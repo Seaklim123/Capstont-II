@@ -356,6 +356,13 @@
   padding: var(--space-sm);
   border-radius: var(--radius-lg);
   transition: background-color var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.user-name {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .user-menu:hover {
@@ -571,6 +578,10 @@
   }
   
   .search-box {
+    display: none;
+  }
+  
+  .desktop-only {
     display: none;
   }
   

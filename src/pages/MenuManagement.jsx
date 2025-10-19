@@ -2,18 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Package, Tag, Plus } from 'lucide-react';
 import MenuItemsTable from '../components/MenuManagement/MenuItemsTable';
 import MenuItemForm from '../components/MenuManagement/MenuItemForm';
+import CategoriesTable from '../components/MenuManagement/CategoriesTable';
+import CategoryForm from '../components/MenuManagement/CategoryForm';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import { menuItems, categories } from '../data/mockData';
 
 const MenuManagement = () => {
   const [items, setItems] = useState(menuItems);
+  const [categoriesList, setCategoriesList] = useState(categories);
   const [filteredItems, setFilteredItems] = useState(menuItems);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('items');
+  
+  // Menu Items state
   const [editingItem, setEditingItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  
+  // Categories state
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showCategoryDeleteConfirm, setShowCategoryDeleteConfirm] = useState(null);
 
   // Filter items based on search and category
   useEffect(() => {
@@ -86,6 +96,64 @@ const MenuManagement = () => {
     setShowDeleteConfirm(null);
   };
 
+  // Category CRUD handlers
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setShowCategoryForm(true);
+  };
+
+  const handleEditCategory = (category) => {
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleSaveCategory = (categoryData) => {
+    if (editingCategory) {
+      // Update existing category
+      setCategoriesList(categoriesList.map(cat =>
+        cat.id === editingCategory.id
+          ? { ...cat, ...categoryData, id: editingCategory.id }
+          : cat
+      ));
+    } else {
+      // Add new category
+      const newCategory = {
+        ...categoryData,
+        id: Math.max(...categoriesList.map(cat => cat.id)) + 1,
+        createdAt: new Date().toISOString()
+      };
+      setCategoriesList([...categoriesList, newCategory]);
+    }
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+  };
+
+  const handleCloseCategoryForm = () => {
+    setShowCategoryForm(false);
+    setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = (category) => {
+    // Check if category has items
+    const itemsInCategory = items.filter(item => item.category === category.value).length;
+    if (itemsInCategory > 0) {
+      alert(`Cannot delete category "${category.label}" because it contains ${itemsInCategory} menu items. Please move or delete those items first.`);
+      return;
+    }
+    setShowCategoryDeleteConfirm(category);
+  };
+
+  const confirmCategoryDelete = () => {
+    if (showCategoryDeleteConfirm) {
+      setCategoriesList(categoriesList.filter(cat => cat.id !== showCategoryDeleteConfirm.id));
+      setShowCategoryDeleteConfirm(null);
+    }
+  };
+
+  const cancelCategoryDelete = () => {
+    setShowCategoryDeleteConfirm(null);
+  };
+
   return (
     <div className="menu-management">
       {/* Page Header */}
@@ -96,8 +164,8 @@ const MenuManagement = () => {
             Manage your restaurant's menu items, categories, and pricing
           </p>
         </div>
-        {activeTab === 'items' && (
-          <div className="page-actions">
+        <div className="page-actions">
+          {activeTab === 'items' ? (
             <button 
               className="btn btn-primary"
               onClick={handleAddItem}
@@ -105,8 +173,16 @@ const MenuManagement = () => {
               <Plus size={16} />
               Add New Item
             </button>
-          </div>
-        )}
+          ) : (
+            <button 
+              className="btn btn-primary"
+              onClick={handleAddCategory}
+            >
+              <Plus size={16} />
+              Add New Category
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -150,7 +226,7 @@ const MenuManagement = () => {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
                   <option value="all">All Categories</option>
-                  {categories.map(category => (
+                  {categoriesList.map(category => (
                     <option key={category.value} value={category.value}>
                       {category.label}
                     </option>
@@ -162,7 +238,7 @@ const MenuManagement = () => {
             {/* Menu Items Table */}
             <MenuItemsTable
               items={filteredItems}
-              categories={categories}
+              categories={categoriesList}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
             />
@@ -170,53 +246,12 @@ const MenuManagement = () => {
         ) : (
           <>
             {/* Categories Table */}
-            <div className="table-container">
-              {categories.length === 0 ? (
-                <div className="empty-state">
-                  <p>No categories found. Add your first category to get started!</p>
-                </div>
-              ) : (
-                <table className="menu-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Category Name</th>
-                      <th>Description</th>
-                      <th>Items Count</th>
-                      <th>Created Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((category) => {
-                      const itemsInCategory = items.filter(item => item.category === category.value).length;
-                      return (
-                        <tr key={category.id}>
-                          <td>
-                            <span className="category-id">#{category.id}</span>
-                          </td>
-                          <td>
-                            <div className="category-name">{category.label}</div>
-                          </td>
-                          <td>
-                            <div className="category-description">
-                              {category.description}
-                            </div>
-                          </td>
-                          <td className="items-count">
-                            <span className="count-badge">
-                              {itemsInCategory} items
-                            </span>
-                          </td>
-                          <td>
-                            {new Date(category.createdAt).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            <CategoriesTable
+              categories={categoriesList}
+              items={items}
+              onEdit={handleEditCategory}
+              onDelete={handleDeleteCategory}
+            />
           </>
         )}
       </div>
@@ -227,10 +262,19 @@ const MenuManagement = () => {
         onClose={handleCloseForm}
         onSave={handleSaveItem}
         editingItem={editingItem}
-        categories={categories}
+        categories={categoriesList}
       />
 
-      {/* Delete Confirmation Modal */}
+      {/* Category Form Modal */}
+      <CategoryForm
+        isOpen={showCategoryForm}
+        onClose={handleCloseCategoryForm}
+        onSave={handleSaveCategory}
+        editingCategory={editingCategory}
+        existingCategories={categoriesList}
+      />
+
+      {/* Menu Item Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={!!showDeleteConfirm}
         onClose={cancelDelete}
@@ -241,6 +285,19 @@ const MenuManagement = () => {
         cancelText="Cancel"
         type="danger"
         itemName={showDeleteConfirm?.name}
+      />
+
+      {/* Category Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!showCategoryDeleteConfirm}
+        onClose={cancelCategoryDelete}
+        onConfirm={confirmCategoryDelete}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? This action cannot be undone and will permanently remove the category."
+        confirmText="Delete Category"
+        cancelText="Cancel"
+        type="danger"
+        itemName={showCategoryDeleteConfirm?.label}
       />
     </div>
   );

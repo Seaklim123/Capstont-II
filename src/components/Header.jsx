@@ -1,4 +1,4 @@
-import { Search, Bell, ChevronDown, Menu } from 'lucide-react';
+import { Bell, ChevronDown, Menu } from 'lucide-react';
 
 const Header = ({ 
   sidebarCollapsed, 
@@ -23,15 +23,6 @@ const Header = ({
       </div>
 
       <div className="header-right">
-        <div className="search-box">
-          <span className="search-icon"><Search size={18} /></span>
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="search-input"
-          />
-        </div>
-
         <div className="header-actions">
           <button className="notification-btn">
             <Bell size={18} />
@@ -40,8 +31,8 @@ const Header = ({
           
           <div className="user-menu">
             <div className="user-avatar">A</div>
-            <span className="user-name">Admin</span>
-            <span className="dropdown-arrow"><ChevronDown size={16} /></span>
+            <span className="user-name desktop-only">Admin</span>
+            <span className="dropdown-arrow desktop-only"><ChevronDown size={16} /></span>
           </div>
         </div>
       </div>
