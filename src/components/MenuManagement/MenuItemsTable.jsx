@@ -1,34 +1,15 @@
 import React from 'react';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, Edit } from 'lucide-react';
 
 const MenuItemsTable = ({ 
   items, 
-  categories
+  categories,
+  onEdit
 }) => {
 
   const getCategoryLabel = (categoryValue) => {
     const category = categories.find(cat => cat.value === categoryValue);
     return category ? category.label : categoryValue;
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // In a real app, you would upload the file to a server
-      // For now, we'll create a mock URL
-      const mockUrl = `https://images.unsplash.com/photo-${Date.now()}?w=400&h=300&fit=crop`;
-      setFormData(prev => ({
-        ...prev,
-        image: mockUrl
-      }));
-    }
-  };
-
-  const removeImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      image: ''
-    }));
   };
 
   return (
@@ -49,6 +30,7 @@ const MenuItemsTable = ({
                 <th>Price</th>
                 <th>Description</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -87,6 +69,17 @@ const MenuItemsTable = ({
                     <span className={`status-badge ${item.available ? 'available' : 'unavailable'}`}>
                       {item.available ? 'Available' : 'Unavailable'}
                     </span>
+                  </td>
+                  <td>
+                    <div className="actions">
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={() => onEdit(item)}
+                        title="Edit item"
+                      >
+                        <Edit size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

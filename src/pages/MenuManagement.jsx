@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Package, Tag } from 'lucide-react';
+import { Search, Filter, Package, Tag, Plus } from 'lucide-react';
 import MenuItemsTable from '../components/MenuManagement/MenuItemsTable';
+import MenuItemForm from '../components/MenuManagement/MenuItemForm';
 import { menuItems, categories } from '../data/mockData';
 
 const MenuManagement = () => {
@@ -9,6 +10,8 @@ const MenuManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('items');
+  const [editingItem, setEditingItem] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Filter items based on search and category
   useEffect(() => {
@@ -30,6 +33,42 @@ const MenuManagement = () => {
     setFilteredItems(filtered);
   }, [items, searchTerm, selectedCategory]);
 
+  const handleAddItem = () => {
+    setEditingItem(null);
+    setShowForm(true);
+  };
+
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setShowForm(true);
+  };
+
+  const handleSaveItem = (itemData) => {
+    if (editingItem) {
+      // Update existing item
+      setItems(items.map(item =>
+        item.id === editingItem.id
+          ? { ...item, ...itemData, id: editingItem.id }
+          : item
+      ));
+    } else {
+      // Add new item
+      const newItem = {
+        ...itemData,
+        id: Math.max(...items.map(item => item.id)) + 1,
+        createdAt: new Date().toISOString()
+      };
+      setItems([...items, newItem]);
+    }
+    setShowForm(false);
+    setEditingItem(null);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingItem(null);
+  };
+
   return (
     <div className="menu-management">
       {/* Page Header */}
@@ -40,6 +79,17 @@ const MenuManagement = () => {
             Manage your restaurant's menu items, categories, and pricing
           </p>
         </div>
+        {activeTab === 'items' && (
+          <div className="page-actions">
+            <button 
+              className="btn btn-primary"
+              onClick={handleAddItem}
+            >
+              <Plus size={16} />
+              Add New Item
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tab Navigation */}
@@ -96,6 +146,7 @@ const MenuManagement = () => {
             <MenuItemsTable
               items={filteredItems}
               categories={categories}
+              onEdit={handleEditItem}
             />
           </>
         ) : (
@@ -151,6 +202,15 @@ const MenuManagement = () => {
           </>
         )}
       </div>
+
+      {/* Menu Item Form Modal */}
+      <MenuItemForm
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        onSave={handleSaveItem}
+        editingItem={editingItem}
+        categories={categories}
+      />
     </div>
   );
 };
