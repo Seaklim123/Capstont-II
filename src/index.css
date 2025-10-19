@@ -9,8 +9,11 @@
   
   /* Success/Warning/Error Colors */
   --success-color: #10b981;
+  --success-dark: #059669;
   --warning-color: #f59e0b;
+  --warning-dark: #d97706;
   --error-color: #ef4444;
+  --error-dark: #dc2626;
   --info-color: #06b6d4;
   
   /* Background Colors */

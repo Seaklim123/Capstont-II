@@ -1,10 +1,11 @@
 import React from 'react';
-import { ImageIcon, Edit } from 'lucide-react';
+import { ImageIcon, Edit, Trash2 } from 'lucide-react';
 
 const MenuItemsTable = ({ 
   items, 
   categories,
-  onEdit
+  onEdit,
+  onDelete
 }) => {
 
   const getCategoryLabel = (categoryValue) => {
@@ -78,6 +79,13 @@ const MenuItemsTable = ({
                         title="Edit item"
                       >
                         <Edit size={14} />
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm btn-danger"
+                        onClick={() => onDelete(item)}
+                        title="Delete item"
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>

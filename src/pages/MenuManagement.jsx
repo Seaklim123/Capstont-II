@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Package, Tag, Plus } from 'lucide-react';
 import MenuItemsTable from '../components/MenuManagement/MenuItemsTable';
 import MenuItemForm from '../components/MenuManagement/MenuItemForm';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import { menuItems, categories } from '../data/mockData';
 
 const MenuManagement = () => {
@@ -12,6 +13,7 @@ const MenuManagement = () => {
   const [activeTab, setActiveTab] = useState('items');
   const [editingItem, setEditingItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   // Filter items based on search and category
   useEffect(() => {
@@ -67,6 +69,21 @@ const MenuManagement = () => {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingItem(null);
+  };
+
+  const handleDeleteItem = (item) => {
+    setShowDeleteConfirm(item);
+  };
+
+  const confirmDelete = () => {
+    if (showDeleteConfirm) {
+      setItems(items.filter(item => item.id !== showDeleteConfirm.id));
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(null);
   };
 
   return (
@@ -147,6 +164,7 @@ const MenuManagement = () => {
               items={filteredItems}
               categories={categories}
               onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
             />
           </>
         ) : (
@@ -210,6 +228,19 @@ const MenuManagement = () => {
         onSave={handleSaveItem}
         editingItem={editingItem}
         categories={categories}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={!!showDeleteConfirm}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Menu Item"
+        message="Are you sure you want to delete this menu item? This action cannot be undone and will permanently remove it from your menu."
+        confirmText="Delete Item"
+        cancelText="Cancel"
+        type="danger"
+        itemName={showDeleteConfirm?.name}
       />
     </div>
   );

@@ -1161,7 +1161,7 @@ button:disabled:hover {
   background: white;
   border-radius: var(--radius-xl);
   width: 90%;
-  max-width: 400px;
+  max-width: 450px;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-light);
 }
@@ -1195,7 +1195,7 @@ button:disabled:hover {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--font-sm);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .confirmation-modal .modal-actions {
@@ -1209,7 +1209,65 @@ button:disabled:hover {
 }
 
 .confirmation-modal .btn {
-  min-width: 80px;
+  min-width: 100px;
+}
+
+/* Additional Button Variants */
+.btn-warning {
+  background-color: var(--warning-color);
+  color: var(--text-white);
+  border: 1px solid var(--warning-color);
+}
+
+.btn-warning:hover {
+  background-color: var(--warning-dark);
+  border-color: var(--warning-dark);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: var(--text-white);
+  border: 1px solid var(--success-color);
+}
+
+.btn-success:hover {
+  background-color: var(--success-dark);
+  border-color: var(--success-dark);
+}
+
+.btn-danger {
+  background-color: var(--error-color);
+  color: var(--text-white);
+  border: 1px solid var(--error-color);
+  font-weight: 600;
+}
+
+.btn-danger:hover {
+  background-color: var(--error-dark);
+  border-color: var(--error-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Icon Color Classes */
+.text-red-500 {
+  color: var(--error-color);
+}
+
+.text-yellow-500 {
+  color: var(--warning-color);
+}
+
+.text-blue-500 {
+  color: var(--primary-color);
+}
+
+.text-green-500 {
+  color: var(--success-color);
+}
+
+.text-gray-500 {
+  color: var(--text-muted);
 }
 
 /* Responsive Design for Menu Management */
