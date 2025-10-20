@@ -1,11 +1,12 @@
 import React from 'react';
-import { ImageIcon, Edit, Trash2 } from 'lucide-react';
+import { ImageIcon, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const MenuItemsTable = ({ 
   items, 
   categories,
   onEdit,
-  onDelete
+  onDelete,
+  onToggleAvailability
 }) => {
 
   const getCategoryLabel = (categoryValue) => {
@@ -73,6 +74,13 @@ const MenuItemsTable = ({
                   </td>
                   <td>
                     <div className="actions">
+                      <button
+                        className={`btn btn-outline btn-sm ${item.available ? 'btn-success' : 'btn-secondary'}`}
+                        onClick={() => onToggleAvailability(item)}
+                        title={item.available ? 'Click to make unavailable' : 'Click to make available'}
+                      >
+                        {item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                      </button>
                       <button
                         className="btn btn-outline btn-sm"
                         onClick={() => onEdit(item)}

@@ -96,6 +96,14 @@ const MenuManagement = () => {
     setShowDeleteConfirm(null);
   };
 
+  const handleToggleAvailability = (item) => {
+    setItems(items.map(i =>
+      i.id === item.id
+        ? { ...i, available: !i.available }
+        : i
+    ));
+  };
+
   // Category CRUD handlers
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -241,6 +249,7 @@ const MenuManagement = () => {
               categories={categoriesList}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
+              onToggleAvailability={handleToggleAvailability}
             />
           </>
         ) : (
