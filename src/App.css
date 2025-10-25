@@ -895,6 +895,39 @@
   color: var(--error-color);
 }
 
+/* Global Status Badge Variants */
+.status-badge.status-success {
+  background-color: rgb(16 185 129 / 0.1);
+  color: var(--success-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-badge.status-danger {
+  background-color: rgb(239 68 68 / 0.1);
+  color: var(--error-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-badge.status-warning {
+  background-color: rgb(245 158 11 / 0.1);
+  color: #d97706;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-badge.status-secondary {
+  background-color: rgb(107 114 128 / 0.1);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .actions {
   display: flex;
   gap: var(--space-xs);
@@ -1586,4 +1619,76 @@ button:disabled:hover {
   background: linear-gradient(135deg, #6b7280, #4b5563);
   color: white;
   box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
+}
+
+/* ===== TABLE MANAGEMENT STYLES ===== */
+
+/* Table Info */
+.table-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Capacity Info */
+.capacity-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+}
+
+/* Location Badge */
+.location-badge {
+  background: var(--surface-light);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-light);
+}
+
+/* Table Status Badges - Now using global status-badge variants */
+
+/* QR Code Info */
+.qr-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-code {
+  background: var(--surface-light);
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  border: 1px solid var(--border-light);
+}
+
+/* Order Link */
+.order-link {
+  color: var(--primary-color);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.order-link:hover {
+  text-decoration: underline;
+}
+
+/* Statistics Grid Enhancement for Tables */
+.stats-grid .stat-card.stat-success {
+  border-left: 4px solid #10b981;
+}
+
+.stats-grid .stat-card.stat-danger {
+  border-left: 4px solid #ef4444;
+}
+
+.stats-grid .stat-card.stat-warning {
+  border-left: 4px solid #f59e0b;
 }
