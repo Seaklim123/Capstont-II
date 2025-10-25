@@ -7,7 +7,7 @@ const Header = ({
   currentPageName 
 }) => {
   return (
-    <header className="admin-header">
+    <header className={`admin-header ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="header-left">
         <button className="sidebar-toggle" onClick={toggleSidebar}>
           <Menu size={20} />

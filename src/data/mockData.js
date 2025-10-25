@@ -55,37 +55,42 @@ export const menuItems = [
 export const categories = [
   { 
     id: 1,
-    value: 'main', 
+    name: 'Main Dishes',
+    value: '1', 
     label: 'Main Dishes',
-    description: 'Primary course items',
-    createdAt: '2024-10-19T08:00:00Z'
+    created_at: '2024-10-19T08:00:00Z',
+    updated_at: '2024-10-19T08:00:00Z'
   },
   { 
     id: 2,
-    value: 'appetizer', 
+    name: 'Appetizers',
+    value: '2', 
     label: 'Appetizers',
-    description: 'Starter dishes and snacks',
-    createdAt: '2024-10-19T08:00:00Z'
+    created_at: '2024-10-19T08:00:00Z',
+    updated_at: '2024-10-19T08:00:00Z'
   },
   { 
     id: 3,
-    value: 'side', 
+    name: 'Sides',
+    value: '3', 
     label: 'Sides',
-    description: 'Side dishes and accompaniments',
-    createdAt: '2024-10-19T08:00:00Z'
+    created_at: '2024-10-19T08:00:00Z',
+    updated_at: '2024-10-19T08:00:00Z'
   },
   { 
     id: 4,
-    value: 'beverage', 
+    name: 'Beverages',
+    value: '4', 
     label: 'Beverages',
-    description: 'Drinks and refreshments',
-    createdAt: '2024-10-19T08:00:00Z'
+    created_at: '2024-10-19T08:00:00Z',
+    updated_at: '2024-10-19T08:00:00Z'
   },
   { 
     id: 5,
-    value: 'dessert', 
+    name: 'Desserts',
+    value: '5', 
     label: 'Desserts',
-    description: 'Sweet treats and desserts',
-    createdAt: '2024-10-19T08:00:00Z'
+    created_at: '2024-10-19T08:00:00Z',
+    updated_at: '2024-10-19T08:00:00Z'
   }
 ];

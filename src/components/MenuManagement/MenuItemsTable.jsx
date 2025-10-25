@@ -23,13 +23,14 @@ const MenuItemsTable = ({
             <p>No menu items found. Add your first menu item to get started!</p>
           </div>
         ) : (
-          <table className="menu-table">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Image</th>
                 <th>Name</th>
                 <th>Category</th>
                 <th>Price</th>
+                <th>Discount</th>
                 <th>Description</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -38,58 +39,72 @@ const MenuItemsTable = ({
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td className="item-image">
+                  <td>
                     {item.image ? (
                       <img 
                         src={item.image} 
                         alt={item.name}
-                        className="food-thumbnail"
+                        className="img-thumbnail hover-scale transition"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="no-image">
-                        <ImageIcon size={12} />
-                      </div>
-                    )}
+                    ) : null}
+                    <div className="img-placeholder" style={{display: item.image ? 'none' : 'flex'}}>
+                      <ImageIcon size={12} />
+                    </div>
                   </td>
                   <td>
-                    <div className="item-name">{item.name}</div>
+                    <div className="font-medium text-primary">{item.name}</div>
                   </td>
                   <td>
-                    <span className="category-badge">
+                    <span className="badge badge-secondary">
                       {getCategoryLabel(item.category)}
                     </span>
                   </td>
                   <td>
-                    <span className="item-price">${item.price.toFixed(2)}</span>
+                    <span className="font-semibold text-success">
+                      ${(item.price || 0).toFixed(2)}
+                    </span>
                   </td>
                   <td>
-                    <div className="item-description" title={item.description}>
+                    {item.discount > 0 ? (
+                      <span className="badge badge-error">
+                        {item.discount}%
+                      </span>
+                    ) : (
+                      <span className="text-muted">-</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="text-secondary text-sm" title={item.description} style={{maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                       {item.description}
                     </div>
                   </td>
                   <td>
-                    <span className={`status-badge ${item.available ? 'available' : 'unavailable'}`}>
+                    <span className={`badge ${item.available ? 'badge-success' : 'badge-secondary'}`}>
                       {item.available ? 'Available' : 'Unavailable'}
                     </span>
                   </td>
                   <td>
-                    <div className="actions">
+                    <div className="flex gap-xs">
                       <button
-                        className={`btn btn-outline btn-sm ${item.available ? 'btn-success' : 'btn-secondary'}`}
+                        className={`btn btn-sm ${item.available ? 'btn-success' : 'btn-secondary'} transition hover-lift`}
                         onClick={() => onToggleAvailability(item)}
                         title={item.available ? 'Click to make unavailable' : 'Click to make available'}
                       >
                         {item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                       </button>
                       <button
-                        className="btn btn-outline btn-sm"
+                        className="btn btn-secondary btn-sm transition hover-lift"
                         onClick={() => onEdit(item)}
                         title="Edit item"
                       >
                         <Edit size={14} />
                       </button>
                       <button
-                        className="btn btn-outline btn-sm btn-danger"
+                        className="btn btn-error btn-sm transition hover-lift"
                         onClick={() => onDelete(item)}
                         title="Delete item"
                       >

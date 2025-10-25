@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Tag } from 'lucide-react';
 
 const CategoriesTable = ({ 
   categories,
@@ -19,12 +19,12 @@ const CategoriesTable = ({
           <p>No categories found. Add your first category to get started!</p>
         </div>
       ) : (
-        <table className="menu-table">
+        <table className="data-table">
           <thead>
             <tr>
+              <th>Image</th>
               <th>ID</th>
               <th>Category Name</th>
-              <th>Description</th>
               <th>Items Count</th>
               <th>Created Date</th>
               <th>Actions</th>
@@ -32,39 +32,54 @@ const CategoriesTable = ({
           </thead>
           <tbody>
             {categories.map((category) => {
-              const itemsInCategory = items.filter(item => item.category === category.value).length;
+              const itemsInCategory = items.filter(item => 
+                item.category && item.category.toString() === category.value
+              ).length;
               return (
                 <tr key={category.id}>
                   <td>
-                    <span className="category-id">#{category.id}</span>
-                  </td>
-                  <td>
-                    <div className="category-name">{category.label}</div>
-                  </td>
-                  <td>
-                    <div className="category-description">
-                      {category.description}
+                    {category.image ? (
+                      <img 
+                        src={category.image} 
+                        alt={category.name}
+                        className="img-thumbnail hover-scale transition"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className="img-placeholder" style={{display: category.image ? 'none' : 'flex'}}>
+                      <Tag size={12} />
                     </div>
                   </td>
-                  <td className="items-count">
-                    <span className="count-badge">
+                  <td>
+                    <span className="badge badge-gradient font-mono">#{category.id}</span>
+                  </td>
+                  <td>
+                    <div className="font-semibold text-primary">{category.label || category.name}</div>
+                  </td>
+                  <td>
+                    <span className="badge badge-info">
                       {itemsInCategory} items
                     </span>
                   </td>
                   <td>
-                    {new Date(category.createdAt).toLocaleDateString()}
+                    <span className="text-secondary text-sm">
+                      {category.created_at ? new Date(category.created_at).toLocaleDateString() : 'N/A'}
+                    </span>
                   </td>
                   <td>
-                    <div className="actions">
+                    <div className="flex gap-xs">
                       <button
-                        className="btn btn-outline btn-sm"
+                        className="btn btn-secondary btn-sm transition hover-lift"
                         onClick={() => onEdit(category)}
                         title="Edit category"
                       >
                         <Edit size={14} />
                       </button>
                       <button
-                        className="btn btn-outline btn-sm btn-danger"
+                        className="btn btn-error btn-sm transition hover-lift"
                         onClick={() => onDelete(category)}
                         title="Delete category"
                         disabled={itemsInCategory > 0}
