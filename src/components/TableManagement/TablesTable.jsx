@@ -1,7 +1,11 @@
-import React from 'react';
-import { Edit, Trash2, QrCode, Users, Eye, Plus, MapPin, CheckCircle, XCircle, Clock, Wrench } from 'lucide-react';
+import React, { useState } from 'react';
+import { Edit, Trash2, QrCode, Users, Plus, MapPin, CheckCircle, XCircle, Clock, Wrench } from 'lucide-react';
+import QRCodeModal from './QRCodeModal';
+import StatusChangeButton from './StatusChangeButton';
 
-const TablesTable = ({ tables, filteredTables, searchTerm }) => {
+const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDeleteTable, onStatusChange }) => {
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
   const getStatusInfo = (status) => {
     const statusMap = {
       available: { 
@@ -12,12 +16,7 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
       occupied: { 
         className: 'status-badge status-danger', 
         text: 'Occupied', 
-        icon: <XCircle size={12} /> 
-      },
-      reserved: { 
-        className: 'status-badge status-warning', 
-        text: 'Reserved', 
-        icon: <Clock size={12} /> 
+        icon: <Users size={12} /> 
       },
       maintenance: { 
         className: 'status-badge status-secondary', 
@@ -38,6 +37,11 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleViewQR = (table) => {
+    setSelectedTable(table);
+    setShowQRModal(true);
   };
 
   if (filteredTables.length === 0) {
@@ -64,6 +68,8 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
   }
 
   return (
+    <>
+      {/* Table Display */}
     <div className="table-container">
       <div className="table-wrapper">
         <table className="data-table">
@@ -102,17 +108,18 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
                     <span className="location-badge">{table.location}</span>
                   </td>
                   <td>
-                    <span className={statusInfo.className}>
-                      {statusInfo.icon}
-                      {statusInfo.text}
-                    </span>
+                    <StatusChangeButton 
+                      table={table}
+                      onStatusChange={onStatusChange}
+                    />
                   </td>
                   <td>
                     <div className="qr-info">
                       <code className="qr-code">{table.qr_code}</code>
                       <button
-                        className="btn-action btn-action-view"
+                        className="btn btn-primary btn-sm transition hover-lift"
                         title="View QR Code"
+                        onClick={() => handleViewQR(table)}
                       >
                         <QrCode size={14} />
                       </button>
@@ -133,22 +140,18 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
+                    <div className="flex gap-xs">
                       <button
-                        className="btn-action btn-action-view"
-                        title="View Details"
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        className="btn-action btn-action-edit"
-                        title="Edit Table"
+                        className="btn btn-secondary btn-sm transition hover-lift"
+                        onClick={() => onEditTable(table)}
+                        title="Edit table"
                       >
                         <Edit size={14} />
                       </button>
                       <button
-                        className="btn-action btn-action-delete"
-                        title="Delete Table"
+                        className="btn btn-error btn-sm transition hover-lift"
+                        onClick={() => onDeleteTable(table)}
+                        title="Delete table"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -160,7 +163,15 @@ const TablesTable = ({ tables, filteredTables, searchTerm }) => {
           </tbody>
         </table>
       </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        table={selectedTable}
+      />
     </div>
+    </>
   );
 };
 

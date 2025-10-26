@@ -1692,3 +1692,183 @@ button:disabled:hover {
 .stats-grid .stat-card.stat-warning {
   border-left: 4px solid #f59e0b;
 }
+
+.stats-grid .stat-card.stat-secondary {
+  border-left: 4px solid #6b7280;
+}
+
+/* Form Row Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Label with Icon */
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+/* QR Code Preview */
+.qr-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--surface-light);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+/* QR Code Modal Styles */
+.modal-small {
+  max-width: 400px;
+}
+
+.qr-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.qr-image {
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: white;
+}
+
+.qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+
+.qr-info {
+  text-align: left;
+  margin-bottom: var(--space-lg);
+}
+
+.qr-info p {
+  margin-bottom: var(--space-sm);
+}
+
+.qr-url {
+  display: block;
+  background: var(--surface-light);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  word-break: break-all;
+  margin-top: var(--space-xs);
+}
+
+.qr-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+/* Delete Confirmation Modal */
+.delete-warning {
+  text-align: center;
+}
+
+.warning-icon {
+  margin-bottom: var(--space-lg);
+}
+
+.warning-content h4 {
+  margin-bottom: var(--space-lg);
+  color: var(--text-primary);
+  font-size: var(--font-lg);
+}
+
+.table-details {
+  background: var(--surface-light);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  text-align: left;
+}
+
+.table-details p {
+  margin-bottom: var(--space-xs);
+  display: flex;
+  justify-content: space-between;
+}
+
+.warning-message {
+  text-align: left;
+  padding: var(--space-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.warning-message p {
+  margin-bottom: var(--space-sm);
+}
+
+.warning-message p:last-child {
+  margin-bottom: 0;
+}
+
+/* Status Change Dropdown */
+.status-dropdown {
+  position: relative;
+}
+
+.status-select {
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: transparent;
+  min-width: 90px;
+}
+
+.status-select.status-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.status-select.status-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+.status-select.status-secondary {
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+}
+
+.status-select:hover {
+  opacity: 0.8;
+  border-color: currentColor;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: currentColor;
+  box-shadow: 0 0 0 2px rgba(currentColor, 0.2);
+}

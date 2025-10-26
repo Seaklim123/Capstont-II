@@ -7,7 +7,6 @@ const TableStats = ({ tables }) => {
       total: tables.length,
       available: tables.filter(t => t.status === 'available').length,
       occupied: tables.filter(t => t.status === 'occupied').length,
-      reserved: tables.filter(t => t.status === 'reserved').length,
       maintenance: tables.filter(t => t.status === 'maintenance').length
     };
   };
@@ -43,10 +42,10 @@ const TableStats = ({ tables }) => {
           <Users size={24} />
         </div>
       </div>
-      <div className="stat-card stat-warning">
+      <div className="stat-card stat-secondary">
         <div className="stat-content">
-          <div className="stat-number">{stats.reserved}</div>
-          <div className="stat-label">Reserved</div>
+          <div className="stat-number">{stats.maintenance}</div>
+          <div className="stat-label">Maintenance</div>
         </div>
         <div className="stat-icon">
           <Users size={24} />

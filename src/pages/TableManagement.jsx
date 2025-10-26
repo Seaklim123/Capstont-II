@@ -4,12 +4,18 @@ import toast from 'react-hot-toast';
 import TableStats from '../components/TableManagement/TableStats';
 import TableToolbar from '../components/TableManagement/TableToolbar';
 import TablesTable from '../components/TableManagement/TablesTable';
+import TableForm from '../components/TableManagement/TableForm';
+import DeleteConfirmModal from '../components/TableManagement/DeleteConfirmModal';
 import { mockTables } from '../components/TableManagement/mockTableData';
 
 const TableManagement = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showTableForm, setShowTableForm] = useState(false);
+  const [editingTable, setEditingTable] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingTable, setDeletingTable] = useState(null);
 
   useEffect(() => {
     loadTables();
@@ -36,6 +42,93 @@ const TableManagement = () => {
     table.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleAddTable = () => {
+    setEditingTable(null);
+    setShowTableForm(true);
+  };
+
+  const handleEditTable = (table) => {
+    setEditingTable(table);
+    setShowTableForm(true);
+  };
+
+  const handleSaveTable = async (tableData) => {
+    const saveToast = toast.loading(editingTable ? 'Updating table...' : 'Adding new table...');
+    
+    try {
+      if (editingTable) {
+        // Update existing table
+        const updatedTables = tables.map(table =>
+          table.id === editingTable.id 
+            ? { ...tableData, id: editingTable.id, created_at: editingTable.created_at }
+            : table
+        );
+        setTables(updatedTables);
+        toast.success('Table updated successfully!', { id: saveToast });
+      } else {
+        // Add new table
+        const newTable = {
+          ...tableData,
+          id: Math.max(...tables.map(t => t.id), 0) + 1,
+          created_at: new Date().toISOString(),
+          current_order_id: null
+        };
+        setTables(prev => [...prev, newTable]);
+        toast.success('Table added successfully!', { id: saveToast });
+      }
+      
+      setShowTableForm(false);
+      setEditingTable(null);
+    } catch (err) {
+      toast.error('Failed to save table', { id: saveToast });
+      console.error('Error saving table:', err);
+    }
+  };
+
+  const handleDeleteTable = (table) => {
+    setDeletingTable(table);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteTable = async () => {
+    const deleteToast = toast.loading('Deleting table...');
+    
+    try {
+      const updatedTables = tables.filter(table => table.id !== deletingTable.id);
+      setTables(updatedTables);
+      toast.success(`${deletingTable.table_name} deleted successfully!`, { id: deleteToast });
+      
+      setShowDeleteConfirm(false);
+      setDeletingTable(null);
+    } catch (err) {
+      toast.error('Failed to delete table', { id: deleteToast });
+      console.error('Error deleting table:', err);
+    }
+  };
+
+  const handleStatusChange = async (tableId, newStatus) => {
+    try {
+      const updatedTables = tables.map(table =>
+        table.id === tableId 
+          ? { ...table, status: newStatus }
+          : table
+      );
+      setTables(updatedTables);
+      
+      const table = tables.find(t => t.id === tableId);
+      const statusLabels = {
+        available: 'Available',
+        occupied: 'Occupied', 
+        maintenance: 'Maintenance'
+      };
+      
+      toast.success(`${table.table_name} marked as ${statusLabels[newStatus]}`);
+    } catch (err) {
+      toast.error('Failed to update table status');
+      console.error('Error updating status:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="page-container">
@@ -48,24 +141,14 @@ const TableManagement = () => {
   }
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-text">
-            <h1 className="page-title">
-              <MapPin className="title-icon" />
-              Table Management
-            </h1>
-            <p className="page-subtitle">
-              Manage restaurant tables, seating arrangements, and QR codes
-            </p>
-          </div>
-          <div className="header-actions">
-            <button className="btn btn-primary">
-              <Plus size={16} />
-              Add New Table
-            </button>
-          </div>
+    <div className="p-xl">
+      {/* Page Header */}
+      <div className="page-header mb-xl">
+        <div>
+          <h1 className="text-3xl font-bold text-primary mb-sm">Table Management</h1>
+          <p className="text-secondary">
+            Manage restaurant tables, seating arrangements, and QR codes
+          </p>
         </div>
       </div>
 
@@ -79,6 +162,7 @@ const TableManagement = () => {
           setSearchTerm={setSearchTerm}
           totalTables={tables.length}
           filteredCount={filteredTables.length}
+          onAddTable={handleAddTable}
         />
 
         {/* Tables Table Component */}
@@ -86,8 +170,28 @@ const TableManagement = () => {
           tables={tables}
           filteredTables={filteredTables}
           searchTerm={searchTerm}
+          onEditTable={handleEditTable}
+          onDeleteTable={handleDeleteTable}
+          onStatusChange={handleStatusChange}
         />
       </div>
+
+      {/* Table Form Modal */}
+      <TableForm
+        isOpen={showTableForm}
+        onClose={() => setShowTableForm(false)}
+        onSave={handleSaveTable}
+        editingTable={editingTable}
+        existingTables={tables}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteTable}
+        table={deletingTable}
+      />
     </div>
   );
 };

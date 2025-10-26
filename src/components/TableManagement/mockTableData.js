@@ -30,7 +30,7 @@ export const mockTables = [
     table_name: 'Table 3',
     capacity: 2,
     location: 'Terrace',
-    status: 'reserved',
+    status: 'available',
     qr_code: 'QR-T003-2024',
     description: 'Outdoor seating with garden view',
     created_at: '2024-10-20T10:00:00Z',
