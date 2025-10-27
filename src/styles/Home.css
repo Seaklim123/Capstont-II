@@ -1,0 +1,485 @@
+﻿/* Home Page Styles - Clean and Responsive */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.home-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Hero Section */
+.hero-section {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin: 20px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Dark overlay for text readability */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.25),
+    rgba(0, 0, 0, 0.4)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.hero-content {
+  text-align: center;
+  color: white;
+  max-width: 600px;
+  padding: 2rem;
+  z-index: 2;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+  opacity: 0.95;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* Search Form */
+.search-form {
+  margin-top: 2rem;
+}
+
+.search-container {
+  display: flex;
+  max-width: 500px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.search-input {
+  flex: 1;
+  padding: 16px 20px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: #333;
+}
+
+.search-input::placeholder {
+  color: #999;
+  font-size: 15px;
+}
+
+.search-btn {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 16px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+}
+
+.search-btn:hover {
+  background: #e55a2b;
+}
+
+/* Categories Section */
+.categories-section {
+  padding: 80px 0 60px;
+  background: #ffffff;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: left;
+  margin-bottom: 2rem;
+  color: #333;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.category-item:hover {
+  transform: translateY(-4px);
+}
+
+.category-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.8rem;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.category-item:hover .category-icon {
+  background: #fff5f2;
+  border-color: #ff6b35;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+}
+
+.icon-emoji {
+  font-size: 2rem;
+  display: block;
+}
+
+.category-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .search-container {
+    flex-direction: column;
+    max-width: 400px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .category-icon {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .category-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .icon-emoji {
+    font-size: 1.5rem;
+  }
+
+  .search-container {
+    max-width: 320px;
+  }
+}
+
+/* Best Sellers Section */
+.best-sellers-section {
+  padding: 80px 0;
+  background: white;
+}
+
+.best-sellers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.food-item {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.food-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.food-image {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.food-info {
+  padding: 0.9rem;
+}
+
+.food-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #333;
+}
+
+.food-description {
+  color: #666;
+  font-size: 0.8rem;
+  margin-bottom: 0.7rem;
+  line-height: 1.4;
+}
+
+.food-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ff6b35;
+}
+
+/* Promotions Section */
+.promotions-section {
+  padding: 80px 0;
+  background: white;
+}
+
+.promotions-section .section-title {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+}
+
+.promotion-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #fff5f2 0%, #ffe8e1 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.2);
+}
+
+.promotion-image {
+  flex: 1;
+  min-height: 250px;
+}
+
+.promotion-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promotion-content {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.promotion-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.promotion-description {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.promotion-btn {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  align-self: flex-start;
+}
+
+.promotion-btn:hover {
+  background: #e55a2b;
+}
+
+/* Featured Restaurants Section */
+.featured-restaurants-section {
+  padding: 80px 0;
+  background: #f8f9fa;
+}
+
+.featured-restaurants-section .section-title {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+}
+
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.restaurant-item {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.restaurant-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.restaurant-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.restaurant-info {
+  padding: 1.5rem;
+}
+
+.restaurant-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.restaurant-description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive Design for New Sections */
+@media (max-width: 1024px) {
+  .best-sellers-grid,
+  .restaurants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .promotion-card {
+    flex-direction: column;
+    margin: 0 20px;
+  }
+  
+  .promotion-content {
+    padding: 2rem;
+  }
+  
+  .promotion-title {
+    font-size: 1.5rem;
+  }
+  
+  .best-sellers-grid,
+  .restaurants-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 15px;
+  }
+}
+
+/* Simple fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

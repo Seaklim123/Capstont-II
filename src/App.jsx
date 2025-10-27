@@ -1,18 +1,24 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
+import InputPage from "./pages/InputPage";
 // import Order from "./pages/Order";
-import Navbar from "./components/Navbar";
+import { Header } from "./components/header";
+import "./styles/App.css";
 
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/menu" element={<Menu />} />
-        
-      </Routes>
+      <div className="app">
+        <Header />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/input" element={<InputPage />} />
+          </Routes>
+        </main>
+      </div>
     </BrowserRouter>
   );
 }
