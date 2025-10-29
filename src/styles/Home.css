@@ -289,3 +289,246 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Best Discount Section */
+.best-discount-section {
+  padding: 4rem 0;
+  background: #f8f9fa;
+}
+
+.best-discount-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.best-discount-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.best-discount-badge {
+  background: #333;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.best-discount-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.best-discount-subtitle {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+.discount-filter-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.filter-tab {
+  background: transparent;
+  border: 2px solid #ddd;
+  padding: 0.8rem 2rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.filter-tab.active {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.filter-tab:hover {
+  border-color: #333;
+}
+
+.best-discount-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.discount-item-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.discount-item-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.discount-item-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: #333;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.discount-item-image {
+  width: 100%;
+  height: 200px;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.discount-item-info {
+  padding: 1.5rem;
+}
+
+.discount-item-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.discount-bottom-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.discount-price-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.discount-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.original-price {
+  font-size: 0.9rem;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.discount-badge {
+  background: #333;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.add-to-cart-btn {
+  background: white;
+  color: #333;
+  border: 2px solid #333;
+  padding: 0.6rem 1rem;
+  border-radius: 25px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.add-to-cart-btn:hover {
+  background: #333;
+  color: white;
+}
+
+.add-to-cart-btn:hover {
+  background: #555;
+}
+
+.discount-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.pagination-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ddd;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.dot.active {
+  background: #333;
+}
+
+.dot:hover {
+  background: #666;
+}
+
+/* Best Discount Responsive */
+@media (max-width: 768px) {
+  .best-discount-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .best-discount-title {
+    font-size: 2rem;
+  }
+  
+  .best-discount-container {
+    padding: 0 1rem;
+  }
+  
+  .discount-bottom-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  
+  .add-to-cart-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 1024px) {
+  .best-discount-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
