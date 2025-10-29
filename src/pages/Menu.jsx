@@ -6,15 +6,15 @@ function Menu() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Show 5 items per page
 
-  // Top categories data
+  // Top categories data - updated to match design
   const topCategories = [
     { id: 1, name: "Grocery", icon: "🛒" },
-    { id: 2, name: "Pizza", icon: "🍕" },
-    { id: 3, name: "Pharmacy", icon: "💊" },
-    { id: 4, name: "Convenience", icon: "🏪" },
-    { id: 5, name: "Pet Supplies", icon: "🐕" },
-    { id: 6, name: "Fast Food", icon: "🍔" },
-    { id: 7, name: "Taco", icon: "🌮" }
+    { id: 2, name: "Grocery", icon: "🛒" },
+    { id: 3, name: "Grocery", icon: "�" },
+    { id: 4, name: "Grocery", icon: "🛒" },
+    { id: 5, name: "Grocery", icon: "�" },
+    { id: 6, name: "Grocery", icon: "🛒" },
+    { id: 7, name: "Grocery", icon: "🛒" }
   ];
 
   // Popular items data
@@ -223,99 +223,38 @@ function Menu() {
 
   return (
     <div className="menu-page">
-      {/* Top Categories */}
-      <section className="top-categories-section">
+      {/* Header Section */}
+      <section className="menu-header-section">
         <div className="container">
-          <div className="top-categories-grid">
+          <div className="menu-header">
+            <span className="menu-badge">Menu</span>
+            <h1 className="menu-title">Our Menu</h1>
+            <p className="menu-subtitle">
+              Lorem ipsum dolor sit amet consectetur.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="menu-categories-section">
+        <div className="container">
+          <div className="menu-categories-grid">
             {topCategories.map(category => (
-              <div key={category.id} className="top-category-item">
-                <div className="top-category-icon">
+              <div key={category.id} className="menu-category-item">
+                <div className="menu-category-circle">
                   <span className="category-emoji">{category.icon}</span>
                 </div>
-                <span className="top-category-label">{category.name}</span>
+                <span className="menu-category-label">{category.name}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Items */}
-      <section className="popular-items-section">
-        <div className="container">
-          <h2 className="section-title">Popular Items</h2>
-          <div className="popular-items-grid">
-            {popularItems.map(item => (
-              <div key={item.id} className="popular-item">
-                <img src={item.image} alt={item.name} className="popular-item-image" />
-                <div className="popular-item-info">
-                  <h3 className="popular-item-name">{item.name}</h3>
-                  <div className="popular-item-details">
-                    <span className="popular-item-time">{item.time}</span>
-                    <span className="popular-item-price">{item.price}</span>
-                  </div>
-                </div>
+            {/* Filter button */}
+            <div className="menu-category-item">
+              <div className="menu-category-circle filter-circle">
+                <span className="filter-icon">☰</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Full Menu */}
-      <section className="full-menu-section">
-        <div className="container">
-          <h2 className="section-title">Full Menu</h2>
-          
-          {/* Category Filter */}
-          <div className="menu-filter">
-            {menuCategories.map(category => (
-              <button
-                key={category}
-                className={`filter-btn ${activeCategory === category ? 'active' : ''}`}
-                onClick={() => handleCategoryChange(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          {/* Menu Items Grid */}
-          <div className="menu-items-grid">
-            {currentItems.map(item => (
-              <div key={item.id} className="menu-item">
-                <img src={item.image} alt={item.name} className="menu-item-image" />
-                <div className="menu-item-info">
-                  <h3 className="menu-item-name">{item.name}</h3>
-                  <p className="menu-item-price">{item.price}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="pagination">
-            <button 
-              className="pagination-btn"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              ‹
-            </button>
-            {[...Array(totalPages)].map((_, index) => (
-              <button
-                key={index + 1}
-                className={`pagination-btn ${currentPage === index + 1 ? 'active' : ''}`}
-                onClick={() => handlePageChange(index + 1)}
-              >
-                {index + 1}
-              </button>
-            ))}
-            <button 
-              className="pagination-btn"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              ›
-            </button>
+              <span className="menu-category-label">Filter</span>
+            </div>
           </div>
         </div>
       </section>
