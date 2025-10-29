@@ -258,6 +258,190 @@ function Menu() {
           </div>
         </div>
       </section>
+
+      {/* Popular Dish Section */}
+      <section className="popular-dish-section">
+        <div className="container">
+          <h2 className="section-title">Popular Dish</h2>
+          <div className="dish-grid">
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Discount Dish Section */}
+      <section className="discount-dish-section">
+        <div className="container">
+          <h2 className="section-title">Discount Dish</h2>
+          <div className="dish-grid">
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="dish-item">
+              <div className="dish-badges">
+                <span className="badge best-seller">Best Seller</span>
+                <span className="badge sold-badge">50+ Sold</span>
+              </div>
+              <div className="dish-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="dish-info">
+                <h3 className="dish-name">Name</h3>
+                <div className="dish-bottom">
+                  <div className="dish-price-info">
+                    <span className="dish-price">$2.10</span>
+                    <span className="original-price">$4.00</span>
+                    <span className="discount-badge">$1.90 OFF</span>
+                  </div>
+                  <button className="add-to-cart-btn">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
