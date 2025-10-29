@@ -58,6 +58,9 @@ class ApiService {
     if (response && response.data && Array.isArray(response.data)) {
       return response.data;
     }
+    if (response && response.data) {
+      return response.data;
+    }
     if (response && Array.isArray(response)) {
       return response;
     }
@@ -328,6 +331,51 @@ class ApiService {
       body: JSON.stringify({ status }),
     });
     return response.data || response;
+  }
+
+  // Tables API methods
+  async getTables() {
+    const response = await this.request('/tables');
+    return this.handleResponse(response);
+  }
+
+  async createTable(tableData) {
+    console.log('Creating table with data:', tableData);
+    const response = await this.request('/tables', {
+      method: 'POST',
+      body: JSON.stringify(tableData),
+    });
+    // Handle Laravel Resource response format
+    return this.handleResponse(response);
+  }
+
+  async updateTable(id, tableData) {
+    console.log('Updating table with data:', tableData);
+    const response = await this.request(`/tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(tableData),
+    });
+    // Handle Laravel Resource response format
+    return this.handleResponse(response);
+  }
+
+  async deleteTable(id) {
+    return this.request(`/tables/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateTableStatus(id, status, currentNumber) {
+    // Send both number and status to satisfy DTO requirements
+    const response = await this.request(`/tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ 
+        number: currentNumber,
+        status: status 
+      }),
+    });
+    // Handle Laravel Resource response format
+    return this.handleResponse(response);
   }
 }
 

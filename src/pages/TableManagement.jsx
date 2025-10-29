@@ -6,7 +6,7 @@ import TableToolbar from '../components/TableManagement/TableToolbar';
 import TablesTable from '../components/TableManagement/TablesTable';
 import TableForm from '../components/TableManagement/TableForm';
 import DeleteConfirmModal from '../components/TableManagement/DeleteConfirmModal';
-import { mockTables } from '../components/TableManagement/mockTableData';
+import ApiService from '../services/api';
 
 const TableManagement = () => {
   const [tables, setTables] = useState([]);
@@ -24,22 +24,36 @@ const TableManagement = () => {
   const loadTables = async () => {
     try {
       setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setTables(mockTables);
+      
+      const response = await ApiService.getTables();
+      console.log('Tables loaded:', response);
+      
+      // Transform data to match expected format
+      const transformedTables = response.map(table => ({
+        id: table.id,
+        table_number: table.number.toString(),
+        table_name: `Table ${table.number}`,
+        number: table.number,
+        status: table.status,
+        created_at: table.created_at,
+        updated_at: table.updated_at
+      }));
+      
+      setTables(transformedTables);
     } catch (error) {
       toast.error('Failed to load tables');
       console.error('Error loading tables:', error);
+      setTables([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
   const filteredTables = tables.filter(table =>
-    table.table_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    table.table_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    table.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    table.status.toLowerCase().includes(searchTerm.toLowerCase())
+    (table.table_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (table.table_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (table.number || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (table.status || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddTable = () => {
@@ -56,32 +70,34 @@ const TableManagement = () => {
     const saveToast = toast.loading(editingTable ? 'Updating table...' : 'Adding new table...');
     
     try {
+      // Prepare data for backend - only send fields that exist in database
+      const backendData = {
+        number: parseInt(tableData.number || tableData.table_number),
+        status: tableData.status || 'available'
+      };
+
+      console.log('Saving table data:', { tableData, backendData });
+
       if (editingTable) {
         // Update existing table
-        const updatedTables = tables.map(table =>
-          table.id === editingTable.id 
-            ? { ...tableData, id: editingTable.id, created_at: editingTable.created_at }
-            : table
-        );
-        setTables(updatedTables);
+        const result = await ApiService.updateTable(editingTable.id, backendData);
+        console.log('Table updated:', result);
         toast.success('Table updated successfully!', { id: saveToast });
       } else {
         // Add new table
-        const newTable = {
-          ...tableData,
-          id: Math.max(...tables.map(t => t.id), 0) + 1,
-          created_at: new Date().toISOString(),
-          current_order_id: null
-        };
-        setTables(prev => [...prev, newTable]);
+        const result = await ApiService.createTable(backendData);
+        console.log('Table created:', result);
         toast.success('Table added successfully!', { id: saveToast });
       }
+      
+      // Reload tables to get fresh data
+      await loadTables();
       
       setShowTableForm(false);
       setEditingTable(null);
     } catch (err) {
-      toast.error('Failed to save table', { id: saveToast });
       console.error('Error saving table:', err);
+      toast.error(`Failed to save table: ${err.message}`, { id: saveToast });
     }
   };
 
@@ -94,38 +110,39 @@ const TableManagement = () => {
     const deleteToast = toast.loading('Deleting table...');
     
     try {
-      const updatedTables = tables.filter(table => table.id !== deletingTable.id);
-      setTables(updatedTables);
-      toast.success(`${deletingTable.table_name} deleted successfully!`, { id: deleteToast });
+      await ApiService.deleteTable(deletingTable.id);
+      toast.success(`${deletingTable.table_name || `Table ${deletingTable.number}`} deleted successfully!`, { id: deleteToast });
+      
+      // Reload tables to get fresh data
+      await loadTables();
       
       setShowDeleteConfirm(false);
       setDeletingTable(null);
     } catch (err) {
-      toast.error('Failed to delete table', { id: deleteToast });
       console.error('Error deleting table:', err);
+      toast.error(`Failed to delete table: ${err.message}`, { id: deleteToast });
     }
   };
 
   const handleStatusChange = async (tableId, newStatus) => {
     try {
-      const updatedTables = tables.map(table =>
-        table.id === tableId 
-          ? { ...table, status: newStatus }
-          : table
-      );
-      setTables(updatedTables);
-      
       const table = tables.find(t => t.id === tableId);
+      
+      // Update status via API, passing the current table number
+      await ApiService.updateTableStatus(tableId, newStatus, parseInt(table.number));
+      
       const statusLabels = {
         available: 'Available',
-        occupied: 'Occupied', 
-        maintenance: 'Maintenance'
+        unavailable: 'Unavailable'
       };
       
-      toast.success(`${table.table_name} marked as ${statusLabels[newStatus]}`);
+      toast.success(`${table.table_name || `Table ${table.number}`} marked as ${statusLabels[newStatus]}`);
+      
+      // Reload tables to get fresh data
+      await loadTables();
     } catch (err) {
-      toast.error('Failed to update table status');
       console.error('Error updating status:', err);
+      toast.error(`Failed to update table status: ${err.message}`);
     }
   };
 
