@@ -8,32 +8,35 @@ export function Header() {
   return (
     <header className="clean-header">
       <div className="header-container">
-        {/* Logo */}
-        <Link to="/" className="logo">
-          <span className="logo-text">Tos Kamong</span>
-        </Link>
+        {/* Left side - Logo and Navigation */}
+        <div className="left-section">
+          {/* Logo */}
+          <Link to="/" className="logo">
+            <span className="logo-text">Tos Kamong</span>
+          </Link>
 
-        {/* Navigation Menu */}
-        <nav className="nav-menu">
-          <Link 
-            to="/" 
-            className={`nav-link ${isActive('/') ? 'active' : ''}`}
-          >
-            Home
-          </Link>
-          <Link 
-            to="/menu" 
-            className={`nav-link ${isActive('/menu') ? 'active' : ''}`}
-          >
-            Menu
-          </Link>
-          <a href="#deals" className="nav-link">
-            Deals
-          </a>
-          <a href="#rewards" className="nav-link">
-            Rewards
-          </a>
-        </nav>
+          {/* Navigation Menu */}
+          <nav className="nav-menu">
+            <Link 
+              to="/" 
+              className={`nav-link ${isActive('/') ? 'active' : ''}`}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/menu" 
+              className={`nav-link ${isActive('/menu') ? 'active' : ''}`}
+            >
+              Menu
+            </Link>
+            <a href="#discount" className="nav-link">
+              Discount
+            </a>
+            <a href="#about" className="nav-link">
+              About Us
+            </a>
+          </nav>
+        </div>
 
         {/* Search and Icons */}
         <div className="header-actions">
@@ -50,12 +53,6 @@ export function Header() {
               </svg>
             </button>
           </div>
-
-          <button className="icon-button favorites">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-          </button>
 
           <button className="icon-button cart">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">

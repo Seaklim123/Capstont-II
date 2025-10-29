@@ -23,12 +23,20 @@
   min-height: 60px;
 }
 
+/* Left Section - Logo and Navigation grouped together */
+.left-section {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex: 1;
+}
+
 /* Logo */
 .logo {
   text-decoration: none;
   color: inherit;
   flex-shrink: 0;
-  min-width: 200px;
+  min-width: auto;
 }
 
 .logo-text {
@@ -43,10 +51,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
-  flex: 1;
-  justify-content: center;
-  margin: 0 60px;
-  max-width: 800px;
+  margin: 0;
 }
 
 .nav-link {
@@ -79,31 +84,35 @@
   display: flex;
   align-items: center;
   background: #f8f9fa;
-  border-radius: 24px;
-  padding: 10px 20px;
+  border-radius: 20px;
+  padding: 8px 16px;
   border: 1px solid #e9ecef;
   transition: all 0.2s ease;
-  min-width: 250px;
+  min-width: 220px;
+  max-width: 280px;
 }
 
 .search-container:focus-within {
-  border-color: #ff6b35;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+  border-color: #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: white;
 }
 
 .search-input {
   border: none;
   background: transparent;
   outline: none;
-  padding: 6px 12px;
-  font-size: 15px;
+  padding: 8px 12px;
+  font-size: 14px;
   color: #333;
-  width: 220px;
+  width: 100%;
   flex: 1;
+  font-weight: 400;
 }
 
 .search-input::placeholder {
   color: #999;
+  font-size: 14px;
 }
 
 .search-btn {

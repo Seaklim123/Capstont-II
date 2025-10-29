@@ -1,5 +1,6 @@
 ﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Footer } from "../components/footer-component";
 import "../styles/Home.css";
 
 const Home = () => {
@@ -263,6 +264,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
