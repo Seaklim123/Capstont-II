@@ -17,8 +17,6 @@ export function Footer() {
             <ul className="footer-nav">
               <li><Link to="/" className="footer-link">Home</Link></li>
               <li><Link to="/menu" className="footer-link">Menu</Link></li>
-              <li><a href="#discount" className="footer-link">Discount</a></li>
-              <li><a href="#about" className="footer-link">About Us</a></li>
               <li><a href="#contact" className="footer-link">Contact</a></li>
             </ul>
           </div>

@@ -29,12 +29,18 @@ export function Header() {
             >
               Menu
             </Link>
-            <a href="#discount" className="nav-link">
+            <Link 
+              to="/discount" 
+              className={`nav-link ${isActive('/discount') ? 'active' : ''}`}
+            >
               Discount
-            </a>
-            <a href="#about" className="nav-link">
+            </Link>
+            <Link 
+              to="/about" 
+              className={`nav-link ${isActive('/about') ? 'active' : ''}`}
+            >
               About Us
-            </a>
+            </Link>
           </nav>
         </div>
 

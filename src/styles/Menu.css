@@ -176,9 +176,6 @@
     font-size: 1.8rem;
   }
 }
-  border: 2px solid #e9ecef;
-  transition: all 0.3s ease;
-}
 
 .top-category-item:hover .top-category-icon {
   background: #fff5f2;

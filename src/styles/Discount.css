@@ -1,0 +1,62 @@
+/* Discount Page Styles */
+.discount-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.discount-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+
+.discount-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.discount-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.discount-subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.discount-offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.offer-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.offer-card:hover {
+  transform: translateY(-5px);
+}
+
+.offer-card h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ff6b35;
+  margin-bottom: 15px;
+}
+
+.offer-card p {
+  font-size: 1.1rem;
+  color: #666;
+}

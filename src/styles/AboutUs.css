@@ -1,0 +1,77 @@
+/* About Us Page Styles */
+.about-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 20px;
+}
+
+.about-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.about-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.about-subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.about-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.about-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.about-section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.about-section p {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.about-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.about-section li {
+  font-size: 1rem;
+  color: #666;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.about-section li:before {
+  content: "✓ ";
+  color: #28a745;
+  font-weight: bold;
+  margin-right: 10px;
+}
