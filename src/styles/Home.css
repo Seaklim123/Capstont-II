@@ -165,3 +165,127 @@ body {
     min-height: 70vh;
   }
 }
+
+/* Best Menu Section */
+.best-menu-section {
+  padding: 80px 0;
+  background: #ffffff;
+}
+
+.best-menu-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.best-menu-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.best-menu-badge {
+  display: inline-block;
+  background: #000;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.best-menu-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.best-menu-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.best-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.menu-item-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.menu-item-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #e5e5e5;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  z-index: 2;
+}
+
+.menu-item-image {
+  height: 200px;
+  background: #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.menu-item-info {
+  padding: 1.5rem;
+}
+
+.menu-item-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.menu-item-description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Best Menu Responsive */
+@media (max-width: 768px) {
+  .best-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .best-menu-title {
+    font-size: 2rem;
+  }
+  
+  .best-menu-container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .best-menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

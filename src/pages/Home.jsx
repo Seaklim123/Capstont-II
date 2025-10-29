@@ -30,6 +30,63 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Best Menu Section */}
+      <section className="best-menu-section">
+        <div className="best-menu-container">
+          <div className="best-menu-header">
+            <span className="best-menu-badge">Best Menu</span>
+            <h2 className="best-menu-title">Our Menu</h2>
+            <p className="best-menu-subtitle">
+              Lorem ipsum dolor sit amet consectetur.
+            </p>
+          </div>
+          
+          <div className="best-menu-grid">
+            <div className="menu-item-card">
+              <div className="menu-item-badge">Best Seller</div>
+              <div className="menu-item-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="menu-item-info">
+                <h3 className="menu-item-name">Name</h3>
+                <p className="menu-item-description">
+                  Lorem ipsum dolor sit amet consectetur. 
+                  Libero risus feugiat ut pulvinar lorem.
+                </p>
+              </div>
+            </div>
+
+            <div className="menu-item-card">
+              <div className="menu-item-badge">Best Seller</div>
+              <div className="menu-item-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="menu-item-info">
+                <h3 className="menu-item-name">Name</h3>
+                <p className="menu-item-description">
+                  Lorem ipsum dolor sit amet consectetur. 
+                  Libero risus feugiat ut pulvinar lorem.
+                </p>
+              </div>
+            </div>
+
+            <div className="menu-item-card">
+              <div className="menu-item-badge">Best Seller</div>
+              <div className="menu-item-image">
+                <span>Menu Image</span>
+              </div>
+              <div className="menu-item-info">
+                <h3 className="menu-item-name">Name</h3>
+                <p className="menu-item-description">
+                  Lorem ipsum dolor sit amet consectetur. 
+                  Libero risus feugiat ut pulvinar lorem.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
