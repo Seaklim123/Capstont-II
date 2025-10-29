@@ -5,6 +5,7 @@ import "../styles/Home.css";
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDiscountPage, setCurrentDiscountPage] = useState(0);
+  const [currentNewFoodPage, setCurrentNewFoodPage] = useState(0);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -35,8 +36,33 @@ const Home = () => {
     { id: 16, name: "Tuna Tartare", price: 4.50, originalPrice: 7.80, discount: 3.30, badge: "50+ Sold" }
   ];
 
+  // Sample new food items data  
+  const newFoodItems = [
+    // Page 1 (items 0-3)
+    { id: 1, name: "Fresh Salad Bowl", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 2, name: "Avocado Toast", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    { id: 3, name: "Smoothie Bowl", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 4, name: "Quinoa Salad", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    // Page 2 (items 4-7)
+    { id: 5, name: "Acai Bowl", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 6, name: "Protein Shake", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    { id: 7, name: "Chia Pudding", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 8, name: "Green Juice", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    // Page 3 (items 8-11)
+    { id: 9, name: "Poke Bowl", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 10, name: "Buddha Bowl", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    { id: 11, name: "Energy Bites", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 12, name: "Keto Wrap", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    // Page 4 (items 12-15)
+    { id: 13, name: "Raw Cake", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 14, name: "Coconut Water", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" },
+    { id: 15, name: "Matcha Latte", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "New" },
+    { id: 16, name: "Kombucha", price: 2.10, originalPrice: 4.00, discount: 1.90, badge: "50+ Sold" }
+  ];
+
   const itemsPerPage = 4;
   const totalPages = Math.ceil(discountItems.length / itemsPerPage);
+  const totalNewFoodPages = Math.ceil(newFoodItems.length / itemsPerPage);
   
   const getCurrentPageItems = () => {
     const startIndex = currentDiscountPage * itemsPerPage;
@@ -44,8 +70,18 @@ const Home = () => {
     return discountItems.slice(startIndex, endIndex);
   };
 
+  const getCurrentNewFoodItems = () => {
+    const startIndex = currentNewFoodPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return newFoodItems.slice(startIndex, endIndex);
+  };
+
   const handleDotClick = (pageIndex) => {
     setCurrentDiscountPage(pageIndex);
+  };
+
+  const handleNewFoodDotClick = (pageIndex) => {
+    setCurrentNewFoodPage(pageIndex);
   };
 
   return (
@@ -170,6 +206,57 @@ const Home = () => {
                   key={index}
                   className={`dot ${currentDiscountPage === index ? 'active' : ''}`}
                   onClick={() => handleDotClick(index)}
+                ></span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* New Food Section */}
+      <section className="new-food-section">
+        <div className="new-food-container">
+          <div className="new-food-header">
+            <span className="new-food-badge">New Food</span>
+            <h2 className="new-food-title">Our New Food</h2>
+            <p className="new-food-subtitle">
+              Lorem ipsum dolor sit amet consectetur.
+            </p>
+          </div>
+          
+          <div className="new-food-filter-tabs">
+            <button className="filter-tab active">All</button>
+          </div>
+          
+          <div className="new-food-grid">
+            {getCurrentNewFoodItems().map((item) => (
+              <div key={item.id} className="new-food-item-card">
+                <div className="new-food-item-badge">{item.badge}</div>
+                <div className="new-food-item-image">
+                  <span>Menu Image</span>
+                </div>
+                <div className="new-food-item-info">
+                  <h3 className="new-food-item-name">{item.name}</h3>
+                  <div className="new-food-bottom-section">
+                    <div className="new-food-price-info">
+                      <span className="new-food-price">${item.price.toFixed(2)}</span>
+                      <span className="original-price">${item.originalPrice.toFixed(2)}</span>
+                      <span className="new-food-discount-badge">${item.discount.toFixed(2)} OFF</span>
+                    </div>
+                    <button className="add-to-cart-btn">Add to Cart</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="new-food-pagination">
+            <div className="pagination-dots">
+              {Array.from({ length: totalNewFoodPages }, (_, index) => (
+                <span 
+                  key={index}
+                  className={`dot ${currentNewFoodPage === index ? 'active' : ''}`}
+                  onClick={() => handleNewFoodDotClick(index)}
                 ></span>
               ))}
             </div>
