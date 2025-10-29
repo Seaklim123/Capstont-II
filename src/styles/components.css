@@ -1,5 +1,20 @@
 /* ===== ADMIN DASHBOARD SPECIFIC STYLES ===== */
 
+/* === FORM LAYOUT === */
+.form-row {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
 /* === LAYOUT === */
 .admin-layout {
   display: flex;

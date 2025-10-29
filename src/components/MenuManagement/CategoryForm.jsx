@@ -15,7 +15,7 @@ const CategoryForm = ({
 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
-  const [imageMode, setImageMode] = useState('url');
+  const [imageMode, setImageMode] = useState('file'); // Always use file mode
   const [errors, setErrors] = useState({});
 
   // Initialize form when editing or reset when adding
@@ -25,9 +25,9 @@ const CategoryForm = ({
         label: editingCategory.label || editingCategory.name || '',
         image: editingCategory.image || ''
       });
-      setImagePreview(editingCategory.image || '');
+      setImagePreview(''); // Don't show existing images in edit mode
       setImageFile(null);
-      setImageMode(editingCategory.image && editingCategory.image.startsWith('http') ? 'url' : 'file');
+      setImageMode('file'); // Always use file mode
     } else {
       setFormData({
         label: '',
@@ -35,7 +35,7 @@ const CategoryForm = ({
       });
       setImagePreview('');
       setImageFile(null);
-      setImageMode('url');
+      setImageMode('file'); // Always use file mode
     }
     setErrors({});
   }, [editingCategory, isOpen]);
@@ -128,46 +128,7 @@ const CategoryForm = ({
     }
   };
 
-  const handleImageUrlChange = (e) => {
-    const url = e.target.value.trim();
-    setFormData(prev => ({
-      ...prev,
-      image: url
-    }));
-    
-    if (!url) {
-      setImagePreview('');
-      setImageFile(null);
-      return;
-    }
-    
-    const isValidImageUrl = url.startsWith('http') && 
-      (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url) || 
-       url.includes('unsplash.com') || 
-       url.includes('imgur.com') ||
-       url.includes('cloudinary.com'));
-    
-    if (isValidImageUrl) {
-      setImagePreview(url);
-    } else {
-      setImagePreview('');
-    }
-    
-    setImageFile(null);
-  };
 
-  const handleImageModeChange = (mode) => {
-    setImageMode(mode);
-    setImageFile(null);
-    setImagePreview('');
-    setFormData(prev => ({
-      ...prev,
-      image: ''
-    }));
-    
-    const fileInput = document.getElementById('category-image-upload');
-    if (fileInput) fileInput.value = '';
-  };
 
   const removeImage = () => {
     setImageFile(null);
@@ -189,12 +150,11 @@ const CategoryForm = ({
     }
 
     const categoryData = {
-      ...formData,
-      label: formData.label.trim(),
-      imageMode: imageMode
+      name: formData.label.trim(), // Use 'name' field for backend compatibility
+      imageMode: 'file' // Always file mode
     };
 
-    onSave(categoryData, imageMode === 'file' ? imageFile : null);
+    onSave(categoryData, imageFile); // Always pass imageFile (can be null)
   };
 
   const handleClose = () => {
@@ -243,71 +203,32 @@ const CategoryForm = ({
 
 
             <div className="form-group">
-              <label className="form-label">Category Image</label>
+              <label className="form-label">Upload Category Image (Optional)</label>
               
-              {/* Image Mode Toggle */}
-              <div className="flex gap-2 mb-3">
-                <button
-                  type="button"
-                  className={`btn btn-sm ${imageMode === 'url' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleImageModeChange('url')}
-                >
-                  <Link size={16} />
-                  Image URL
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${imageMode === 'file' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleImageModeChange('file')}
-                >
-                  <FileImage size={16} />
-                  Upload File
-                </button>
-              </div>
-
-              {/* URL Input Mode */}
-              {imageMode === 'url' && (
-                <div className="mb-3">
+              {/* File Upload Area */}
+              {!imagePreview ? (
+                <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
+                  <ImageIcon size={32} className="mx-auto mb-3 text-gray" />
+                  <label htmlFor="category-image-upload" className="btn btn-primary btn-sm cursor-pointer">
+                    <Upload size={16} />
+                    Choose Category Image
+                  </label>
                   <input
-                    type="url"
-                    placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                    value={formData.image}
-                    onChange={handleImageUrlChange}
-                    className="form-input"
+                    type="file"
+                    id="category-image-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
                   />
-                  <small className="text-gray text-sm">Paste a direct link to an image (JPG, PNG, WebP)</small>
+                  <p className="text-gray text-sm mt-3">
+                    Upload JPG, PNG, or WebP (Max 5MB)<br/>
+                    Recommended size: 300x200px for categories
+                  </p>
                 </div>
-              )}
-
-              {/* File Upload Mode */}
-              {imageMode === 'file' && (
+              ) : (
+                // Image Preview
                 <div className="mb-3">
-                  {!imagePreview ? (
-                    <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
-                      <ImageIcon size={24} className="mx-auto mb-2 text-gray" />
-                      <label htmlFor="category-image-upload" className="btn btn-secondary btn-sm cursor-pointer">
-                        <Upload size={16} />
-                        Choose Image File
-                      </label>
-                      <input
-                        type="file"
-                        id="category-image-upload"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        style={{ display: 'none' }}
-                      />
-                      <p className="text-gray text-sm mt-2">
-                        Recommended: 300x200px, JPG or PNG (Max 5MB)
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Image Preview */}
-              {imagePreview && (
-                <div className="mb-3">
-                  <div className="border rounded overflow-hidden bg-gray-light" style={{ maxWidth: '200px' }}>
+                  <div className="border rounded overflow-hidden bg-gray-light" style={{ maxWidth: '250px' }}>
                     <img 
                       src={imagePreview} 
                       alt="Category Preview" 
@@ -324,33 +245,29 @@ const CategoryForm = ({
                     <div style={{display: 'none'}} className="p-4 text-center text-gray">
                       <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Unable to load image</p>
-                      <small>Please check the URL or try a different image</small>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-3">
+                    <label htmlFor="category-image-change" className="btn btn-secondary btn-sm cursor-pointer">
+                      <Upload size={14} />
+                      Change Image
+                    </label>
                     <button
                       type="button"
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-danger btn-sm"
                       onClick={removeImage}
-                      title="Remove image"
                     >
                       <X size={14} />
                       Remove
                     </button>
-                    {imageMode === 'file' && (
-                      <label htmlFor="category-image-change" className="btn btn-secondary btn-sm cursor-pointer">
-                        <Upload size={14} />
-                        Change File
-                      </label>
-                    )}
-                    <input
-                      type="file"
-                      id="category-image-change"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                    />
                   </div>
+                  <input
+                    type="file"
+                    id="category-image-change"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
                 </div>
               )}
             </div>
