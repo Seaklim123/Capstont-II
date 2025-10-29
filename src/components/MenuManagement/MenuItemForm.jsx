@@ -36,19 +36,21 @@ const MenuItemForm = ({
         category: editingItem.category_id?.toString() || editingItem.category?.toString() || (categories[0]?.value || ''),
         price: editingItem.price || '',
         description: editingItem.description || '',
-        image: editingItem.image || '',
+        image: editingItem.image_url || editingItem.image || '',
         available: editingItem.status === 'available',
         discount: discountPercent,
         status: editingItem.status || 'available'
       });
-      setImagePreview(''); // Don't show existing images in edit mode
+      // Show existing image when editing (if it exists)
+      setImagePreview(editingItem.image_url || editingItem.image || '');
       setImageFile(null);
       setImageMode('file'); // Always use file mode
       
       console.log('Editing item initialized:', {
         item: editingItem,
-        imageMode: isUrl ? 'url' : 'file',
-        hasImage: !!editingItem.image
+        imageMode: 'file', // Always file mode now
+        hasImage: !!(editingItem.image_url || editingItem.image),
+        imageUrl: editingItem.image_url || editingItem.image
       });
     } else {
       setFormData({
