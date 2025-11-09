@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -11,7 +11,7 @@ import {
 import Header from './Header';
 import Footer from './Footer';
 
-const AdminLayout = ({ children }) => {
+const AdminLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -119,7 +119,7 @@ const AdminLayout = ({ children }) => {
 
         {/* Page Content */}
         <main className="page-content">
-          {children}
+          <Outlet />
         </main>
 
         {/* Footer */}

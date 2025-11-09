@@ -1,6 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from "./contexts/AuthContext";
 import AdminLayout from "./components/AdminLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import OrdersManagement from "./pages/OrdersManagement";
 import MenuManagement from "./pages/MenuManagement";
@@ -8,23 +11,55 @@ import TableManagement from "./pages/TableManagement";
 import UsersStaff from "./pages/UsersStaff";
 import Reports from "./pages/Reports";
 import "./styles/globals.css";
+import "./styles/login.css";
 import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="admin-layout">
-        <AdminLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/orders" element={<OrdersManagement />} />
-            <Route path="/menu" element={<MenuManagement />} />
-            <Route path="/tables" element={<TableManagement />} />
-            <Route path="/users" element={<UsersStaff />} />
-            <Route path="/reports" element={<Reports />} />
-          </Routes>
-        </AdminLayout>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Login Route */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Protected Admin Routes */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="orders" element={
+              <ProtectedRoute requiredPermission="manage_orders">
+                <OrdersManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="menu" element={
+              <ProtectedRoute>
+                <MenuManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="tables" element={
+              <ProtectedRoute>
+                <TableManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="users" element={
+              <ProtectedRoute requiredRole="founder_restaurant">
+                <UsersStaff />
+              </ProtectedRoute>
+            } />
+            <Route path="reports" element={
+              <ProtectedRoute requiredPermission="view_reports">
+                <Reports />
+              </ProtectedRoute>
+            } />
+          </Route>
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
         
         {/* Toast Notifications */}
         <Toaster
@@ -63,8 +98,8 @@ function App() {
             },
           }}
         />
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
