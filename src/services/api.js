@@ -1,7 +1,28 @@
 // API service for backend communication
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_ADMIN_PREFIX = '/v1/admin';
+const API_AUTH_PREFIX = '/v1/auth';
 
 class ApiService {
+    // Get user by ID
+    async getUserById(id, token) {
+      const response = await this.request(`/v1/admin/users/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      // Laravel returns { message, data }
+      return response.data || response;
+    }
+  // Auth API method
+  async login(credentials) {
+      const response = await this.request(`${API_AUTH_PREFIX}/login`, {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    return this.handleResponse(response);
+  }
   constructor() {
     this.baseURL = API_BASE_URL;
     this.storageURL = API_BASE_URL.replace('/api', '') + '/storage';
@@ -70,16 +91,21 @@ class ApiService {
   // Generic request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // Default headers for JSON requests
     const defaultHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    
-    const config = {
+
+    // Get token from localStorage
+    const token = localStorage.getItem('authToken');
+    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    let config = {
       headers: {
         ...defaultHeaders,
+        ...authHeaders,
         ...options.headers,
       },
       mode: 'cors',
@@ -88,31 +114,43 @@ class ApiService {
 
     // Remove Content-Type for FormData requests (let browser set it)
     if (options.body instanceof FormData) {
+      // Remove Content-Type, then explicitly set Authorization header
       delete config.headers['Content-Type'];
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
     }
 
     try {
+      // Debug: print request headers for every API call
+      console.log('API Request:', {
+        url,
+        method: config.method || 'GET',
+        headers: config.headers,
+      });
+
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error(`Cannot connect to server at ${this.baseURL}. Please check if the backend is running.`);
       }
-      
+
       throw error;
     }
   }
 
   // Categories API methods
   async getCategories() {
-    const response = await this.request('/categories');
+      const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
     const categories = this.handleResponse(response);
     
     // Transform categories to include properly formatted image URLs
@@ -124,7 +162,7 @@ class ApiService {
   }
 
   async createCategory(categoryData) {
-    const response = await this.request('/categories', {
+      const response = await this.request(`${API_ADMIN_PREFIX}/categories`, {
       method: 'POST',
       body: JSON.stringify(categoryData),
     });
@@ -132,7 +170,7 @@ class ApiService {
   }
 
   async updateCategory(id, categoryData) {
-    const response = await this.request(`/categories/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(categoryData),
     });
@@ -140,7 +178,7 @@ class ApiService {
   }
 
   async deleteCategory(id) {
-    return this.request(`/categories/${id}`, {
+      return this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
       method: 'DELETE',
     });
   }
@@ -161,7 +199,7 @@ class ApiService {
       formData.append('image_path', imageFile);
     }
     
-    const response = await this.request('/categories', {
+      const response = await this.request(`${API_ADMIN_PREFIX}/categories`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -195,7 +233,7 @@ class ApiService {
     // Use POST with _method override for file uploads (Laravel way)
     formData.append('_method', 'PUT');
     
-    const response = await this.request(`/categories/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -207,7 +245,7 @@ class ApiService {
 
   // Products API methods
   async getProducts() {
-    const response = await this.request('/products');
+      const response = await this.request(`${API_ADMIN_PREFIX}/products`);
     const products = this.handleResponse(response);
     
     // Transform products to include properly formatted image URLs
@@ -234,7 +272,7 @@ class ApiService {
 
   async createProduct(productData) {
     console.log('Creating product with JSON data:', productData);
-    const response = await this.request('/products', {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products`, {
       method: 'POST',
       body: JSON.stringify(productData),
     });
@@ -266,7 +304,7 @@ class ApiService {
       formDataEntries: [...formData.entries()].map(([key, value]) => [key, typeof value === 'object' ? `File: ${value.name}` : value])
     });
     
-    const response = await this.request('/products', {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products`, {
       method: 'POST',
       headers: {
         // Remove Content-Type to let browser set it with boundary for FormData
@@ -283,7 +321,7 @@ class ApiService {
   }
 
   async updateProduct(id, productData) {
-    const response = await this.request(`/products/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(productData),
     });
@@ -309,7 +347,7 @@ class ApiService {
     // Use POST with _method override for file uploads (Laravel way)
     formData.append('_method', 'PUT');
     
-    const response = await this.request(`/products/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -320,13 +358,13 @@ class ApiService {
   }
 
   async deleteProduct(id) {
-    return this.request(`/products/${id}`, {
+      return this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
       method: 'DELETE',
     });
   }
 
   async toggleProductStatus(id, status) {
-    const response = await this.request(`/products/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
@@ -335,13 +373,13 @@ class ApiService {
 
   // Tables API methods
   async getTables() {
-    const response = await this.request('/tables');
+      const response = await this.request(`${API_ADMIN_PREFIX}/tables`);
     return this.handleResponse(response);
   }
 
   async createTable(tableData) {
     console.log('Creating table with data:', tableData);
-    const response = await this.request('/tables', {
+      const response = await this.request(`${API_ADMIN_PREFIX}/tables`, {
       method: 'POST',
       body: JSON.stringify(tableData),
     });
@@ -351,7 +389,7 @@ class ApiService {
 
   async updateTable(id, tableData) {
     console.log('Updating table with data:', tableData);
-    const response = await this.request(`/tables/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
       method: 'PUT',
       body: JSON.stringify(tableData),
     });
@@ -360,14 +398,14 @@ class ApiService {
   }
 
   async deleteTable(id) {
-    return this.request(`/tables/${id}`, {
+      return this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
       method: 'DELETE',
     });
   }
 
   async updateTableStatus(id, status, currentNumber) {
     // Send both number and status to satisfy DTO requirements
-    const response = await this.request(`/tables/${id}`, {
+      const response = await this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ 
         number: currentNumber,

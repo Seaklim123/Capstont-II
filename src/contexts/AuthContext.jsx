@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -35,7 +34,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
-      // Clear invalid data
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       setUser(null);
@@ -47,62 +45,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      // Mock API call - replace with actual authentication
-      const mockUsers = [
-        {
-          id: 1,
-          username: 'admin',
-          password: 'admin123',
-          role: 'founder_restaurant',
-          status: 'active',
-          name: 'Administrator'
-        },
-        {
-          id: 2,
-          username: 'cashier',
-          password: 'cashier123',
-          role: 'cashier',
-          status: 'active',
-          name: 'Cashier'
-        }
-      ];
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const foundUser = mockUsers.find(
-        u => u.username === credentials.username && u.password === credentials.password
-      );
-
-      if (!foundUser) {
-        throw new Error('Invalid username or password');
+      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      const data = await response.json();
+      const { token, user: userData } = data;
+      if (!token || !userData) {
+        throw new Error('Invalid login response from server');
       }
-
-      if (foundUser.status !== 'active') {
-        throw new Error('Account is inactive. Please contact administrator.');
-      }
-
-      // Generate mock token
-      const token = `token_${foundUser.id}_${Date.now()}`;
-      
-      // Prepare user data (exclude password)
-      const userData = {
-        id: foundUser.id,
-        username: foundUser.username,
-        role: foundUser.role,
-        status: foundUser.status,
-        name: foundUser.name,
-        loginTime: new Date().toISOString()
-      };
-
-      // Store in localStorage
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(userData));
-
-      // Update state
       setUser(userData);
       setIsAuthenticated(true);
-
       return userData;
     } catch (error) {
       console.error('Login error:', error);
@@ -111,11 +67,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    // Clear storage
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    
-    // Clear state
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -132,8 +85,6 @@ export const AuthProvider = ({ children }) => {
 
   const hasRole = (requiredRole) => {
     if (!user) return false;
-    
-    // Role hierarchy: founder_restaurant > cashier
     const roleHierarchy = {
       'founder_restaurant': 2,
       'cashier': 1
@@ -148,7 +99,6 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (permission) => {
     if (!user) return false;
 
-    // Define permissions for each role
     const permissions = {
       'founder_restaurant': [
         'view_dashboard',
