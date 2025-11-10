@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
 import { Footer } from "../components/footer-component.jsx";
 import { categoryApi } from "../services/api.js";
 
 function Menu() {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [categories, setCategories] = useState([]);
@@ -101,6 +103,11 @@ function Menu() {
       return `http://127.0.0.1:8000/storage/${imagePath}`;
     }
     return null;
+  };
+
+  // Handle add to cart click
+  const handleAddToCart = (itemId) => {
+    navigate(`/product/${itemId}`);
   };
 
   // Popular items data
@@ -442,7 +449,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -463,7 +470,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -484,7 +491,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -505,7 +512,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -534,7 +541,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -555,7 +562,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -576,7 +583,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -597,7 +604,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -628,7 +635,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -649,7 +656,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -670,7 +677,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -691,7 +698,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -712,7 +719,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -733,7 +740,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -754,7 +761,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -775,7 +782,7 @@ function Menu() {
                     <span className="original-price">$4.00</span>
                     <span className="discount-badge">$1.90 OFF</span>
                   </div>
-                  <button className="add-to-cart-btn">Add to Cart</button>
+                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
               </div>
             </div>

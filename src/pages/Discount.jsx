@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/footer-component';
 import '../styles/Discount.css';
 
 const Discount = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
 
   // Categories for filtering
@@ -108,7 +110,7 @@ const Discount = () => {
                       <span className="original-price">{dish.originalPrice}</span>
                       <span className="discount-badge">{dish.discount} OFF</span>
                     </div>
-                    <button className="add-to-cart-btn">Add to Cart</button>
+                    <button className="add-to-cart-btn" onClick={() => navigate(`/product/${dish.id}`)}>Add to Cart</button>
                   </div>
                 </div>
               </div>

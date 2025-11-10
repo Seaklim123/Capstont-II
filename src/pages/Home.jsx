@@ -1,9 +1,10 @@
 ﻿import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Footer } from "../components/footer-component";
 import "../styles/Home.css";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDiscountPage, setCurrentDiscountPage] = useState(0);
   const [currentNewFoodPage, setCurrentNewFoodPage] = useState(0);
@@ -75,6 +76,10 @@ const Home = () => {
     const startIndex = currentNewFoodPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return newFoodItems.slice(startIndex, endIndex);
+  };
+
+  const handleAddToCart = (itemId) => {
+    navigate(`/product/${itemId}`);
   };
 
   const handleDotClick = (pageIndex) => {
@@ -193,7 +198,7 @@ const Home = () => {
                       <span className="original-price">${item.originalPrice.toFixed(2)}</span>
                       <span className="discount-badge">${item.discount.toFixed(2)} OFF</span>
                     </div>
-                    <button className="add-to-cart-btn">Add to Cart</button>
+                    <button className="add-to-cart-btn" onClick={() => handleAddToCart(item.id)}>Add to Cart</button>
                   </div>
                 </div>
               </div>
@@ -244,7 +249,7 @@ const Home = () => {
                       <span className="original-price">${item.originalPrice.toFixed(2)}</span>
                       <span className="new-food-discount-badge">${item.discount.toFixed(2)} OFF</span>
                     </div>
-                    <button className="add-to-cart-btn">Add to Cart</button>
+                    <button className="add-to-cart-btn" onClick={() => handleAddToCart(item.id)}>Add to Cart</button>
                   </div>
                 </div>
               </div>
