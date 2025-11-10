@@ -140,6 +140,24 @@
   font-weight: 500;
 }
 
+.loading-text {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 1rem;
+}
+
+.no-products {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.no-products p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
 /* All Dishes Section */
 .all-dishes-section {
   padding: 60px 0 80px;
@@ -236,6 +254,25 @@
   justify-content: center;
   color: #999;
   font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dish-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dish-image span {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e5e5;
 }
 
 .dish-info {

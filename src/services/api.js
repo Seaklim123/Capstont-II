@@ -133,8 +133,119 @@ export const categoryApi = {
 };
 
 // ===========================================
+// PRODUCT API
+// ===========================================
+export const productApi = {
+  // GET: Fetch all products
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products`);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+
+  // GET: Fetch single product by ID
+  getById: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error fetching product ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // POST: Create new product
+  create: async (productData) => {
+    try {
+      const isFormData = productData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData) {
+        requestData = new FormData();
+        requestData.append('name', productData.name);
+        requestData.append('price', productData.price);
+        requestData.append('discount', productData.discount || 0);
+        requestData.append('description', productData.description || '');
+        requestData.append('status', productData.status || 'available');
+        requestData.append('category_id', productData.category_id);
+        if (productData.image_path) {
+          requestData.append('image_path', productData.image_path);
+        }
+      } else {
+        requestData = productData;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/products`,
+        createRequestOptions('POST', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update existing product
+  update: async (id, productData) => {
+    try {
+      const isFormData = productData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData) {
+        requestData = new FormData();
+        if (productData.name) requestData.append('name', productData.name);
+        if (productData.price) requestData.append('price', productData.price);
+        if (productData.discount !== undefined) requestData.append('discount', productData.discount);
+        if (productData.description) requestData.append('description', productData.description);
+        if (productData.status) requestData.append('status', productData.status);
+        if (productData.category_id) requestData.append('category_id', productData.category_id);
+        if (productData.image_path) requestData.append('image_path', productData.image_path);
+        requestData.append('_method', 'PUT');
+      } else {
+        requestData = {};
+        if (productData.name) requestData.name = productData.name;
+        if (productData.price) requestData.price = productData.price;
+        if (productData.discount !== undefined) requestData.discount = productData.discount;
+        if (productData.description) requestData.description = productData.description;
+        if (productData.status) requestData.status = productData.status;
+        if (productData.category_id) requestData.category_id = productData.category_id;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/products/${id}`,
+        createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating product ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: Delete product by ID
+  delete: async (id) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/products/${id}`,
+        createRequestOptions('DELETE')
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error deleting product ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+// ===========================================
 // EXPORT DEFAULT API OBJECT
 // ===========================================
 export default {
   category: categoryApi,
+  product: productApi,
 };
