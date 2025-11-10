@@ -4,44 +4,90 @@ import '../styles/AboutUs.css';
 
 const AboutUs = () => {
   return (
-    <div className="about-page">
-      <div className="about-container">
-        <header className="about-header">
-          <h1 className="about-title">About Tos Kamong Food</h1>
-          <p className="about-subtitle">
-            Your favorite restaurant for delicious meals and great experiences
-          </p>
-        </header>
+    <div className="about-us-page">
+      {/* Hero Section */}
+      <section className="about-hero-section">
+        <div className="container">
+          <div className="about-hero-content">
+            <span className="profile-badge">Profile</span>
+            <h1 className="about-title">About Us</h1>
+            <p className="about-subtitle">
+              Lorem ipsum dolor sit amet consectetur.
+            </p>
+            <button className="order-now-btn">Order now</button>
+          </div>
+        </div>
+      </section>
 
-        <section className="about-content">
-          <div className="about-section">
-            <h3>Our Story</h3>
-            <p>
-              Tos Kamong Food has been serving delicious meals to our community for years. 
-              We pride ourselves on fresh ingredients, excellent service, and a warm atmosphere.
-            </p>
+      {/* Stats Section */}
+      <section className="stats-section">
+        <div className="container">
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-label">Meals Sold</div>
+              <div className="stat-value">100,000</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Local Farmers Partnered</div>
+              <div className="stat-value">50</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Sustainable Ingredients</div>
+              <div className="stat-value">90%</div>
+            </div>
           </div>
-          
-          <div className="about-section">
-            <h3>Our Mission</h3>
-            <p>
-              To provide exceptional dining experiences through quality food, 
-              outstanding service, and a welcoming environment for all our guests.
-            </p>
+        </div>
+      </section>
+
+      {/* Our Story Section */}
+      <section className="our-story-section">
+        <div className="container">
+          <div className="story-grid">
+            <div className="story-left">
+              <h2 className="story-title">Our Story</h2>
+              <p className="story-text">
+                Founded in 2021, our journey began with a passion for food and a love for community. We believe that great meals bring people together.
+              </p>
+              <button className="learn-more-btn">Learn More</button>
+            </div>
+            <div className="story-right">
+              <div className="story-card">
+                <h3 className="card-title">A Culinary Adventure</h3>
+                <p className="card-text">
+                  Our founder, Chef Jamie, has traveled the world to bring the best flavors to your table, crafting each dish with love and care.
+                </p>
+              </div>
+              <div className="story-card">
+                <h3 className="card-title">Community First</h3>
+                <p className="card-text">
+                  We source our ingredients from local farmers to support our community and ensure that every meal is fresh and sustainable.
+                </p>
+              </div>
+            </div>
           </div>
-          
-          <div className="about-section">
-            <h3>Why Choose Us</h3>
-            <ul>
-              <li>Fresh, high-quality ingredients</li>
-              <li>Fast and reliable service</li>
-              <li>Competitive prices</li>
-              <li>Wide variety of menu options</li>
-            </ul>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="team-section">
+        <div className="container">
+          <div className="team-member">
+            <div className="member-avatar">
+              <div className="avatar-placeholder"></div>
+            </div>
+            <div className="member-info">
+              <h3 className="member-name">Name</h3>
+              <p className="member-role">Founder - Culinary Expert</p>
+              <p className="member-description">
+                With over a decade of experience, Chef Jamie ensures every meal is a new experience in flavor.
+              </p>
+              <button className="contact-btn">Contact of Person</button>
+            </div>
           </div>
-        </section>
-      </div>
-      
+        </div>
+      </section>
+
+      {/* Footer */}
       <Footer />
     </div>
   );

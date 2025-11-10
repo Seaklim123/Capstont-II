@@ -1,22 +1,107 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/Menu.css";
 import { Footer } from "../components/footer-component.jsx";
+import { categoryApi } from "../services/api.js";
 
 function Menu() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const itemsPerPage = 5; // Show 5 items per page
 
-  // Top categories data - updated to match design
-  const topCategories = [
-    { id: 1, name: "Grocery", icon: "🛒" },
-    { id: 2, name: "Grocery", icon: "🛒" },
-    { id: 3, name: "Grocery", icon: "�" },
-    { id: 4, name: "Grocery", icon: "🛒" },
-    { id: 5, name: "Grocery", icon: "�" },
-    { id: 6, name: "Grocery", icon: "🛒" },
-    { id: 7, name: "Grocery", icon: "🛒" }
-  ];
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching categories from:', import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api');
+        const response = await categoryApi.getAll();
+        console.log('Categories response:', response);
+        // Log image paths for debugging
+        if (response.data) {
+          response.data.forEach(cat => {
+            console.log(`Category "${cat.name}" image_path:`, cat.image_path);
+          });
+        }
+        setCategories(response.data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError(`Backend not running. Please start your Laravel server: php artisan serve`);
+        // Use fallback categories when backend is not available (without images)
+        setCategories([
+          { id: 1, name: "Food", image_path: null },
+          { id: 2, name: "Beverages", image_path: null },
+          { id: 3, name: "Desserts", image_path: null },
+          { id: 4, name: "Snacks", image_path: null }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Default icon for categories without images
+  const getDefaultIcon = (categoryName) => {
+    const iconMap = {
+      'food': '🍽️',
+      'beverage': '🥤',
+      'dessert': '🍰',
+      'snack': '🍿',
+      'meat': '🥩',
+      'vegetable': '🥬',
+      'fruit': '🍎',
+      'seafood': '�',
+      'dairy': '🥛',
+      'bakery': '🥖'
+    };
+    
+    const lowerCaseName = categoryName.toLowerCase();
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (lowerCaseName.includes(key)) {
+        return icon;
+      }
+    }
+    return '🛒'; // Default grocery icon
+  };
+
+  // Helper function to get category image URL
+  const getCategoryImageUrl = (category) => {
+    if (category.image_path && category.image_path !== null && category.image_path !== '') {
+      console.log(`Processing image for ${category.name}:`, category.image_path);
+      
+      // If it's a full URL, use it as is
+      if (category.image_path.startsWith('http')) {
+        return category.image_path;
+      }
+      
+      // Handle different Laravel storage path formats
+      let imagePath = category.image_path;
+      
+      // Remove leading slash if present
+      if (imagePath.startsWith('/')) {
+        imagePath = imagePath.substring(1);
+      }
+      
+      // If it starts with 'storage/', construct URL
+      if (imagePath.startsWith('storage/')) {
+        return `http://127.0.0.1:8000/${imagePath}`;
+      }
+      
+      // If it's just a filename, assume it's in storage/app/public/categories
+      if (!imagePath.includes('/')) {
+        return `http://127.0.0.1:8000/storage/categories/${imagePath}`;
+      }
+      
+      // Default: add storage prefix
+      return `http://127.0.0.1:8000/storage/${imagePath}`;
+    }
+    return null;
+  };
 
   // Popular items data
   const popularItems = [
@@ -240,23 +325,99 @@ function Menu() {
       {/* Categories Section */}
       <section className="menu-categories-section">
         <div className="container">
-          <div className="menu-categories-grid">
-            {topCategories.map(category => (
-              <div key={category.id} className="menu-category-item">
-                <div className="menu-category-circle">
-                  <span className="category-emoji">{category.icon}</span>
-                </div>
-                <span className="menu-category-label">{category.name}</span>
-              </div>
-            ))}
-            {/* Filter button */}
-            <div className="menu-category-item">
-              <div className="menu-category-circle filter-circle">
-                <span className="filter-icon">☰</span>
-              </div>
-              <span className="menu-category-label">Filter</span>
+          {loading && (
+            <div className="categories-loading">
+              <p>Loading categories...</p>
             </div>
-          </div>
+          )}
+          
+          {error && (
+            <div className="categories-error">
+              <p>⚠️ {error}</p>
+              <p style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
+                Using fallback categories for now. Categories will work when backend is connected.
+              </p>
+            </div>
+          )}
+          
+          {!loading && !error && (
+            <div className="menu-categories-grid">
+              {/* All Categories Option */}
+              <div 
+                className={`menu-category-item ${activeCategory === 'All' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('All')}
+              >
+                <div className="menu-category-circle">
+                  <span className="category-emoji">🍽️</span>
+                </div>
+                <span className="menu-category-label">All</span>
+              </div>
+              
+              {/* Dynamic Categories from API */}
+              {categories.slice(0, 6).map(category => {
+                const imageUrl = getCategoryImageUrl(category);
+                console.log(`=== Category: ${category.name} ===`);
+                console.log('Raw image_path:', category.image_path);
+                console.log('Processed URL:', imageUrl);
+                console.log('Has image_path:', !!category.image_path);
+                console.log('========================');
+                
+                return (
+                  <div 
+                    key={category.id} 
+                    className={`menu-category-item ${activeCategory === category.name ? 'active' : ''}`}
+                    onClick={() => setActiveCategory(category.name)}
+                  >
+                    <div className="menu-category-circle">
+                      {imageUrl ? (
+                        <>
+                          <img 
+                            src={imageUrl} 
+                            alt={category.name}
+                            className="category-image"
+                            onLoad={() => console.log(`✅ SUCCESS: Image loaded for ${category.name}`)}
+                            onError={(e) => {
+                              console.log(`❌ FAILED: Image failed for ${category.name}`);
+                              console.log('Failed URL:', imageUrl);
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                          <span 
+                            className="category-emoji"
+                            style={{ display: 'none' }}
+                          >
+                            {getDefaultIcon(category.name)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="category-emoji">
+                          {console.log(`🔄 Using emoji for ${category.name} (no image_path)`)}
+                          {getDefaultIcon(category.name)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="menu-category-label">{category.name}</span>
+                  </div>
+                );
+              })}
+              
+              {/* Filter button */}
+              <div className="menu-category-item">
+                <div className="menu-category-circle filter-circle">
+                  <span className="filter-icon">☰</span>
+                </div>
+                <span className="menu-category-label">Filter</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Show message if no categories */}
+          {!loading && !error && categories.length === 0 && (
+            <div className="no-categories">
+              <p>No categories available. <a href="/categories">Add some categories</a> to get started.</p>
+            </div>
+          )}
         </div>
       </section>
 

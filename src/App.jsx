@@ -2,8 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import InputPage from "./pages/InputPage";
-// import AboutUs from "./pages/AboutUs";
-// import Discount from "./pages/Discount";
+import CategoryManagement from "./pages/CategoryManagement";
+import AboutUs from "./pages/AboutUs";
+import Discount from "./pages/Discount";
 // import Order from "./pages/Order";
 import { Header } from "./components/header";
 import "./styles/App.css";
@@ -18,8 +19,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/input" element={<InputPage />} />
-            <Route path="/discount" element={<div></div>} />
-            <Route path="/about" element={<div></div>} />
+            <Route path="/categories" element={<CategoryManagement />} />
+            <Route path="/discount" element={<Discount />} />
+            <Route path="/about" element={<AboutUs />} />
           </Routes>
         </main>
       </div>

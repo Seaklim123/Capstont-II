@@ -1,77 +1,285 @@
 /* About Us Page Styles */
-.about-page {
+
+.about-us-page {
   min-height: 100vh;
   background: #ffffff;
 }
 
-.about-container {
-  max-width: 1200px;
+.container {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 20px;
+  padding: 0 80px;
 }
 
-.about-header {
+/* Hero Section */
+.about-hero-section {
+  padding: 80px 0 60px;
   text-align: center;
-  margin-bottom: 60px;
+  background: #ffffff;
 }
 
-.about-title {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.about-subtitle {
-  font-size: 1.2rem;
-  color: #666;
+.about-hero-content {
   max-width: 600px;
   margin: 0 auto;
 }
 
-.about-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 40px;
-  margin-top: 40px;
+.profile-badge {
+  display: inline-block;
+  background: #000;
+  color: white;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
 }
 
-.about-section {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.about-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 12px;
+  line-height: 1.2;
 }
 
-.about-section h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.about-section p {
+.about-subtitle {
   font-size: 1rem;
   color: #666;
   line-height: 1.6;
-  margin-bottom: 15px;
+  margin-bottom: 24px;
 }
 
-.about-section ul {
-  list-style-type: none;
-  padding: 0;
+.order-now-btn {
+  background: #000;
+  color: white;
+  padding: 12px 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.about-section li {
+.order-now-btn:hover {
+  background: #333;
+}
+
+/* Stats Section */
+.stats-section {
+  padding: 40px 0;
+  background: #f8f8f8;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 30px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000;
+}
+
+/* Our Story Section */
+.our-story-section {
+  padding: 80px 0;
+  background: #ffffff;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.story-left {
+  padding-right: 20px;
+}
+
+.story-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 20px;
+}
+
+.story-text {
   font-size: 1rem;
   color: #666;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  line-height: 1.8;
+  margin-bottom: 30px;
 }
 
-.about-section li:before {
-  content: "✓ ";
-  color: #28a745;
-  font-weight: bold;
-  margin-right: 10px;
+.learn-more-btn {
+  background: #000;
+  color: white;
+  padding: 12px 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.learn-more-btn:hover {
+  background: #333;
+}
+
+.story-right {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.story-card {
+  background: #f8f8f8;
+  padding: 30px;
+  border-radius: 8px;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 12px;
+}
+
+.card-text {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.7;
+}
+
+/* Team Section */
+.team-section {
+  padding: 60px 0 80px;
+  background: #ffffff;
+}
+
+.team-member {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  align-items: center;
+  max-width: 900px;
+}
+
+.member-avatar {
+  width: 120px;
+  height: 120px;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #e0e0e0;
+  border-radius: 50%;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.member-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.member-role {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.member-description {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.contact-btn {
+  background: #000;
+  color: white;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  width: fit-content;
+}
+
+.contact-btn:hover {
+  background: #333;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 40px;
+  }
+  
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
+  
+  .about-title {
+    font-size: 2rem;
+  }
+  
+  .story-title {
+    font-size: 1.5rem;
+  }
+  
+  .team-member {
+    grid-template-columns: 1fr;
+    text-align: center;
+    justify-items: center;
+  }
+  
+  .member-info {
+    align-items: center;
+  }
+  
+  .contact-btn {
+    width: 100%;
+  }
 }

@@ -1,4 +1,377 @@
 /* Discount Page Styles */
+
+.discount-page {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 0;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 80px;
+}
+
+/* Header Section */
+.discount-header-section {
+  padding: 60px 0 50px;
+  text-align: center;
+}
+
+.discount-header {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.discount-badge {
+  display: inline-block;
+  background: #000;
+  color: white;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.discount-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.discount-subtitle {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Categories Section */
+.discount-categories-section {
+  padding: 40px 0 50px;
+  background: #f5f5f5;
+}
+
+.discount-categories-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.discount-category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.discount-category-item:hover {
+  transform: translateY(-3px);
+}
+
+.discount-category-item.active .discount-category-circle {
+  background: #333;
+  border-color: #333;
+}
+
+.discount-category-circle {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  background: #c4c4c4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.discount-category-circle:hover {
+  background: #b0b0b0;
+}
+
+.filter-circle {
+  background: #e8e8e8;
+}
+
+.category-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.filter-icon {
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.discount-category-label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.filter-circle {
+  background: #f8f9fa;
+  border-color: #ddd;
+}
+
+.category-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.filter-icon {
+  font-size: 1.5rem;
+  color: #666;
+}
+
+.discount-category-label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* All Dishes Section */
+.all-dishes-section {
+  padding: 60px 0 80px;
+  background: #ffffff;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.filter-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: #e8e8e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  background: #d0d0d0;
+}
+
+.all-dishes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+.dish-item {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.dish-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dish-badges {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 1;
+}
+
+.badge {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  background: #e0e0e0;
+}
+
+.best-seller {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.sold-badge {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.dish-image {
+  width: 100%;
+  height: 200px;
+  background: #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.dish-info {
+  padding: 18px;
+}
+
+.dish-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 12px;
+}
+
+.dish-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dish-price-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dish-price {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.original-price {
+  font-size: 0.9rem;
+  color: #aaa;
+  text-decoration: line-through;
+}
+
+.discount-badge {
+  background: transparent;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #d0d0d0;
+}
+
+.add-to-cart-btn {
+  width: 100%;
+  padding: 10px;
+  background: white;
+  color: #000;
+  border: 1.5px solid #ccc;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-to-cart-btn:hover {
+  background: #f8f8f8;
+  border-color: #999;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.pagination-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d9d9d9;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dot.active {
+  background: #000;
+}
+
+.dot:hover {
+  background: #999;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .all-dishes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .discount-categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .all-dishes-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .discount-categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  .discount-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .all-dishes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .discount-categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .discount-category-circle {
+    width: 60px;
+    height: 60px;
+  }
+}
 .discount-page {
   min-height: 100vh;
   background: #ffffff;
