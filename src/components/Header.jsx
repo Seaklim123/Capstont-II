@@ -40,19 +40,19 @@ const Header = ({
   };
 
   const getUserInitial = () => {
-    if (!user) return 'U';
-    return user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase();
+  if (!user) return 'U';
+  return user.username ? user.username.charAt(0).toUpperCase() : 'U';
   };
 
   const getUserDisplayName = () => {
-    if (!user) return 'User';
-    return user.name || user.username;
+  if (!user) return 'User';
+  return user.username;
   };
 
   const getRoleBadge = () => {
     if (!user) return '';
     const roleLabels = {
-      'founder_restaurant': 'Admin',
+      'founder_restaurant': 'Founder',
       'cashier': 'Cashier'
     };
     return roleLabels[user.role] || user.role;
@@ -104,7 +104,6 @@ const Header = ({
                   <div className="user-details">
                     <div className="user-name enhanced-user-name">{getUserDisplayName()}</div>
                     <div className="user-role enhanced-user-role">{getRoleBadge()}</div>
-                    <div className="user-email enhanced-user-email">{user?.username}</div>
                   </div>
                 </div>
 
