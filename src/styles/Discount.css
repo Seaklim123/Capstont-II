@@ -1,472 +1,142 @@
-/* Discount Page Styles */
-
-.discount-page {
-  min-height: 100vh;
-  background: #ffffff;
-  padding: 0;
-}
-
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 80px;
-}
-
-/* Header Section */
-.discount-header-section {
-  padding: 60px 0 50px;
-  text-align: center;
-}
-
-.discount-header {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.discount-badge {
-  display: inline-block;
-  background: #000;
-  color: white;
-  padding: 6px 20px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 16px;
-}
-
-.discount-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
-
-.discount-subtitle {
-  font-size: 1rem;
-  color: #666;
-  line-height: 1.6;
-}
-
-/* Categories Section */
-.discount-categories-section {
-  padding: 40px 0 50px;
-  background: #f5f5f5;
-}
-
-.discount-categories-grid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 3rem;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.discount-category-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.discount-category-item:hover {
-  transform: translateY(-3px);
-}
-
-.discount-category-item.active .discount-category-circle {
-  background: #333;
-  border-color: #333;
-}
-
-.discount-category-circle {
-  width: 75px;
-  height: 75px;
-  border-radius: 50%;
-  background: #c4c4c4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.discount-category-circle:hover {
-  background: #b0b0b0;
-}
-
-.filter-circle {
-  background: #e8e8e8;
-}
-
-.category-emoji {
-  font-size: 1.8rem;
-  line-height: 1;
-}
-
-.filter-icon {
-  font-size: 1.5rem;
-  color: #666;
-}
-
-.discount-category-label {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-}
-
-.filter-circle {
-  background: #f8f9fa;
-  border-color: #ddd;
-}
-
-.category-emoji {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.filter-icon {
-  font-size: 1.5rem;
-  color: #666;
-}
-
-.discount-category-label {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-}
-
-.loading-text {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-  font-size: 1rem;
-}
-
-.no-products {
-  text-align: center;
-  padding: 60px 20px;
-  color: #666;
-}
-
-.no-products p {
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-/* All Dishes Section */
-.all-dishes-section {
-  padding: 60px 0 80px;
-  background: #ffffff;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
-.section-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #000;
-}
-
-.filter-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: none;
-  background: #e8e8e8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.filter-button:hover {
-  background: #d0d0d0;
-}
-
-.all-dishes-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
-  margin-bottom: 50px;
-}
-
-.dish-item {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  position: relative;
-}
-
-.dish-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.dish-badges {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  gap: 8px;
-  z-index: 1;
-}
-
-.badge {
-  padding: 5px 12px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #333;
-  white-space: nowrap;
-  background: #e0e0e0;
-}
-
-.best-seller {
-  background: #e0e0e0;
-  color: #333;
-}
-
-.sold-badge {
-  background: #e0e0e0;
-  color: #333;
-}
-
-.dish-image {
-  width: 100%;
-  height: 200px;
-  background: #e5e5e5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  font-size: 14px;
-  position: relative;
-  overflow: hidden;
-}
-
-.dish-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.dish-image span {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #e5e5e5;
-}
-
-.dish-info {
-  padding: 18px;
-}
-
-.dish-name {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #000;
-  margin-bottom: 12px;
-}
-
-.dish-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dish-price-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.dish-price {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #000;
-}
-
-.original-price {
-  font-size: 0.9rem;
-  color: #aaa;
-  text-decoration: line-through;
-}
-
-.discount-badge {
-  background: transparent;
-  color: #000;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid #d0d0d0;
-}
-
-.add-to-cart-btn {
-  width: 100%;
-  padding: 10px;
-  background: white;
-  color: #000;
-  border: 1.5px solid #ccc;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.add-to-cart-btn:hover {
-  background: #f8f8f8;
-  border-color: #999;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-}
-
-.pagination-dots {
-  display: flex;
-  gap: 8px;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #d9d9d9;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.dot.active {
-  background: #000;
-}
-
-.dot:hover {
-  background: #999;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .all-dishes-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .discount-categories-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .all-dishes-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  
-  .discount-categories-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-  
-  .discount-title {
-    font-size: 2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .all-dishes-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .discount-categories-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .discount-category-circle {
-    width: 60px;
-    height: 60px;
-  }
-}
-.discount-page {
-  min-height: 100vh;
-  background: #ffffff;
-}
-
 .discount-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 20px;
-}
-
-.discount-header {
-  text-align: center;
-  margin-bottom: 60px;
-}
-
-.discount-title {
-  font-size: 3rem;
-  font-weight: 700;
   color: #333;
+  background-color: #fff;
+}
+
+.discount-hero h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.discount-btn {
+  background-color: #4b8ee2;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: none;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #666;
   margin-bottom: 20px;
 }
 
-.discount-subtitle {
-  font-size: 1.2rem;
-  color: #666;
-  max-width: 600px;
-  margin: 0 auto;
+.category-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
 }
 
-.discount-offers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  margin-top: 40px;
-}
-
-.offer-card {
+.category-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
   background: white;
-  padding: 40px 30px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.category-btn:hover {
+  background-color: #4b8ee2;
+  color: white;
+}
+
+.section-title {
+  text-align: left;
+  margin-left: 8%;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.dishes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 25px;
+  padding: 0 8%;
+}
+
+.dish-card {
+  border: 1px solid #ddd;
+  padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-align: center;
-  transition: transform 0.3s ease;
+  transition: 0.3s;
+  background: #fafafa;
 }
 
-.offer-card:hover {
-  transform: translateY(-5px);
+.dish-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.offer-card h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #ff6b35;
-  margin-bottom: 15px;
+.dish-card img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
-.offer-card p {
-  font-size: 1.1rem;
-  color: #666;
+.add-btn {
+  background-color: #406092;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background-color: #4b8ee2;
+}
+
+/* Footer */
+.footer-section {
+  background-color: #0e1a2b;
+  color: white;
+  padding: 40px 8%;
+  margin-top: 60px;
+}
+
+.footer-top {
+  border-bottom: 1px solid #2a3b52;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.brand {
+  color: #4b8ee2;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.footer-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-content li {
+  margin: 6px 0;
+  cursor: pointer;
+}
+
+.socials a {
+  margin-right: 10px;
+  font-size: 1.3rem;
+  color: white;
+  text-decoration: none;
+}
+
+.footer-bottom {
+  border-top: 1px solid #2a3b52;
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 10px;
+  font-size: 0.9rem;
+  color: #ccc;
 }

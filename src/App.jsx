@@ -7,6 +7,8 @@ import AboutUs from "./pages/AboutUs";
 import Discount from "./pages/Discount";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
+import AboutUs from "./pages/AboutUs";
+import Discount from "./pages/Discount";
 // import Order from "./pages/Order";
 import { Header } from "./components/header";
 import "./styles/App.css";
@@ -26,6 +28,8 @@ function App() {
             <Route path="/about" element={<AboutUs />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/discount" element={<Discount />} />
+            <Route path="/about" element={<AboutUs/>} />
           </Routes>
         </main>
       </div>

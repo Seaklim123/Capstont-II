@@ -1,285 +1,209 @@
 /* About Us Page Styles */
-
-.about-us-page {
-  min-height: 100vh;
-  background: #ffffff;
+.about-container {
+  color: #222;
+  background-color: #fff;
 }
 
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 80px;
-}
-
-/* Hero Section */
-.about-hero-section {
-  padding: 80px 0 60px;
+/* ===== HERO SECTION ===== */
+.about-hero {
   text-align: center;
-  background: #ffffff;
+  padding: 60px 20px;
 }
 
-.about-hero-content {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.profile-badge {
-  display: inline-block;
+.profile-btn {
   background: #000;
-  color: white;
-  padding: 6px 20px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 16px;
-}
-
-.about-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
-
-.about-subtitle {
-  font-size: 1rem;
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 24px;
-}
-
-.order-now-btn {
-  background: #000;
-  color: white;
-  padding: 12px 40px;
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.order-now-btn:hover {
-  background: #333;
-}
-
-/* Stats Section */
-.stats-section {
-  padding: 40px 0;
-  background: #f8f8f8;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 30px 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #666;
+  padding: 8px 18px;
+  border-radius: 20px;
   margin-bottom: 12px;
-  font-weight: 500;
+  cursor: pointer;
 }
 
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #000;
+.primary-btn {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  margin-top: 15px;
+  cursor: pointer;
 }
 
-/* Our Story Section */
-.our-story-section {
-  padding: 80px 0;
-  background: #ffffff;
+/* ===== STATS ===== */
+.stats-section {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 40px 0;
+  flex-wrap: wrap;
 }
 
-.story-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+.stat-box {
+  border: 1px solid #ddd;
+  padding: 20px 30px;
+  border-radius: 8px;
+  width: 220px;
+  text-align: center;
+}
+
+/* ===== STORY ===== */
+.story-section {
+  display: flex;
+  justify-content: space-between;
   align-items: start;
+  gap: 40px;
+  padding: 0 8%;
+  margin-top: 40px;
+  flex-wrap: wrap;
 }
 
 .story-left {
-  padding-right: 20px;
+  flex: 1;
 }
 
-.story-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 20px;
+.story-left h2 {
+  margin-bottom: 10px;
 }
 
-.story-text {
-  font-size: 1rem;
-  color: #666;
-  line-height: 1.8;
-  margin-bottom: 30px;
+.story-left p {
+  margin-bottom: 15px;
 }
 
-.learn-more-btn {
-  background: #000;
-  color: white;
-  padding: 12px 40px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+.outline-btn {
+  border: 1px solid #000;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.learn-more-btn:hover {
-  background: #333;
 }
 
 .story-right {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px;
 }
 
-.story-card {
-  background: #f8f8f8;
-  padding: 30px;
+.highlight-box {
+  border: 1px solid #ddd;
+  padding: 16px;
   border-radius: 8px;
+  background: #f9f9f9;
 }
 
-.card-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #000;
-  margin-bottom: 12px;
-}
-
-.card-text {
-  font-size: 0.95rem;
-  color: #666;
-  line-height: 1.7;
-}
-
-/* Team Section */
-.team-section {
-  padding: 60px 0 80px;
-  background: #ffffff;
-}
-
-.team-member {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 40px;
+/* ===== FOUNDER ===== */
+.founder-section {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  max-width: 900px;
+  padding: 60px 8%;
+  flex-wrap: wrap;
+  border-top: 1px solid #eee;
 }
 
-.member-avatar {
-  width: 120px;
-  height: 120px;
+.founder-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #e0e0e0;
+.founder-img {
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
 }
 
-.member-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.member-name {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 4px;
-}
-
-.member-role {
+.badge {
+  background: #eee;
+  padding: 4px 8px;
+  margin-right: 6px;
+  border-radius: 6px;
   font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.member-description {
-  font-size: 0.95rem;
-  color: #666;
-  line-height: 1.7;
-  margin-bottom: 16px;
 }
 
 .contact-btn {
   background: #000;
   color: white;
-  padding: 10px 30px;
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
-  width: fit-content;
 }
 
-.contact-btn:hover {
-  background: #333;
+/* ===== FOOTER ===== */
+.footer-section {
+  background: #0e1a2b;
+  color: #fff;
+  padding: 50px 8%;
+  margin-top: 60px;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .container {
-    padding: 0 40px;
-  }
-  
-  .story-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+.footer-top {
+  border-bottom: 1px solid #2a3b52;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
 }
 
+.brand {
+  color: #4b8ee2;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.footer-content h4 {
+  margin-bottom: 10px;
+}
+
+.footer-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-content li {
+  margin: 6px 0;
+  cursor: pointer;
+}
+
+.socials a {
+  margin-right: 10px;
+  font-size: 1.2rem;
+  color: white;
+  text-decoration: none;
+}
+
+.footer-bottom {
+  border-top: 1px solid #2a3b52;
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 10px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 20px;
+  .story-section {
+    flex-direction: column;
   }
-  
-  .about-title {
-    font-size: 2rem;
-  }
-  
-  .story-title {
-    font-size: 1.5rem;
-  }
-  
-  .team-member {
-    grid-template-columns: 1fr;
-    text-align: center;
-    justify-items: center;
-  }
-  
-  .member-info {
+
+  .stats-section {
+    flex-direction: column;
     align-items: center;
   }
-  
-  .contact-btn {
-    width: 100%;
+
+  .founder-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
   }
 }
