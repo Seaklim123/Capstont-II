@@ -7,8 +7,6 @@ import AboutUs from "./pages/AboutUs";
 import Discount from "./pages/Discount";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
-import AboutUs from "./pages/AboutUs";
-import Discount from "./pages/Discount";
 // import Order from "./pages/Order";
 import { Header } from "./components/header";
 import "./styles/App.css";
