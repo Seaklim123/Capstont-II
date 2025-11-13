@@ -7,6 +7,7 @@ export function Header() {
   const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
   const [cartCount, setCartCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Update cart count when component mounts and when storage changes
@@ -35,11 +36,38 @@ export function Header() {
     };
   }, [location]); // Re-check when location changes
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+
   return (
     <header className="clean-header">
       <div className="header-container">
         {/* Left side - Logo and Navigation */}
         <div className="left-section">
+          {/* Mobile Menu Button */}
+          <button 
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {mobileMenuOpen ? (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              )}
+            </svg>
+          </button>
+
           {/* Logo */}
           <Link to="/" className="logo">
             <span className="logo-text">Tos Kamong</span>
@@ -100,6 +128,40 @@ export function Header() {
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <nav className="mobile-nav-menu">
+          <Link 
+            to="/" 
+            className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link 
+            to="/menu" 
+            className={`mobile-nav-link ${isActive('/menu') ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Menu
+          </Link>
+          <Link 
+            to="/discount" 
+            className={`mobile-nav-link ${isActive('/discount') ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Discount
+          </Link>
+          <Link 
+            to="/about" 
+            className={`mobile-nav-link ${isActive('/about') ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            About Us
+          </Link>
+        </nav>
+      )}
     </header>
   );
 }

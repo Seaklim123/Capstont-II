@@ -158,6 +158,28 @@ export const productApi = {
     }
   },
 
+  // GET: Fetch best sellers products
+  getBestSellers: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/best-sellers/list`);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching best sellers:', error);
+      throw error;
+    }
+  },
+
+  // GET: Fetch discount products
+  getDiscounts: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/discounts/list`);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching discounts:', error);
+      throw error;
+    }
+  },
+
   // POST: Create new product
   create: async (productData) => {
     try {

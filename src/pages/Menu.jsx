@@ -2,16 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
 import { Footer } from "../components/footer-component.jsx";
-import { categoryApi } from "../services/api.js";
+import { categoryApi, productApi } from "../services/api.js";
 
 function Menu() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const itemsPerPage = 5; // Show 5 items per page
+  const itemsPerPage = 8; // Show 8 items per page
 
   // Fetch categories from API
   useEffect(() => {
@@ -24,7 +26,7 @@ function Menu() {
         // Log image paths for debugging
         if (response.data) {
           response.data.forEach(cat => {
-            console.log(`Category "${cat.name}" image_path:`, cat.image_path);
+            console.log(`Category "${cat.name}" image:`, cat.image);
           });
         }
         setCategories(response.data || []);
@@ -32,13 +34,8 @@ function Menu() {
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError(`Backend not running. Please start your Laravel server: php artisan serve`);
-        // Use fallback categories when backend is not available (without images)
-        setCategories([
-          { id: 1, name: "Food", image_path: null },
-          { id: 2, name: "Beverages", image_path: null },
-          { id: 3, name: "Desserts", image_path: null },
-          { id: 4, name: "Snacks", image_path: null }
-        ]);
+        // No fallback - only use API data
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -46,6 +43,35 @@ function Menu() {
 
     fetchCategories();
   }, []);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setProductsLoading(true);
+        console.log('Fetching products from API...');
+        const response = await productApi.getAll();
+        console.log('Products response:', response);
+        setProducts(response.data || []);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Get image URL for products
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/300x200?text=No+Image";
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/storage/')) return `http://127.0.0.1:8000${imagePath}`;
+    if (imagePath.startsWith('storage/')) return `http://127.0.0.1:8000/${imagePath}`;
+    return `http://127.0.0.1:8000/storage/${imagePath}`;
+  };
 
   // Default icon for categories without images
   const getDefaultIcon = (categoryName) => {
@@ -73,8 +99,15 @@ function Menu() {
 
   // Helper function to get category image URL
   const getCategoryImageUrl = (category) => {
+    // Backend now returns 'image' field with full URL
+    if (category.image && category.image !== null && category.image !== '') {
+      console.log(`Processing image for ${category.name}:`, category.image);
+      return category.image;
+    }
+    
+    // Fallback to image_path if still using old format
     if (category.image_path && category.image_path !== null && category.image_path !== '') {
-      console.log(`Processing image for ${category.name}:`, category.image_path);
+      console.log(`Processing image_path for ${category.name}:`, category.image_path);
       
       // If it's a full URL, use it as is
       if (category.image_path.startsWith('http')) {
@@ -102,6 +135,7 @@ function Menu() {
       // Default: add storage prefix
       return `http://127.0.0.1:8000/storage/${imagePath}`;
     }
+    
     return null;
   };
 
@@ -110,194 +144,26 @@ function Menu() {
     navigate(`/product/${itemId}`);
   };
 
-  // Popular items data
-  const popularItems = [
-    {
-      id: 1,
-      name: "Burger Blast",
-      image: "/classic-burger-fries.png",
-      time: "30 minutes",
-      price: "$2.99"
-    },
-    {
-      id: 2,
-      name: "Taco Twister",
-      image: "/street-tacos-on-plate.jpg",
-      time: "25 minutes",
-      price: "$1.99"
-    },
-    {
-      id: 3,
-      name: "Fries Frenzy",
-      image: "/bakery-croissants-and-pastries.jpg",
-      time: "20 minutes",
-      price: "$1.49"
-    },
-    {
-      id: 4,
-      name: "Wrap Rapids",
-      image: "/modern-restaurant-interior-with-wooden-decor.jpg",
-      time: "15 minutes",
-      price: "$3.50"
+  // Filter products by category
+  const getFilteredProducts = () => {
+    if (activeCategory === "All") {
+      return products;
     }
-  ];
+    
+    // Find category ID by name
+    const category = categories.find(cat => cat.name === activeCategory);
+    if (!category) return [];
+    
+    return products.filter(product => product.category_id === category.id);
+  };
 
-  // Full menu categories
-  const menuCategories = ["All", "Burgers", "Taco", "Fries", "Wraps"];
-
-  // Full menu items (expanded for pagination)
-  const fullMenuItems = [
-    // Page 1
-    {
-      id: 1,
-      name: "Classic Burger",
-      image: "/classic-burger-fries.png",
-      price: "$7.99",
-      category: "Burgers"
-    },
-    {
-      id: 2,
-      name: "Spicy Taco",
-      image: "/street-tacos-on-plate.jpg",
-      price: "$5.99",
-      category: "Taco"
-    },
-    {
-      id: 3,
-      name: "Crispy Fries",
-      image: "/bakery-croissants-and-pastries.jpg",
-      price: "$3.99",
-      category: "Fries"
-    },
-    {
-      id: 4,
-      name: "Chicken Wrap",
-      image: "/assorted-sushi.png",
-      price: "$6.99",
-      category: "Wraps"
-    },
-    {
-      id: 5,
-      name: "Veggie Burger",
-      image: "/illustrated-burger-drawing.jpg",
-      price: "$8.99",
-      category: "Burgers"
-    },
-    // Page 2
-    {
-      id: 6,
-      name: "Fish Taco",
-      image: "/mexican-restaurant-tacos-on-table.jpg",
-      price: "$4.99",
-      category: "Taco"
-    },
-    {
-      id: 7,
-      name: "Sweet Potato Fries",
-      image: "/chocolate-layer-cake-slice.jpg",
-      price: "$2.99",
-      category: "Fries"
-    },
-    {
-      id: 8,
-      name: "Beef Wrap",
-      image: "/japanese-restaurant-interior-minimalist.jpg",
-      price: "$7.49",
-      category: "Wraps"
-    },
-    {
-      id: 9,
-      name: "Double Burger",
-      image: "/classic-burger-fries.png",
-      price: "$9.99",
-      category: "Burgers"
-    },
-    {
-      id: 10,
-      name: "Loaded Fries",
-      image: "/bakery-croissants-and-pastries.jpg",
-      price: "$5.99",
-      category: "Fries"
-    },
-    // Page 3
-    {
-      id: 11,
-      name: "BBQ Taco",
-      image: "/street-tacos-on-plate.jpg",
-      price: "$6.49",
-      category: "Taco"
-    },
-    {
-      id: 12,
-      name: "Turkey Wrap",
-      image: "/assorted-sushi.png",
-      price: "$7.99",
-      category: "Wraps"
-    },
-    {
-      id: 13,
-      name: "Mushroom Burger",
-      image: "/illustrated-burger-drawing.jpg",
-      price: "$8.49",
-      category: "Burgers"
-    },
-    {
-      id: 14,
-      name: "Cheese Fries",
-      image: "/chocolate-layer-cake-slice.jpg",
-      price: "$4.49",
-      category: "Fries"
-    },
-    {
-      id: 15,
-      name: "Breakfast Taco",
-      image: "/mexican-restaurant-tacos-on-table.jpg",
-      price: "$3.99",
-      category: "Taco"
-    },
-    // Page 4
-    {
-      id: 16,
-      name: "Bacon Burger",
-      image: "/classic-burger-fries.png",
-      price: "$10.99",
-      category: "Burgers"
-    },
-    {
-      id: 17,
-      name: "Spicy Fries",
-      image: "/bakery-croissants-and-pastries.jpg",
-      price: "$4.99",
-      category: "Fries"
-    },
-    {
-      id: 18,
-      name: "Veggie Wrap",
-      image: "/japanese-restaurant-interior-minimalist.jpg",
-      price: "$6.49",
-      category: "Wraps"
-    },
-    {
-      id: 19,
-      name: "Fish Burger",
-      image: "/illustrated-burger-drawing.jpg",
-      price: "$8.99",
-      category: "Burgers"
-    },
-    {
-      id: 20,
-      name: "Deluxe Taco",
-      image: "/street-tacos-on-plate.jpg",
-      price: "$7.99",
-      category: "Taco"
-    }
-  ];
-
-  const filteredMenuItems = activeCategory === "All" 
-    ? fullMenuItems 
-    : fullMenuItems.filter(item => item.category === activeCategory);
+  // Get products for different sections
+  const allProducts = getFilteredProducts();
+  const bestSellerProducts = products.filter(p => p.is_best_seller === 1 || p.is_best_seller === true);
+  const discountProducts = products.filter(p => p.discount && parseFloat(p.discount) > 0);
 
   // Pagination logic
+  const filteredMenuItems = getFilteredProducts();
   const totalPages = Math.ceil(filteredMenuItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -355,7 +221,21 @@ function Menu() {
                 onClick={() => setActiveCategory('All')}
               >
                 <div className="menu-category-circle">
-                  <span className="category-emoji">🍽️</span>
+                  <img 
+                    src="http://127.0.0.1:8000/Image/All.jpg" 
+                    alt="All"
+                    className="category-image"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <span 
+                    className="category-emoji"
+                    style={{ display: 'none' }}
+                  >
+                    🍽️
+                  </span>
                 </div>
                 <span className="menu-category-label">All</span>
               </div>
@@ -364,9 +244,9 @@ function Menu() {
               {categories.slice(0, 6).map(category => {
                 const imageUrl = getCategoryImageUrl(category);
                 console.log(`=== Category: ${category.name} ===`);
-                console.log('Raw image_path:', category.image_path);
+                console.log('Raw image:', category.image);
                 console.log('Processed URL:', imageUrl);
-                console.log('Has image_path:', !!category.image_path);
+                console.log('Has image:', !!category.image);
                 console.log('========================');
                 
                 return (
@@ -399,7 +279,7 @@ function Menu() {
                         </>
                       ) : (
                         <span className="category-emoji">
-                          {console.log(`🔄 Using emoji for ${category.name} (no image_path)`)}
+                          {console.log(`🔄 Using emoji for ${category.name} (no image)`)}
                           {getDefaultIcon(category.name)}
                         </span>
                       )}
@@ -408,14 +288,6 @@ function Menu() {
                   </div>
                 );
               })}
-              
-              {/* Filter button */}
-              <div className="menu-category-item">
-                <div className="menu-category-circle filter-circle">
-                  <span className="filter-icon">☰</span>
-                </div>
-                <span className="menu-category-label">Filter</span>
-              </div>
             </div>
           )}
           
@@ -432,91 +304,171 @@ function Menu() {
       <section className="popular-dish-section">
         <div className="container">
           <h2 className="section-title">Popular Dish</h2>
-          <div className="dish-grid">
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
+          {productsLoading ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>
+          ) : bestSellerProducts.length === 0 ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>No popular dishes available</p>
+          ) : (
+            <div className="dish-grid">
+              {bestSellerProducts.slice(0, 4).map((product) => (
+                <div 
+                  key={product.id} 
+                  onClick={() => handleAddToCart(product.id)}
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    border: '1px solid #f0f0f0',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                  }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    {product.is_best_seller && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '12px',
+                        backgroundColor: '#333',
+                        color: 'white',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        fontSize: '0.65rem',
+                        fontWeight: '600',
+                        zIndex: 2
+                      }}>Best Seller</span>
+                    )}
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      backgroundColor: '#333',
+                      color: 'white',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.65rem',
+                      fontWeight: '600',
+                      zIndex: 2
+                    }}>50+ Sold</span>
+                    <div style={{ height: '200px', overflow: 'hidden' }}>
+                      <img 
+                        src={getImageUrl(product.image || product.image_path)} 
+                        alt={product.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
+                      />
+                    </div>
                   </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
+                  
+                  <div style={{ 
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}>
+                    <h3 style={{ 
+                      fontWeight: '600', 
+                      fontSize: '1.05rem', 
+                      color: '#1a1a1a',
+                      lineHeight: '1.4',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      margin: 0
+                    }}>{product.name}</h3>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ 
+                            fontSize: '1.4rem', 
+                            fontWeight: '700', 
+                            color: '#1a1a1a',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            lineHeight: 1
+                          }}>
+                            ${parseFloat(product.price).toFixed(2)}
+                          </span>
+                          {product.discount > 0 && (
+                            <span style={{ 
+                              fontSize: '0.9rem', 
+                              color: '#999',
+                              textDecoration: 'line-through',
+                              fontWeight: '400'
+                            }}>
+                              ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        {product.discount > 0 && (
+                          <span style={{ 
+                            fontSize: '0.75rem', 
+                            fontWeight: '600',
+                            backgroundColor: 'white',
+                            color: '#1a1a1a',
+                            padding: '0.3rem 0.6rem', 
+                            borderRadius: '4px',
+                            border: '1.5px solid #333',
+                            whiteSpace: 'nowrap',
+                            width: 'fit-content'
+                          }}>
+                            ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
+                          </span>
+                        )}
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product.id);
+                        }}
+                        style={{
+                          padding: '0.65rem 1.5rem',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          border: '1.5px solid #d0d0d0',
+                          borderRadius: '25px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          alignSelf: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f5f5f5';
+                          e.target.style.borderColor = '#1a1a1a';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.borderColor = '#d0d0d0';
+                        }}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
-              </div>
+              ))}
             </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -524,91 +476,167 @@ function Menu() {
       <section className="discount-dish-section">
         <div className="container">
           <h2 className="section-title">Discount Dish</h2>
-          <div className="dish-grid">
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
+          {productsLoading ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>
+          ) : discountProducts.length === 0 ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>No discount dishes available</p>
+          ) : (
+            <div className="dish-grid">
+              {discountProducts.slice(0, 4).map((product) => (
+                <div 
+                  key={product.id} 
+                  onClick={() => handleAddToCart(product.id)}
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    border: '1px solid #f0f0f0',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                  }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    {product.is_best_seller && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '12px',
+                        backgroundColor: '#333',
+                        color: 'white',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        fontSize: '0.65rem',
+                        fontWeight: '600',
+                        zIndex: 2
+                      }}>Best Seller</span>
+                    )}
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      backgroundColor: '#333',
+                      color: 'white',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.65rem',
+                      fontWeight: '600',
+                      zIndex: 2
+                    }}>50+ Sold</span>
+                    <div style={{ height: '200px', overflow: 'hidden' }}>
+                      <img 
+                        src={getImageUrl(product.image || product.image_path)} 
+                        alt={product.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
+                      />
+                    </div>
                   </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
+                  
+                  <div style={{ 
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}>
+                    <h3 style={{ 
+                      fontWeight: '600', 
+                      fontSize: '1.05rem', 
+                      color: '#1a1a1a',
+                      lineHeight: '1.4',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      margin: 0
+                    }}>{product.name}</h3>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ 
+                            fontSize: '1.4rem', 
+                            fontWeight: '700', 
+                            color: '#1a1a1a',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            lineHeight: 1
+                          }}>
+                            ${parseFloat(product.price).toFixed(2)}
+                          </span>
+                          <span style={{ 
+                            fontSize: '0.9rem', 
+                            color: '#999',
+                            textDecoration: 'line-through',
+                            fontWeight: '400'
+                          }}>
+                            ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
+                          </span>
+                        </div>
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          fontWeight: '600',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          padding: '0.3rem 0.6rem', 
+                          borderRadius: '4px',
+                          border: '1.5px solid #333',
+                          whiteSpace: 'nowrap',
+                          width: 'fit-content'
+                        }}>
+                          ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
+                        </span>
+                      </div>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product.id);
+                        }}
+                        style={{
+                          padding: '0.65rem 1.5rem',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          border: '1.5px solid #d0d0d0',
+                          borderRadius: '25px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          alignSelf: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f5f5f5';
+                          e.target.style.borderColor = '#1a1a1a';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.borderColor = '#d0d0d0';
+                        }}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
                 </div>
-              </div>
+              ))}
             </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -617,186 +645,200 @@ function Menu() {
         <div className="container">
           <h2 className="section-title">All Dishes</h2>
           
-          <div className="all-dishes-grid">
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-                <div className="all-label">All</div>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
+          {productsLoading ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>
+          ) : currentItems.length === 0 ? (
+            <p style={{textAlign: 'center', padding: '2rem'}}>No dishes available</p>
+          ) : (
+            <>
+              <div className="all-dishes-grid">
+                {currentItems.map((product, index) => (
+                  <div 
+                    key={product.id} 
+                    onClick={() => handleAddToCart(product.id)}
+                    style={{
+                      backgroundColor: 'white',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                      border: '1px solid #f0f0f0',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                    }}
+                  >
+                    <div style={{ position: 'relative' }}>
+                      {product.is_best_seller && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '12px',
+                          left: '12px',
+                          backgroundColor: '#333',
+                          color: 'white',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          fontSize: '0.65rem',
+                          fontWeight: '600',
+                          zIndex: 2
+                        }}>Best Seller</span>
+                      )}
+                      <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        backgroundColor: '#333',
+                        color: 'white',
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        fontSize: '0.65rem',
+                        fontWeight: '600',
+                        zIndex: 2
+                      }}>50+ Sold</span>
+                      {index === 0 && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '12px',
+                          left: '12px',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.7rem',
+                          fontWeight: '500',
+                          zIndex: 2
+                        }}>All</div>
+                      )}
+                      <div style={{ height: '200px', overflow: 'hidden' }}>
+                        <img 
+                          src={getImageUrl(product.image || product.image_path)} 
+                          alt={product.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div style={{ 
+                      padding: '1.25rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1rem'
+                    }}>
+                      <h3 style={{ 
+                        fontWeight: '600', 
+                        fontSize: '1.05rem', 
+                        color: '#1a1a1a',
+                        lineHeight: '1.4',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        margin: 0
+                      }}>{product.name}</h3>
+                      
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1rem'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ 
+                              fontSize: '1.4rem', 
+                              fontWeight: '700', 
+                              color: '#1a1a1a',
+                              fontFamily: 'system-ui, -apple-system, sans-serif',
+                              lineHeight: 1
+                            }}>
+                              ${parseFloat(product.price).toFixed(2)}
+                            </span>
+                            {product.discount > 0 && (
+                              <span style={{ 
+                                fontSize: '0.9rem', 
+                                color: '#999',
+                                textDecoration: 'line-through',
+                                fontWeight: '400'
+                              }}>
+                                ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          {product.discount > 0 && (
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              fontWeight: '600',
+                              backgroundColor: 'white',
+                              color: '#1a1a1a',
+                              padding: '0.3rem 0.6rem', 
+                              borderRadius: '4px',
+                              border: '1.5px solid #333',
+                              whiteSpace: 'nowrap',
+                              width: 'fit-content'
+                            }}>
+                              ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
+                            </span>
+                          )}
+                        </div>
+                        
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product.id);
+                          }}
+                          style={{
+                            padding: '0.65rem 1.5rem',
+                            backgroundColor: 'white',
+                            color: '#1a1a1a',
+                            border: '1.5px solid #d0d0d0',
+                            borderRadius: '25px',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            alignSelf: 'center'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#f5f5f5';
+                            e.target.style.borderColor = '#1a1a1a';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'white';
+                            e.target.style.borderColor = '#d0d0d0';
+                          }}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
+                ))}
+              </div>
+
+              <div className="pagination">
+                <div className="pagination-dots">
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <span 
+                      key={index}
+                      className={`dot ${currentPage === index + 1 ? 'active' : ''}`}
+                      onClick={() => handlePageChange(index + 1)}
+                      style={{ cursor: 'pointer' }}
+                    ></span>
+                  ))}
                 </div>
               </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="dish-item">
-              <div className="dish-badges">
-                <span className="badge best-seller">Best Seller</span>
-                <span className="badge sold-badge">50+ Sold</span>
-              </div>
-              <div className="dish-image">
-                <span>Menu Image</span>
-              </div>
-              <div className="dish-info">
-                <h3 className="dish-name">Name</h3>
-                <div className="dish-bottom">
-                  <div className="dish-price-info">
-                    <span className="dish-price">$2.10</span>
-                    <span className="original-price">$4.00</span>
-                    <span className="discount-badge">$1.90 OFF</span>
-                  </div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(1)}>Add to Cart</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pagination">
-            <div className="pagination-dots">
-              <span className="dot active"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </section>
 

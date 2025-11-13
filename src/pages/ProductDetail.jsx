@@ -11,6 +11,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -27,6 +28,25 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      try {
+        const response = await productApi.getAll();
+        // Filter out current product and get 4 related products
+        const related = response.data
+          .filter(p => p.id !== parseInt(id))
+          .slice(0, 4);
+        setRelatedProducts(related);
+      } catch (error) {
+        console.error('Error fetching related products:', error);
+      }
+    };
+
+    if (id) {
+      fetchRelatedProducts();
+    }
+  }, [id]);
+
   const getProductImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
@@ -37,18 +57,6 @@ const ProductDetail = () => {
     if (!path.includes('/')) return `http://127.0.0.1:8000/storage/products/${path}`;
     return `http://127.0.0.1:8000/storage/${path}`;
   };
-
-  // Sample related dishes
-  const relatedDishes = Array.from({ length: 4 }, (_, i) => ({
-    id: i + 1,
-    name: "Name",
-    price: "$2.10",
-    originalPrice: "$4.00",
-    discount: "$1.90 OFF",
-    badge: i % 2 === 0 ? "Best Seller" : null,
-    soldBadge: i % 3 === 0 ? "50+ Sold" : null,
-    image: "Menu Image"
-  }));
 
   const handleIncrease = () => {
     setQuantity(prev => prev + 1);
@@ -83,7 +91,7 @@ const ProductDetail = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: getProductImageUrl(product.image_path),
+        image: getProductImageUrl(product.image || product.image_path),
         quantity: quantity
       });
     }
@@ -161,9 +169,9 @@ const ProductDetail = () => {
           <div className="product-grid">
             <div className="product-image-container">
               <div className="product-image">
-                {getProductImageUrl(product.image_path) ? (
+                {getProductImageUrl(product.image || product.image_path) ? (
                   <img 
-                    src={getProductImageUrl(product.image_path)} 
+                    src={getProductImageUrl(product.image || product.image_path)} 
                     alt={product.name}
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -171,7 +179,7 @@ const ProductDetail = () => {
                     }}
                   />
                 ) : null}
-                <span style={{ display: getProductImageUrl(product.image_path) ? 'none' : 'block' }}>
+                <span style={{ display: getProductImageUrl(product.image || product.image_path) ? 'none' : 'block' }}>
                   {product.name}
                 </span>
               </div>
@@ -237,28 +245,49 @@ const ProductDetail = () => {
           <h2 className="related-title">Related Dishes</h2>
           
           <div className="related-dishes-grid">
-            {relatedDishes.map(dish => (
-              <div key={dish.id} className="related-dish-item">
-                <div className="dish-badges">
-                  {dish.badge && <span className="badge best-seller">{dish.badge}</span>}
-                  {dish.soldBadge && <span className="badge sold-badge">{dish.soldBadge}</span>}
-                </div>
-                <div className="dish-image">
-                  <span>{dish.image}</span>
-                </div>
-                <div className="dish-info">
-                  <h3 className="dish-name">{dish.name}</h3>
-                  <div className="dish-bottom">
-                    <div className="dish-price-info">
-                      <span className="dish-price">{dish.price}</span>
-                      <span className="original-price">{dish.originalPrice}</span>
-                      <span className="discount-badge">{dish.discount}</span>
+            {relatedProducts.map(relatedProduct => {
+              const originalPrice = relatedProduct.discount > 0 
+                ? (parseFloat(relatedProduct.price) / (1 - relatedProduct.discount / 100)).toFixed(2)
+                : null;
+              const discountAmount = originalPrice 
+                ? (parseFloat(originalPrice) - parseFloat(relatedProduct.price)).toFixed(2)
+                : null;
+
+              return (
+                <div key={relatedProduct.id} className="related-dish-item">
+                  <div className="dish-badges">
+                    {relatedProduct.is_bestseller && <span className="badge best-seller">Best Seller</span>}
+                    {relatedProduct.sold_count >= 50 && <span className="badge sold-badge">50+ Sold</span>}
+                  </div>
+                  <div className="dish-image">
+                    {relatedProduct.image || relatedProduct.image_path ? (
+                      <img 
+                        src={getProductImageUrl(relatedProduct.image || relatedProduct.image_path)} 
+                        alt={relatedProduct.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <span>Menu Image</span>
+                    )}
+                  </div>
+                  <div className="dish-info">
+                    <h3 className="dish-name">{relatedProduct.name}</h3>
+                    <div className="dish-bottom">
+                      <div className="dish-price-info">
+                        <span className="dish-price">${parseFloat(relatedProduct.price).toFixed(2)}</span>
+                        {originalPrice && (
+                          <>
+                            <span className="original-price">${originalPrice}</span>
+                            <span className="discount-badge">${discountAmount} OFF</span>
+                          </>
+                        )}
+                      </div>
+                      <button className="add-to-cart-btn" onClick={() => navigate(`/product/${relatedProduct.id}`)}>Add to Cart</button>
                     </div>
-                    <button className="add-to-cart-btn" onClick={() => navigate(`/product/${dish.id}`)}>Add to Cart</button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}

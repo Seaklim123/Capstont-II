@@ -1,5 +1,7 @@
 ﻿/* Home Page Styles - Simple Landing */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -7,7 +9,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: #333;
 }
@@ -26,12 +28,12 @@ body {
 }
 
 .landing-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 3rem;
   align-items: center;
 }
 
@@ -40,18 +42,23 @@ body {
 }
 
 .landing-title {
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: #333;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 4rem;
+  font-weight: 800;
+  color: #1a1a1a;
   margin-bottom: 1.5rem;
-  line-height: 1.2;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
 }
 
 .landing-subtitle {
-  font-size: 1.1rem;
-  color: #666;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #5a5a5a;
   margin-bottom: 2.5rem;
-  line-height: 1.6;
+  line-height: 1.7;
+  letter-spacing: 0.3px;
 }
 
 .landing-buttons {
@@ -62,13 +69,15 @@ body {
 
 .btn-outline {
   padding: 0.9rem 2rem;
-  border: 2px solid #333;
+  border: 2px solid #1a1a1a;
   background: transparent;
-  color: #333;
+  color: #1a1a1a;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.5px;
   transition: all 0.3s ease;
   cursor: pointer;
   display: inline-block;
@@ -76,7 +85,7 @@ body {
 }
 
 .btn-outline:hover {
-  background: #333;
+  background: #1a1a1a;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -84,12 +93,14 @@ body {
 
 .btn-solid {
   padding: 0.9rem 2rem;
-  border: 2px solid #333;
-  background: #333;
+  border: 2px solid #1a1a1a;
+  background: #1a1a1a;
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.5px;
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -105,17 +116,21 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f8f9fa;
   border-radius: 20px;
-  padding: 2rem;
-  min-height: 400px;
+  padding: 0;
+  min-height: 600px;
+  width: 100%;
 }
 
 .landing-image img {
+  width: 100%;
   max-width: 100%;
   height: auto;
+  min-height: 550px;
+  max-height: 600px;
+  object-fit: cover;
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* Responsive Design */
@@ -361,9 +376,13 @@ body {
 
 .best-discount-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
   margin-bottom: 2rem;
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
 }
 
 .discount-item-card {
@@ -402,6 +421,13 @@ body {
   justify-content: center;
   color: #666;
   font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.discount-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .discount-item-info {
@@ -581,9 +607,13 @@ body {
 
 .new-food-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
   margin-bottom: 3rem;
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
 }
 
 .new-food-item-card {
@@ -628,6 +658,13 @@ body {
   justify-content: center;
   color: #666;
   font-size: 0.9rem;
+  overflow: hidden;
+}
+
+.new-food-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .new-food-item-info {
@@ -881,5 +918,416 @@ body {
     grid-column: 1 / -1;
     text-align: center;
     margin-top: 1rem;
+  }
+}
+
+/* Mobile Responsive - Complete */
+@media (max-width: 768px) {
+  /* Hero Section */
+  .hero-section {
+    padding: 2rem 0 !important;
+  }
+  
+  .landing-hero {
+    padding: 1rem 0 !important;
+    min-height: auto !important;
+  }
+  
+  .landing-container {
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    padding: 0 !important;
+  }
+  
+  .landing-content {
+    padding: 0 1.25rem !important;
+    text-align: center !important;
+    animation: fadeInUp 0.8s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .landing-title {
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #1a1a1a 0%, #444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .landing-subtitle {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    margin-bottom: 1.75rem !important;
+    color: #666 !important;
+    font-weight: 400;
+  }
+  
+  .landing-buttons {
+    flex-direction: column !important;
+    gap: 0.875rem !important;
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+  
+  .btn-outline,
+  .btn-solid {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 0.95rem !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  .btn-outline {
+    background: white !important;
+    border: 2px solid #1a1a1a !important;
+  }
+  
+  .btn-outline:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .btn-solid {
+    background: linear-gradient(135deg, #1a1a1a 0%, #333 100%) !important;
+    border: 2px solid #1a1a1a !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .btn-solid:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .landing-image {
+    order: -1 !important;
+    max-width: 100% !important;
+    padding: 0 1rem !important;
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .landing-image img {
+    border-radius: 20px !important;
+    max-height: 280px !important;
+    object-fit: cover !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    width: 100% !important;
+  }
+  
+  .hero-content {
+    padding: 2rem 1rem !important;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .hero-content p {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .hero-buttons {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .hero-buttons button,
+  .hero-buttons a {
+    width: 100% !important;
+    padding: 0.875rem 1.5rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Search Section */
+  .search-section {
+    padding: 1.5rem 1.25rem !important;
+    background: linear-gradient(to bottom, #f8f9fa, #ffffff) !important;
+  }
+  
+  .search-wrapper {
+    max-width: 100% !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 14px !important;
+  }
+  
+  .search-input {
+    font-size: 0.9rem !important;
+    padding: 0.875rem 1rem 0.875rem 2.75rem !important;
+    border-radius: 14px !important;
+  }
+  
+  /* Section Headers - Modern Style */
+  .new-food-header h2,
+  .best-discount-header h2,
+  .best-menu-header h2 {
+    background: linear-gradient(135deg, #1a1a1a 0%, #444 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+  }
+  
+  /* New Food Section */
+  .new-food-section {
+    padding: 2.5rem 0 !important;
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa) !important;
+  }
+  
+  .new-food-header {
+    padding: 0 1.25rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+  
+  .new-food-header h2 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .new-food-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 1.25rem !important;
+  }
+  
+  .new-food-item {
+    border-radius: 16px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+  }
+  
+  .new-food-item:active {
+    transform: scale(0.97) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .new-food-item img {
+    height: 180px !important;
+    transition: transform 0.4s ease !important;
+  }
+  
+  .new-food-item:active img {
+    transform: scale(1.05) !important;
+  }
+  
+  .new-food-item h3 {
+    font-size: 1rem !important;
+    padding: 1rem !important;
+    font-weight: 600 !important;
+  }
+  
+  .new-food-item .price {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .new-food-item .original-price {
+    font-size: 0.8rem !important;
+  }
+  
+  .new-food-item .discount-badge {
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 6px !important;
+  }
+  
+  .new-food-item button {
+    padding: 0.625rem 1rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .new-food-item button:active {
+    transform: scale(0.95) !important;
+  }
+  
+  /* Best Discount Section */
+  .best-discount-section {
+    padding: 2.5rem 0 !important;
+    background: #ffffff !important;
+  }
+  
+  .best-discount-header {
+    padding: 0 1.25rem !important;
+    margin-bottom: 1.75rem !important;
+  }
+  
+  .best-discount-header h2 {
+    font-size: 1.65rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .best-discount-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 0 1.25rem !important;
+  }
+  
+  .discount-item {
+    border-radius: 16px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  .discount-item:active {
+    transform: scale(0.97) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .discount-item img {
+    height: 180px !important;
+    transition: transform 0.4s ease !important;
+  }
+  
+  .discount-item:active img {
+    transform: scale(1.05) !important;
+  }
+  
+  .discount-item h3 {
+    font-size: 1rem !important;
+    padding: 1rem !important;
+    font-weight: 600 !important;
+  }
+  
+  .discount-item .price {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .discount-item .original-price {
+    font-size: 0.8rem !important;
+  }
+  
+  .discount-item .discount-badge {
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 6px !important;
+  }
+  
+  .discount-item button {
+    padding: 0.625rem 1rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+  }
+  
+  .discount-item button:active {
+    transform: scale(0.95) !important;
+  }
+  
+  /* Pagination */
+  .pagination {
+    margin-top: 2rem !important;
+  }
+  
+  .pagination button {
+    padding: 0.625rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .pagination button:active {
+    transform: scale(0.95) !important;
+  }
+  
+  .dot {
+    width: 8px !important;
+    height: 8px !important;
+    transition: all 0.3s ease !important;
+  }
+  
+  .dot.active {
+    width: 24px !important;
+    border-radius: 4px !important;
+  }
+  
+  /* Container */
+  .container {
+    padding: 0 1.25rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile adjustments */
+  .landing-hero {
+    padding: 0.75rem 0 !important;
+  }
+  
+  .landing-title {
+    font-size: 1.75rem !important;
+    margin-bottom: 0.875rem !important;
+  }
+  
+  .landing-subtitle {
+    font-size: 0.875rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .landing-image img {
+    max-height: 240px !important;
+    border-radius: 16px !important;
+  }
+  
+  .btn-outline,
+  .btn-solid {
+    padding: 0.875rem 1.25rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .new-food-header h2,
+  .best-discount-header h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  .new-food-grid,
+  .best-discount-grid {
+    gap: 0.875rem !important;
+  }
+  
+  .new-food-item img,
+  .discount-item img {
+    height: 130px !important;
+  }
+  
+  .new-food-item h3,
+  .discount-item h3 {
+    font-size: 0.85rem !important;
   }
 }
