@@ -150,7 +150,7 @@ class ApiService {
 
   // Categories API methods
   async getCategories() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
+    const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
     const categories = this.handleResponse(response);
     
     // Transform categories to include properly formatted image URLs
@@ -413,6 +413,15 @@ class ApiService {
       }),
     });
     // Handle Laravel Resource response format
+    return this.handleResponse(response);
+  }
+  // Method orders
+ async getOrder() {
+      const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
+    return this.handleResponse(response);
+  }
+ async cheackOrder(id) {
+      const response = await this.request(`${API_ADMIN_PREFIX}/findByNumber/${id}`);
     return this.handleResponse(response);
   }
 }
