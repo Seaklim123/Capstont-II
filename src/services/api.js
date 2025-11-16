@@ -416,14 +416,46 @@ class ApiService {
     return this.handleResponse(response);
   }
   // Method orders
- async getOrder() {
+  async getOrder() {
       const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
     return this.handleResponse(response);
   }
- async cheackOrder(id) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/findByNumber/${id}`);
+  async cheackOrder(id) {
+      const response = await this.request(`${API_ADMIN_PREFIX}/orders/findByNumber/${id}`);
     return this.handleResponse(response);
   }
+
+  async acceptOrder(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'accepted' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+  async cencalOrder(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancel' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+  async cencalOrderList(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/cancelOrder/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancel' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+
 }
 
 // Export singleton instance

@@ -1,20 +1,25 @@
 // src/pages/OrdersManagement.jsx
 import React, { useEffect, useState } from "react";
 import ApiService from "../services/api";
+import { Modal, Box, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const OrdersManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-
+  const [viewOrder, setViewOrder] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [selectedOrderItems, setSelectedOrderItems] = useState([]);
+  const [openItemsModal, setOpenItemsModal] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => {
     loadOrders();
   }, []);
 
   const loadOrders = async () => {
     try {
-      const data = await ApiService.getOrder(); // returns data.data
-      setOrders(data);
+      const data = await ApiService.getOrder(); 
+      setOrders(data); 
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -22,26 +27,69 @@ const OrdersManagement = () => {
     }
   };
 
+  const handleOpenItemsModal = (orderItems) => {
+    setSelectedOrderItems(orderItems);
+    setOpenItemsModal(true);
+  };
+
+  const handleCloseItemsModal = () => {
+    setOpenItemsModal(false);
+    setSelectedOrderItems([]);
+  };
+
+  const handleAcceptOrder = async (id) => {
+    try {
+      const res = await ApiService.acceptOrder(id);
+      console.log("Order accepted:", res);
+
+      alert("Order accepted successfully!");
+
+      // Refresh the orders list
+      await loadOrders();
+    } catch (error) {
+      console.error("Error accepting order:", error);
+      alert("Failed to accept order");
+    }
+  };
+  const handleCancelOrder = async (id) => {
+    try {
+      const res = await ApiService.cencalOrder(id);
+      console.log("Order Cencel:", res);
+
+      alert("Order Cencel successfully!");
+
+      // Refresh the orders list
+      await loadOrders();
+    } catch (error) {
+      console.error("Error accepting order:", error);
+      alert("Failed to accept order");
+    }
+  };
+  const handleCancelOrderList = async (id) => {
+    try {
+      const res = await ApiService.cencalOrderList(id);
+      console.log("OrderList Cencel:", res);
+
+      alert("OrderList Cencel successfully!");
+
+      // Refresh the orders list
+      await loadOrders();
+    } catch (error) {
+      console.error("Error accepting order:", error);
+      alert("Failed to accept order");
+    }
+  };
+
+
   return (
     <div className="orders-management p-6">
       <div className="page-header mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Orders Management
-        </h1>
-        <p className="text-gray-500">
-          Manage all current orders and update their status
-        </p>
+        <h1 className="text-2xl font-semibold text-gray-800">Orders Management</h1>
+        <p className="text-gray-500">Manage all current orders and update their status</p>
       </div>
-
-      <div className="content-section mb-4">
-        <h2 className="text-lg font-semibold text-gray-700 mb-2">
-          Orders Management Content
-        </h2>
-        <p className="text-gray-600">
-          This page displays all current orders, with details and actions.
-        </p>
-      </div>
-
+      <Button onClick={() => navigate("/create-order")}>
+        Create Order
+      </Button>
       <div className="overflow-x-auto rounded-xl shadow-sm">
         {loading ? (
           <p className="text-gray-500">Loading orders...</p>
@@ -58,38 +106,68 @@ const OrdersManagement = () => {
                 <th className="px-4 py-3">Refund</th>
                 <th className="px-4 py-3">Price/Order</th>
                 <th className="px-4 py-3">Phone Number</th>
-                <th className="px-4 py-3">View</th>
+                <th className="px-4 py-3">Items</th>
               </tr>
             </thead>
-
             <tbody className="text-gray-800">
-              {orders.length > 0 ? (
-                orders.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="px-4 py-3">{item.id}</td>
-                    <td className="px-4 py-3">{item.numberOrder}</td>
-                    <td className="px-4 py-3">${item.totalPrice}</td>
-                    <td className="px-4 py-3">{item.discount}</td>
-                    <td className="px-4 py-3">{item.status}</td>
-                    <td className="px-4 py-3">{item.payment}</td>
-                    <td className="px-4 py-3">{item.refund}</td>
-                    <td className="px-4 py-3">{item.priceperorder}</td>
-                    <td className="px-4 py-3">{item.phonenumber}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        onClick={() => setSelectedOrder(item)}
+            {orders.length > 0 ? (
+              orders.map((item) => (
+                <tr key={item.id} className="border-b">
+                  <td className="px-4 py-3">{item.id}</td>
+                  <td className="px-4 py-3">{item.numberOrder}</td>
+                  <td className="px-4 py-3">${item.totalPrice}</td>
+                  <td className="px-4 py-3">{item.discount}</td>
+                  <td className="px-4 py-3">
+                  {item.status === "starting" ? (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleAcceptOrder(item.id)}
+                        sx={{
+                          bgcolor: "green",
+                          color: "white",
+                          "&:hover": {
+                            bgcolor: "darkgreen",
+                          },
+                        }}
                       >
-                        View Order
-                      </button>
-                    </td>
+                        Accept Order
+                      </Button>
+                      <Button
+                        onClick={() => handleCancelOrder(item.id)}
+                        sx={{
+                          bgcolor: "red",
+                          color: "white",
+                          "&:hover": {
+                            bgcolor: "darkgreen",
+                          },
+                        }}
+                      >
+                        Cancel Order
+                      </Button>
+                      
+                    </div>
+                  ) : (
+                    item.status
+                  )}
+                </td>
+                  <td className="px-4 py-3">{item.payment}</td>
+                  <td className="px-4 py-3">{item.refund}</td>
+                  <td className="px-4 py-3">{item.priceperorder}</td>
+                  <td className="px-4 py-3">{item.phonenumber}</td>
+                  <td className="px-4 py-3">
+                    <Button 
+                      variant="outlined" 
+                      size="small"
+                      onClick={() => handleOpenItemsModal(item.order_lists)}
+                    >
+                      View Items
+                    </Button>
+                  </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="text-center py-4 text-gray-500">
-                    No orders found.
-                  </td>
+                  <td colSpan="10" className="text-center py-4 text-gray-500">No orders found.</td>
                 </tr>
               )}
             </tbody>
@@ -97,72 +175,99 @@ const OrdersManagement = () => {
         )}
       </div>
 
-      {/* MODAL */}
-      {selectedOrder && (
-        <OrderModal
-          order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-        />
-      )}
+      {/* Modal for viewing order items */}
+      <Modal
+        open={openItemsModal}
+        onClose={handleCloseItemsModal}
+        aria-labelledby="order-items-modal"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 500,
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            bgcolor: 'background.paper',
+            border: '2px solid #000',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <h2 id="order-items-modal" className="text-xl font-semibold mb-4">
+            Order Items
+          </h2>
+          <div className="space-y-3">
+           
+            {selectedOrderItems && selectedOrderItems.length > 0 ? (
+              selectedOrderItems.map((orderItem) => (
+                <div
+                  key={orderItem.id}
+                  className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-gray-100 transition"
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-600">Product:</p>
+                      <p className="text-base text-gray-800">
+                        {orderItem.cart?.product?.name || 'N/A'} {orderItem.id}
+                      </p>
+
+                      <Button
+                        onClick={() => handleCancelOrderList(orderItem.id)}
+                        sx={{
+                          bgcolor: "red",
+                          color: "white",
+                          "&:hover": {
+                            bgcolor: "darkgreen",
+                          },
+                        }}
+                      >
+                        Cancel Order
+                      </Button>
+                      
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-600">Quantity:</p>
+                      <p className="text-base text-gray-800">
+                        {orderItem.cart?.quantity || 0}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-sm font-semibold text-gray-600">Status:</p>
+                      <p className="text-base text-gray-800">
+                        <span className={`px-2 py-1 rounded text-black text-xs font-semibold ${
+                          orderItem.status === 'starting' ? 'bg-green-500' :
+                          orderItem.status === 'accepted' ? 'bg-yellow-500' :
+                          orderItem.status === 'cancel' ? 'bg-red-500' :
+                          'bg-gray-500'
+                        }`}>
+                          {orderItem.status || 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">No items in this order.</p>
+            )}
+          </div>
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="contained"
+              onClick={handleCloseItemsModal}
+              sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
+            >
+              Close
+            </Button>
+          </div>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
 export default OrdersManagement;
-
-/* -------------------------------------------------------
-   ORDER MODAL COMPONENT
--------------------------------------------------------- */
-const OrderModal = ({ order, onClose }) => {
-  if (!order) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-full max-w-xl shadow-xl overflow-y-auto max-h-[90vh]">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">
-          Order Details (ID: {order.id})
-        </h2>
-
-        {/* Main Order Info */}
-        <div className="space-y-2 text-gray-700">
-          <p><strong>Order Number:</strong> {order.numberOrder}</p>
-          <p><strong>Total Price:</strong> ${order.totalPrice}</p>
-          <p><strong>Discount:</strong> {order.discount}</p>
-          <p><strong>Status:</strong> {order.status}</p>
-          <p><strong>Payment:</strong> {order.payment}</p>
-          <p><strong>Refund:</strong> {order.refund}</p>
-          <p><strong>Phone:</strong> {order.phonenumber}</p>
-        </div>
-
-        {/* Ordered Items */}
-        <h3 className="text-lg font-semibold mt-6 mb-2">Ordered Items</h3>
-
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-          {order.order_lists.map((item) => (
-            <div
-              key={item.id}
-              className="p-3 border rounded-lg bg-gray-50 shadow-sm"
-            >
-              <p><strong>Status:</strong> {item.status}</p>
-              <p><strong>Quantity:</strong> {item.cart.quantity}</p>
-              <p><strong>Product:</strong> {item.cart.product.name}</p>
-              <p><strong>Price:</strong> ${item.cart.product.price}</p>
-              <p><strong>Note:</strong> {item.cart.note}</p>
-              <p><strong>Table Number:</strong> {item.cart.table_number.number}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Close Button */}
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
