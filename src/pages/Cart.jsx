@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Footer } from '../components/footer-component';
+// Footer removed from Cart to prevent About Us content appearing in cart
 import '../styles/Cart.css';
 
 const Cart = () => {
@@ -62,6 +62,15 @@ const Cart = () => {
               <span>←</span>
             </button>
             <h1 className="cart-title">Shopping Cart</h1>
+            {/* Show table number if present (from QR) */}
+            {typeof window !== 'undefined' && localStorage.getItem('tableNumber') && (
+              <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.95rem', color: '#555', marginRight: '0.5rem' }}>Table</span>
+                <div style={{ background: '#f5f5f5', padding: '6px 10px', borderRadius: '8px', fontWeight: 600 }}>
+                  {localStorage.getItem('tableNumber')}
+                </div>
+              </div>
+            )}
           </div>
 
           {cartItems.length === 0 ? (
@@ -157,7 +166,7 @@ const Cart = () => {
         </div>
       </section>
       
-      <Footer />
+      
     </div>
   );
 };

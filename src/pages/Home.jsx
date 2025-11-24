@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Footer } from "../components/footer-component";
+// Footer removed from Home to avoid showing About Us under New Food
 import { BestSellers } from "../components/best-sellers";
 import { productApi } from "../services/api";
 import "../styles/Home.css";
@@ -551,8 +551,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer removed on Home page */}
     </div>
   );
 };

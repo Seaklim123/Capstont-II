@@ -1,6 +1,5 @@
 import React from "react";
 import "../styles/AboutUs.css";
-import { Footer } from "../components/footer-component";
 
 function AboutUs() {
   return (
@@ -80,7 +79,7 @@ function AboutUs() {
         <button className="contact-btn">Contact of Person</button>
       </section>
 
-     <Footer />
+    
     </div>
   );
 }

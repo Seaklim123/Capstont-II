@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
-import { Footer } from "../components/footer-component.jsx";
 import { categoryApi, productApi } from "../services/api.js";
 
 function Menu() {
@@ -139,7 +138,7 @@ function Menu() {
     return null;
   };
 
-  // Handle add to cart click
+  // Handle add to cart click — navigate to product detail (legacy behavior)
   const handleAddToCart = (itemId) => {
     navigate(`/product/${itemId}`);
   };
@@ -842,7 +841,7 @@ function Menu() {
         </div>
       </section>
 
-      <Footer />
+      
     </div>
   );
 }

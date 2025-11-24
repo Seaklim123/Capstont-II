@@ -10,6 +10,7 @@ import Cart from "./pages/Cart";
 import ApiTest from "./pages/ApiTest";
 // import Order from "./pages/Order";
 import { Header } from "./components/header";
+import SiteFooter from "./components/site-footer";
 import "./styles/App.css";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
             <Route path="/api-test" element={<ApiTest />} />
           </Routes>
         </main>
+        <SiteFooter />
       </div>
     </BrowserRouter>
   );

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import "../styles/Discount.css";
-import { Footer } from "../components/footer-component";
 import { categoryApi, productApi } from '../services/api';
 
 function Discount() {
+  const navigate = useNavigate();
   // State management
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -120,28 +121,76 @@ function Discount() {
         <h2 className="section-title">All Dishes ({filteredProducts.length})</h2>
         {filteredProducts.length === 0 ? (
           <p style={{ textAlign: 'center', padding: '20px' }}>No products found</p>
-        ) : (
+          ) : (
           <div className="dishes-grid">
             {filteredProducts.map((product) => (
-              <div className="dish-card" key={product.id}>
-                <img 
-                  src={getImageUrl(product.image || product.image_path)} 
-                  alt={product.name}
-                  onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
-                />
-                <h4>{product.name}</h4>
-                <p>${product.price}</p>
-                {product.discount > 0 && (
-                  <span className="discount-badge">{product.discount}% OFF</span>
-                )}
-                <button className="add-btn">Add to Cart</button>
+              <div className="dish-card" key={product.id} style={{ cursor: 'pointer' }}>
+                <div style={{ position: 'relative' }}>
+                  {product.is_best_seller && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      backgroundColor: '#333',
+                      color: 'white',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.65rem',
+                      fontWeight: '600',
+                      zIndex: 2
+                    }}>Best Seller</span>
+                  )}
+                  {product.sold_count > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      backgroundColor: '#333',
+                      color: 'white',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      fontSize: '0.65rem',
+                      fontWeight: '600',
+                      zIndex: 2
+                    }}>{product.sold_count}+ Sold</span>
+                  )}
+
+                  <div style={{ height: '200px', overflow: 'hidden' }}>
+                    <img
+                      src={getImageUrl(product.image || product.image_path)}
+                      alt={product.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/600x400?text=No+Image"; }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ padding: '1.0rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <h4 style={{ margin: 0 }}>{product.name}</h4>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>${parseFloat(product.price).toFixed(2)}</span>
+                        {product.discount > 0 && (
+                          <span style={{ textDecoration: 'line-through', color: '#777' }}>${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}</span>
+                        )}
+                      </div>
+                      {product.discount > 0 && (
+                        <span style={{ fontSize: '0.85rem', color: '#d9534f' }}>{product.discount}% OFF</span>
+                      )}
+                    </div>
+
+                    <button className="add-btn" onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}>Add to Cart</button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      <Footer />
+      
     </div>
         
   );

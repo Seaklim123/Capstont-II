@@ -1,0 +1,41 @@
+/* Site footer styles matching the dark 3-column layout from the screenshot */
+.site-footer{
+  background: #042424; /* dark teal */
+  color: #dbeeee;
+  padding: 48px 0 20px;
+  font-family: inherit;
+}
+.site-footer .container{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.site-footer-top{
+  display:flex;
+  gap: 24px;
+  align-items:flex-start;
+  justify-content: space-between;
+  flex-wrap:wrap;
+}
+.footer-col{flex:1; min-width:200px}
+.footer-brand .welcome{color:#8ad3d3; font-size:14px}
+.footer-brand .brand-title{font-size:40px; margin:8px 0 0; color:#e9ffff}
+.footer-links h4, .footer-contact h4{color:#dbeeee; margin-bottom:12px}
+.footer-links ul{list-style:none; padding:0; margin:0}
+.footer-links li{margin:8px 0}
+.footer-links a{color:#cbe9e9; text-decoration:none}
+.footer-links a:hover{color:#fff; text-decoration:underline}
+.contact-email{color:#bfe6e6; margin-bottom:10px}
+.socials{display:flex; gap:10px}
+.social-btn{display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:transparent; border:1px solid rgba(255,255,255,0.08); color:#bfe6e6; text-decoration:none}
+.social-btn svg{display:block}
+.footer-divider{border:0; border-top:1px solid rgba(255,255,255,0.06); margin:28px 0}
+.site-footer-bottom{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+.site-footer-bottom a{color:#a8d2d2; text-decoration:none}
+.site-footer-bottom .bottom-right{color:#9fbdbd}
+
+@media (max-width:780px){
+  .footer-brand .brand-title{font-size:32px}
+  .site-footer-top{gap:16px}
+  .site-footer-bottom{font-size:13px}
+}
