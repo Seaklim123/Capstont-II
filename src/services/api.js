@@ -4,17 +4,6 @@ const API_ADMIN_PREFIX = '/v1/admin';
 const API_AUTH_PREFIX = '/v1/auth';
 
 class ApiService {
-    // Get user by ID
-    async getUserById(id, token) {
-      const response = await this.request(`/v1/admin/users/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      // Laravel returns { message, data }
-      return response.data || response;
-    }
   // Auth API method
   async login(credentials) {
       const response = await this.request(`${API_AUTH_PREFIX}/login`, {
@@ -413,6 +402,77 @@ class ApiService {
       }),
     });
     // Handle Laravel Resource response format
+    return this.handleResponse(response);
+  }
+
+  // Users API methods
+  async getUsers() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users`);
+    return this.handleResponse(response);
+  }
+
+  async getUserById(id) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}`);
+    return this.handleResponse(response);
+  }
+
+  async createUser(userData) {
+    console.log('Creating user with data:', userData);
+    const response = await this.request(`${API_ADMIN_PREFIX}/users`, {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async createCashier(userData) {
+    console.log('Creating cashier with data:', userData);
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/cashier`, {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateUser(id, userData) {
+    console.log('Updating user with data:', userData);
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async deleteUser(id) {
+    return this.request(`${API_ADMIN_PREFIX}/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async toggleUserStatus(id) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}/toggle-status`, {
+      method: 'PATCH',
+    });
+    return this.handleResponse(response);
+  }
+
+  async getCashiers() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/cashiers`);
+    return this.handleResponse(response);
+  }
+
+  async getActiveUsers() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/active`);
+    return this.handleResponse(response);
+  }
+
+  async searchUsers(query) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/search?q=${encodeURIComponent(query)}`);
+    return this.handleResponse(response);
+  }
+
+  async getUserStatistics() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/users/statistics`);
     return this.handleResponse(response);
   }
 }

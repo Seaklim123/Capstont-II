@@ -15,10 +15,10 @@ const UsersStaff = () => {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const response = await api.request('/v1/admin/users', { method: 'GET' });
-      const staffList = (response.data || response).filter(user => user.role === 'cashier');
-      setStaff(staffList);
+      const response = await api.getCashiers();
+      setStaff(response || []);
     } catch (error) {
+      console.error('Error fetching staff:', error);
       toast.error('Failed to load staff');
       setStaff([]);
     } finally {
@@ -49,11 +49,12 @@ const UsersStaff = () => {
   const confirmDelete = async () => {
     if (showDeleteConfirm) {
       try {
-        await api.request(`/v1/admin/users/${showDeleteConfirm.id}`, { method: 'DELETE' });
-        toast.success('Staff deleted');
+        await api.deleteUser(showDeleteConfirm.id);
+        toast.success('Staff member deleted successfully');
         fetchStaff();
-      } catch (err) {
-        toast.error('Failed to delete staff');
+      } catch (error) {
+        console.error('Error deleting staff:', error);
+        toast.error('Failed to delete staff member');
       }
       setShowDeleteConfirm(null);
     }
@@ -63,46 +64,57 @@ const UsersStaff = () => {
     setShowDeleteConfirm(null);
   };
 
-  const handleSave = async (form) => {
+  const handleSave = async (formData) => {
     try {
       if (editingUser) {
-        // Edit staff
-        await api.request(`/v1/admin/users/${editingUser.id}`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            username: form.username,
-            role: form.role,
-            status: form.status,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-        toast.success('Staff updated');
+        // Edit staff - prepare data for update
+        const updateData = {
+          username: formData.username,
+          email: formData.email,
+          primary_phone: formData.primary_phone,
+          secondary_phone: formData.secondary_phone,
+          role: formData.role,
+          status: formData.status,
+        };
+
+        // Only include password if it's provided
+        if (formData.password && formData.password.trim()) {
+          updateData.password = formData.password;
+        }
+
+        await api.updateUser(editingUser.id, updateData);
+        toast.success('Staff member updated successfully');
       } else {
-        // Add staff
-        await api.request('/v1/admin/users', {
-          method: 'POST',
-          body: JSON.stringify({
-            username: form.username,
-            password: form.password,
-            password_confirmation: form.password_confirmation, // <-- Use the confirmation field!
-            role: form.role,
-            status: form.status,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-        toast.success('Staff added');
+        // Add new staff - use cashier endpoint
+        const newUserData = {
+          username: formData.username,
+          email: formData.email,
+          primary_phone: formData.primary_phone,
+          secondary_phone: formData.secondary_phone,
+          password: formData.password,
+          password_confirmation: formData.password_confirmation,
+          role: formData.role,
+          status: formData.status,
+        };
+
+        await api.createCashier(newUserData);
+        toast.success('Staff member added successfully');
       }
       setShowForm(false);
       setEditingUser(null);
       fetchStaff();
-    } catch (err) {
-      toast.error('Failed to save staff');
+    } catch (error) {
+      console.error('Error saving staff:', error);
+      const errorMessage = error.message || 'Failed to save staff member';
+      toast.error(errorMessage);
     }
   };
 
   const filteredStaff = staff.filter(user =>
     (user.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.status || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.status || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.primary_phone || '').includes(searchTerm)
   );
 
   return (
@@ -143,6 +155,8 @@ const UsersStaff = () => {
           <thead>
             <tr>
               <th>Username</th>
+              <th>Email</th>
+              <th>Primary Phone</th>
               <th>Role</th>
               <th>Status</th>
               <th>Created At</th>
@@ -150,34 +164,58 @@ const UsersStaff = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredStaff.map(user => (
-              <tr key={user.id}>
-                <td>{user.username}</td>
-                <td>{user.role}</td>
-                <td>{user.status}</td>
-                <td>{user.created_at}</td>
-                <td>
-                  <div className="flex gap-xs">
-                    <button
-                      className="btn btn-sm btn-outline flex items-center gap-xxs"
-                      onClick={() => handleEdit(user)}
-                      title="Edit"
-                    >
-                      <Edit size={16} />
-                      <span className="hidden md:inline">Edit</span>
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger flex items-center gap-xxs"
-                      onClick={() => handleDelete(user)}
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                      <span className="hidden md:inline">Delete</span>
-                    </button>
-                  </div>
+            {loading ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                  Loading staff members...
                 </td>
               </tr>
-            ))}
+            ) : filteredStaff.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                  {staff.length === 0 ? 'No staff members found.' : 'No staff members match your search.'}
+                </td>
+              </tr>
+            ) : (
+              filteredStaff.map(user => (
+                <tr key={user.id}>
+                  <td>{user.username}</td>
+                  <td>{user.email || 'N/A'}</td>
+                  <td>{user.primary_phone || 'N/A'}</td>
+                  <td>
+                    <span className={`badge ${user.role === 'cashier' ? 'badge-primary' : 'badge-secondary'}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${user.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td>{user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</td>
+                  <td>
+                    <div className="flex gap-xs">
+                      <button
+                        className="btn btn-sm btn-outline flex items-center gap-xxs"
+                        onClick={() => handleEdit(user)}
+                        title="Edit"
+                      >
+                        <Edit size={16} />
+                        <span className="hidden md:inline">Edit</span>
+                      </button>
+                      <button
+                        className="btn btn-sm btn-danger flex items-center gap-xxs"
+                        onClick={() => handleDelete(user)}
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                        <span className="hidden md:inline">Delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
