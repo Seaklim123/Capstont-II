@@ -191,7 +191,7 @@ const UserForm = ({ isOpen, onClose, onSave, editingUser }) => {
             <label>Role</label>
             <select name="role" value={form.role} onChange={handleChange}>
               <option value="cashier">Cashier</option>
-              <option value="founder_restaurant">Founder</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           <div className="form-group">

@@ -9,13 +9,15 @@ const UsersStaff = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all'); // Add role filter
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const response = await api.getCashiers();
+      // Use getUsers() to get all users instead of just cashiers
+      const response = await api.getUsers();
       setStaff(response || []);
     } catch (error) {
       console.error('Error fetching staff:', error);
@@ -110,12 +112,19 @@ const UsersStaff = () => {
     }
   };
 
-  const filteredStaff = staff.filter(user =>
-    (user.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.status || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.primary_phone || '').includes(searchTerm)
-  );
+  const filteredStaff = staff.filter(user => {
+    // Filter by search term
+    const matchesSearch = 
+      (user.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.status || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.primary_phone || '').includes(searchTerm);
+
+    // Filter by role
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
 
   return (
     <div className="p-xl">
@@ -124,7 +133,7 @@ const UsersStaff = () => {
         <div>
           <h1 className="text-3xl font-bold text-primary mb-sm">Users & Staff Management</h1>
           <p className="text-secondary">
-            Manage staff accounts, roles, and permissions
+            Manage all user accounts, roles, and permissions ({staff.length} total users)
           </p>
         </div>
         <div>
@@ -146,6 +155,17 @@ const UsersStaff = () => {
             onChange={e => setSearchTerm(e.target.value)}
             className="input input-bordered ml-xs"
           />
+        </div>
+        <div className="filter-controls">
+          <select
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+            className="input input-bordered"
+          >
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="cashier">Cashier</option>
+          </select>
         </div>
       </div>
 
@@ -183,8 +203,12 @@ const UsersStaff = () => {
                   <td>{user.email || 'N/A'}</td>
                   <td>{user.primary_phone || 'N/A'}</td>
                   <td>
-                    <span className={`badge ${user.role === 'cashier' ? 'badge-primary' : 'badge-secondary'}`}>
-                      {user.role}
+                    <span className={`badge ${
+                      user.role === 'admin' ? 'badge-danger' :
+                      user.role === 'cashier' ? 'badge-primary' : 
+                      'badge-secondary'
+                    }`}>
+                      {user.role === 'admin' ? 'Admin' : 'Cashier'}
                     </span>
                   </td>
                   <td>
