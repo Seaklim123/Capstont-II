@@ -51,10 +51,10 @@ const MenuManagement = () => {
         ...item,
         available: item.status === 'available' || item.available,
         category: item.category_id || item.category,
-        price: parseFloat(item.price || 0), // Use actual price field from database
-        discount: parseFloat(item.discount || 0), // Keep discount separate
-        image: item.image_url || '', // Use image URL from API service
-        originalImagePath: item.originalImagePath // Keep original path for debugging
+        price: parseFloat(item.price || 0),
+        discount: parseFloat(item.discount || 0), // Discount is stored as dollar amount
+        image: item.image_url || '',
+        originalImagePath: item.originalImagePath
       }));
       
       // Transform categories data to ensure consistent field names

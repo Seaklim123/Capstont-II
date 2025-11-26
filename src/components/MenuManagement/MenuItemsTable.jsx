@@ -86,45 +86,31 @@ const MenuItemsTable = ({
                     </span>
                   </td>
                   <td>
-                    {item.discount > 0 && item.price > 0 ? (() => {
-                      // Check if discount looks like a percentage (0-100) or dollar amount
-                      const isPercentage = item.discount <= 100 && item.discount <= item.price;
-                      const discountAmount = isPercentage ? (item.price * item.discount / 100) : item.discount;
-                      const finalPrice = item.price - discountAmount;
-                      
-                      return (
-                        <div className="text-sm">
-                          <span className="font-semibold text-success">
-                            ${finalPrice.toFixed(2)}
-                          </span>
-                          <br />
-                          <span className="text-muted line-through text-xs">
-                            ${item.price.toFixed(2)}
-                          </span>
-                        </div>
-                      );
-                    })() : (
+                    {item.discount > 0 && item.price > 0 ? (
+                      <div className="text-sm">
+                        <span className="font-semibold text-success">
+                          ${(item.price - item.discount).toFixed(2)}
+                        </span>
+                        <br />
+                        <span className="text-muted line-through text-xs">
+                          ${item.price.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
                       <span className="font-semibold text-success">
                         ${(item.price || 0).toFixed(2)}
                       </span>
                     )}
                   </td>
                   <td>
-                    {item.discount > 0 && item.price > 0 ? (() => {
-                      // Check if discount looks like a percentage (0-100) or dollar amount
-                      const isPercentage = item.discount <= 100 && item.discount <= item.price;
-                      const discountPercent = isPercentage ? item.discount : Math.round((item.discount / item.price) * 100);
-                      const discountAmount = isPercentage ? (item.price * item.discount / 100) : item.discount;
-                      
-                      return (
-                        <span 
-                          className="badge badge-error"
-                          title={`${discountPercent}% discount = $${discountAmount.toFixed(2)} off`}
-                        >
-                          {discountPercent}%
-                        </span>
-                      );
-                    })() : (
+                    {item.discount > 0 && item.price > 0 ? (
+                      <span 
+                        className="badge badge-error"
+                        title={`${Math.round((item.discount / item.price) * 100)}% discount = $${item.discount.toFixed(2)} off`}
+                      >
+                        {Math.round((item.discount / item.price) * 100)}%
+                      </span>
+                    ) : (
                       <span className="text-muted">-</span>
                     )}
                   </td>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Link, FileImage } from 'lucide-react';
+import '../../styles/image-preview.css';
 
 const CategoryForm = ({
   isOpen,
@@ -16,6 +17,7 @@ const CategoryForm = ({
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [imageMode, setImageMode] = useState('file'); // Always use file mode
+  const [isExistingImage, setIsExistingImage] = useState(false); // Track if showing existing image
   const [errors, setErrors] = useState({});
 
   // Initialize form when editing or reset when adding
@@ -25,15 +27,26 @@ const CategoryForm = ({
         label: editingCategory.label || editingCategory.name || '',
         image: editingCategory.image || ''
       });
-      setImagePreview(''); // Don't show existing images in edit mode
+      
+      // Show existing image when editing (if it exists)
+      const existingImageUrl = editingCategory.image_url || editingCategory.image;
+      setImagePreview(existingImageUrl || '');
+      setIsExistingImage(!!existingImageUrl);
       setImageFile(null);
       setImageMode('file'); // Always use file mode
+      
+      console.log('Editing category initialized:', {
+        category: editingCategory,
+        hasImage: !!existingImageUrl,
+        imageUrl: existingImageUrl
+      });
     } else {
       setFormData({
         label: '',
         image: ''
       });
       setImagePreview('');
+      setIsExistingImage(false);
       setImageFile(null);
       setImageMode('file'); // Always use file mode
     }
@@ -57,6 +70,11 @@ const CategoryForm = ({
     return () => {
       document.body.classList.remove('modal-open');
       document.body.style.top = '';
+      
+      // Clean up any object URL when component unmounts
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
     };
   }, [isOpen]);
 
@@ -120,6 +138,7 @@ const CategoryForm = ({
       setImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
+      setIsExistingImage(false); // Mark as new upload
       
       setFormData(prev => ({
         ...prev,
@@ -133,6 +152,7 @@ const CategoryForm = ({
   const removeImage = () => {
     setImageFile(null);
     setImagePreview('');
+    setIsExistingImage(false);
     setFormData(prev => ({
       ...prev,
       image: ''
@@ -140,6 +160,11 @@ const CategoryForm = ({
     
     const fileInput = document.getElementById('category-image-upload');
     if (fileInput) fileInput.value = '';
+    
+    // Clean up any object URL if it exists
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -228,29 +253,39 @@ const CategoryForm = ({
               ) : (
                 // Image Preview
                 <div className="mb-3">
-                  <div className="border rounded overflow-hidden bg-gray-light" style={{ maxWidth: '250px' }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Category Preview" 
-                      className="w-full h-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                      onLoad={(e) => {
-                        e.target.style.display = 'block';
-                        e.target.nextSibling.style.display = 'none';
-                      }}
-                    />
-                    <div style={{display: 'none'}} className="p-4 text-center text-gray">
+                  {isExistingImage && (
+                    <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
+                      <p className="text-blue-800 text-sm flex items-center gap-2">
+                        <FileImage size={16} />
+                        Current category image - Upload a new image to replace it
+                      </p>
+                    </div>
+                  )}
+                  <div className="image-preview-container border rounded overflow-hidden bg-gray-light">
+                    <div className="image-preview-wrapper">
+                      <img 
+                        src={imagePreview} 
+                        alt="Category Preview" 
+                        className="image-preview-img"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.nextElementSibling.style.display = 'flex';
+                        }}
+                        onLoad={(e) => {
+                          e.target.style.display = 'block';
+                          e.target.parentElement.nextElementSibling.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div style={{display: 'none'}} className="image-error-state p-4 text-center text-gray flex flex-col items-center justify-center">
                       <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Unable to load image</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="image-actions">
                     <label htmlFor="category-image-change" className="btn btn-secondary btn-sm cursor-pointer">
                       <Upload size={14} />
-                      Change Image
+                      {isExistingImage ? 'Replace Image' : 'Change Image'}
                     </label>
                     <button
                       type="button"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Link, FileImage } from 'lucide-react';
+import '../../styles/image-preview.css';
 
 const MenuItemForm = ({
   isOpen,
@@ -48,7 +49,9 @@ const MenuItemForm = ({
       
       console.log('Editing item initialized:', {
         item: editingItem,
-        imageMode: 'file', // Always file mode now
+        discountAmount: editingItem.discount,
+        calculatedDiscountPercent: discountPercent,
+        imageMode: 'file',
         hasImage: !!(editingItem.image_url || editingItem.image),
         imageUrl: editingItem.image_url || editingItem.image
       });
@@ -161,7 +164,7 @@ const MenuItemForm = ({
     }
 
     // Calculate discount amount from percentage
-    const price = parseFloat(formData.price);
+    const price = parseFloat(formData.price) || 0;
     const discountPercent = formData.discount ? parseFloat(formData.discount) : 0;
     const discountAmount = discountPercent > 0 ? (price * discountPercent / 100) : 0;
 
@@ -169,21 +172,25 @@ const MenuItemForm = ({
       name: formData.name.trim(),
       category_id: formData.category,
       price: price,
-      discount: discountAmount > 0 ? discountAmount : null,
+      discount: discountAmount, // Always save as dollar amount
       description: formData.description.trim(),
       status: formData.status,
       imageMode: 'file', // Always file mode
       // Include image file name if selected
       image: imageFile ? imageFile.name : '',
-      // Include percentage for frontend display
+      // Include percentage for frontend display only (not saved to DB)
       discountPercent: discountPercent
     };
 
-    console.log('Form submission with percentage calculation:', {
+    console.log('Form submission with discount calculation:', {
       originalPrice: price,
       discountPercent: discountPercent,
       calculatedDiscountAmount: discountAmount,
-      finalPrice: price - discountAmount
+      finalPrice: price - discountAmount,
+      willSaveToDatabase: {
+        price: price,
+        discount: discountAmount // This dollar amount goes to database
+      }
     });
 
     console.log('Form submission data:', {
@@ -390,26 +397,28 @@ const MenuItemForm = ({
               ) : (
                 // Image Preview
                 <div className="mb-3">
-                  <div className="border rounded overflow-hidden bg-gray-light" style={{ maxWidth: '250px' }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full h-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                      onLoad={(e) => {
-                        e.target.style.display = 'block';
-                        e.target.nextSibling.style.display = 'none';
-                      }}
-                    />
-                    <div style={{display: 'none'}} className="p-4 text-center text-gray">
-                      <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
+                  <div className="image-preview-container menu-item-image-preview">
+                    <div className="image-preview-wrapper">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="image-preview-img"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.nextElementSibling.style.display = 'flex';
+                        }}
+                        onLoad={(e) => {
+                          e.target.style.display = 'block';
+                          e.target.parentElement.nextElementSibling.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div style={{display: 'none'}} className="image-error-state">
+                      <ImageIcon size={24} className="opacity-50" />
                       <p className="text-sm">Unable to load image</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-3">
+                  <div className="image-actions">
                     <label htmlFor="image-change" className="btn btn-secondary btn-sm cursor-pointer">
                       <Upload size={14} />
                       Change Image
