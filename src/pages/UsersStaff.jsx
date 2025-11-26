@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Shield, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import UserForm from '../components/UsersStaff/UserForm';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import PermissionGuard from '../components/common/PermissionGuard';
+import '../styles/permissions.css';
 
 const UsersStaff = () => {
   const [staff, setStaff] = useState([]);
@@ -12,6 +15,11 @@ const UsersStaff = () => {
   const [roleFilter, setRoleFilter] = useState('all'); // Add role filter
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const { hasPermission, user } = useAuth();
+
+  // Check if user has permission to manage users
+  const canManageUsers = hasPermission('manage_users');
+  const canDeleteUsers = hasPermission('delete_items');
 
   const fetchStaff = async () => {
     try {
@@ -33,11 +41,19 @@ const UsersStaff = () => {
   }, []);
 
   const handleAdd = () => {
+    if (!canManageUsers) {
+      toast.error('You don\'t have permission to add users');
+      return;
+    }
     setEditingUser(null);
     setShowForm(true);
   };
 
   const handleEdit = (user) => {
+    if (!canManageUsers) {
+      toast.error('You don\'t have permission to edit users');
+      return;
+    }
     setEditingUser(user);
     setShowForm(true);
   };
@@ -45,6 +61,10 @@ const UsersStaff = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   const handleDelete = (user) => {
+    if (!canDeleteUsers) {
+      toast.error('You don\'t have permission to delete users');
+      return;
+    }
     setShowDeleteConfirm(user);
   };
 
@@ -67,6 +87,11 @@ const UsersStaff = () => {
   };
 
   const handleSave = async (formData) => {
+    if (!canManageUsers) {
+      toast.error('You don\'t have permission to manage users');
+      return;
+    }
+
     try {
       if (editingUser) {
         // Edit staff - prepare data for update
@@ -125,6 +150,16 @@ const UsersStaff = () => {
 
     return matchesSearch && matchesRole;
   });
+
+  // If user doesn't have permission to manage users, show access denied
+  if (!canManageUsers) {
+    return (
+      <PermissionGuard 
+        permission="manage_users" 
+        fallbackMessage="This section is restricted to users with user management privileges."
+      />
+    );
+  }
 
   return (
     <div className="p-xl">
@@ -220,17 +255,19 @@ const UsersStaff = () => {
                   <td>
                     <div className="flex gap-xs">
                       <button
-                        className="btn btn-sm btn-outline flex items-center gap-xxs"
+                        className={`btn btn-sm btn-outline flex items-center gap-xxs ${!canManageUsers ? 'disabled' : ''}`}
                         onClick={() => handleEdit(user)}
-                        title="Edit"
+                        title={canManageUsers ? "Edit" : "No permission to edit"}
+                        disabled={!canManageUsers}
                       >
                         <Edit size={16} />
                         <span className="hidden md:inline">Edit</span>
                       </button>
                       <button
-                        className="btn btn-sm btn-danger flex items-center gap-xxs"
+                        className={`btn btn-sm btn-danger flex items-center gap-xxs ${!canDeleteUsers ? 'disabled' : ''}`}
                         onClick={() => handleDelete(user)}
-                        title="Delete"
+                        title={canDeleteUsers ? "Delete" : "No permission to delete"}
+                        disabled={!canDeleteUsers}
                       >
                         <Trash2 size={16} />
                         <span className="hidden md:inline">Delete</span>

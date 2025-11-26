@@ -99,9 +99,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       const loginData = await loginResponse.json();
-      const { token } = loginData;
+      
+      // Debug: Log the entire response to see structure
+      console.log('Login response data:', loginData);
+      
+      // Try different possible token property names
+      const token = loginData.token || loginData.access_token || loginData.data?.token || loginData.data?.access_token;
+      
+      console.log('Extracted token:', token);
       
       if (!token) {
+        console.error('No token found in response. Response structure:', Object.keys(loginData));
         throw new Error('No token received from server');
       }
 
@@ -120,7 +128,7 @@ export const AuthProvider = ({ children }) => {
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          userData = profileData.user || profileData;
+          userData = profileData.user || profileData.data || profileData;
         } else {
           console.warn('Profile endpoint failed, using fallback user data');
         }
@@ -133,7 +141,7 @@ export const AuthProvider = ({ children }) => {
         userData = {
           id: Date.now(), // Temporary ID
           username: credentials.username,
-          role: 'founder_restaurant', // Default role, this should be determined by backend
+          role: 'admin', // Default role based on your current system
           name: credentials.username,
           email: `${credentials.username}@example.com`, // Placeholder email
         };
@@ -189,7 +197,7 @@ export const AuthProvider = ({ children }) => {
   const hasRole = (requiredRole) => {
     if (!user) return false;
     const roleHierarchy = {
-      'founder_restaurant': 2,
+      'admin': 2,
       'cashier': 1
     };
 
@@ -203,7 +211,7 @@ export const AuthProvider = ({ children }) => {
     if (!user) return false;
 
     const permissions = {
-      'founder_restaurant': [
+      'admin': [
         'view_dashboard',
         'manage_orders',
         'manage_menu',

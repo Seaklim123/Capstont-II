@@ -89,15 +89,19 @@ const TableForm = ({
       newErrors.number = 'Table number is required';
     } else if (trimmedNumber.length > 10) {
       newErrors.number = 'Table number must be less than 10 characters';
+    } else if (!/^[a-zA-Z0-9]+$/.test(trimmedNumber)) {
+      newErrors.number = 'Table number can only contain letters and numbers';
     } else {
-      // Check for duplicate table number
-      const isDuplicate = existingTables.some(table => 
-        table.number === trimmedNumber && 
-        (!editingTable || table.id !== editingTable.id)
-      );
+      // Check for duplicate table number (case-insensitive)
+      const isDuplicate = existingTables.some(table => {
+        const existingNumber = String(table.number || table.table_number || '').toLowerCase().trim();
+        const newNumber = trimmedNumber.toLowerCase();
+        return existingNumber === newNumber && 
+               (!editingTable || table.id !== editingTable.id);
+      });
       
       if (isDuplicate) {
-        newErrors.number = 'Table number already exists';
+        newErrors.number = `Table number "${trimmedNumber}" already exists. Please choose a different number.`;
       }
     }
 
@@ -169,8 +173,9 @@ const TableForm = ({
                   name="number"
                   value={formData.number}
                   onChange={handleInputChange}
-                  placeholder="e.g., 1, 2, 3 or A1, B2"
+                  placeholder="e.g., 1, 2, A1, B2 (letters and numbers only)"
                   className={`form-input ${errors.number ? 'border-error' : ''}`}
+                  maxLength={10}
                 />
                 {errors.number && (
                   <span className="text-error text-sm">{errors.number}</span>

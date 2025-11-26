@@ -122,8 +122,40 @@ class ApiService {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          
+          // Handle duplicate table number error specifically
+          if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
+            const tableNumber = this.extractTableNumberFromError(errorData.message);
+            errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
+          } 
+          // Handle other validation errors
+          else if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+          // Handle Laravel validation errors
+          else if (errorData.errors) {
+            const firstErrorKey = Object.keys(errorData.errors)[0];
+            const firstError = errorData.errors[firstErrorKey];
+            errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+          }
+        } catch (parseError) {
+          // If we can't parse the error, fall back to the text response
+          try {
+            const errorText = await response.text();
+            if (errorText.includes('UNIQUE constraint failed: table_numbers.number')) {
+              errorMessage = 'Table number already exists. Please choose a different table number.';
+            } else {
+              errorMessage = `HTTP ${response.status}: ${errorText}`;
+            }
+          } catch {
+            errorMessage = `HTTP ${response.status}: Server error`;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -134,6 +166,17 @@ class ApiService {
       }
 
       throw error;
+    }
+  }
+
+  // Helper method to extract table number from database error
+  extractTableNumberFromError(errorMessage) {
+    try {
+      // Look for pattern like "values (4, available, ...)"
+      const match = errorMessage.match(/values \((\d+),/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
     }
   }
 
@@ -473,6 +516,52 @@ class ApiService {
 
   async getUserStatistics() {
     const response = await this.request(`${API_ADMIN_PREFIX}/users/statistics`);
+    return this.handleResponse(response);
+  }
+
+  // Dashboard API methods
+  async getDashboardData() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardEarnings() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/earnings`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardOrders() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/orders`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardTopProducts() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/top-products`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardFinancialSummary() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/financial-summary`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardEarningsChart() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/earnings/chart`);
+    return this.handleResponse(response);
+  }
+
+  async getDashboardCategoryPerformance() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/category-performance`);
+    return this.handleResponse(response);
+  }
+
+  async searchDashboardCategories(query) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/search/categories?q=${encodeURIComponent(query)}`);
+    return this.handleResponse(response);
+  }
+
+  async searchDashboardProducts(query) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/search/products?q=${encodeURIComponent(query)}`);
     return this.handleResponse(response);
   }
 }

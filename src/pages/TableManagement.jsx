@@ -21,6 +21,15 @@ const TableManagement = () => {
     loadTables();
   }, []);
 
+  // Helper function to check if table number exists
+  const isTableNumberExists = (number, excludeId = null) => {
+    return tables.some(table => {
+      const tableNumber = String(table.number || table.table_number || '').toLowerCase().trim();
+      const checkNumber = String(number || '').toLowerCase().trim();
+      return tableNumber === checkNumber && (!excludeId || table.id !== excludeId);
+    });
+  };
+
   const loadTables = async () => {
     try {
       setLoading(true);
@@ -76,6 +85,11 @@ const TableManagement = () => {
         status: tableData.status || 'available'
       };
 
+      // Validate table number is not NaN
+      if (isNaN(backendData.number)) {
+        throw new Error('Table number must be a valid number');
+      }
+
       console.log('Saving table data:', { tableData, backendData });
 
       if (editingTable) {
@@ -97,7 +111,26 @@ const TableManagement = () => {
       setEditingTable(null);
     } catch (err) {
       console.error('Error saving table:', err);
-      toast.error(`Failed to save table: ${err.message}`, { id: saveToast });
+      
+      // Handle specific error types with user-friendly messages
+      let errorMessage = 'Failed to save table';
+      
+      if (err.message.includes('already exists')) {
+        errorMessage = err.message;
+      } else if (err.message.includes('UNIQUE constraint failed')) {
+        errorMessage = 'Table number already exists. Please choose a different number.';
+      } else if (err.message.includes('valid number')) {
+        errorMessage = 'Please enter a valid table number';
+      } else if (err.message.includes('Cannot connect')) {
+        errorMessage = 'Cannot connect to server. Please check your connection.';
+      } else if (err.message && err.message !== 'Failed to save table') {
+        errorMessage = err.message;
+      }
+      
+      toast.error(errorMessage, { 
+        id: saveToast,
+        duration: 4000 // Show error longer for better visibility
+      });
     }
   };
 
