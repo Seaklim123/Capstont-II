@@ -1,5 +1,15 @@
 // API Base Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000';
+
+// Helper function to transform image paths to full URLs
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+  if (imagePath.startsWith('/storage/')) return `${STORAGE_BASE_URL}${imagePath}`;
+  if (imagePath.startsWith('storage/')) return `${STORAGE_BASE_URL}/${imagePath}`;
+  return `${STORAGE_BASE_URL}/storage/${imagePath}`;
+};
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -92,8 +102,17 @@ export const categoryApi = {
   getAll: async () => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.categories);
-      const response = await fetch(`${API_BASE_URL}/categories`);
-      return await handleResponse(response);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories`);
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      return result;
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
@@ -104,8 +123,14 @@ export const categoryApi = {
   getById: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`);
-      return await handleResponse(response);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`);
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      return result;
     } catch (error) {
       console.error(`Error fetching category ${id}:`, error);
       throw error;
@@ -131,7 +156,7 @@ export const categoryApi = {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/categories`,
+        `${API_BASE_URL}/v1/admin/categories`,
         createRequestOptions('POST', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -162,7 +187,7 @@ export const categoryApi = {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/categories/${id}`,
+        `${API_BASE_URL}/v1/admin/categories/${id}`,
         createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -180,7 +205,7 @@ export const categoryApi = {
         return await mockDelay({ success: true });
       }
       const response = await fetch(
-        `${API_BASE_URL}/categories/${id}`,
+        `${API_BASE_URL}/v1/admin/categories/${id}`,
         createRequestOptions('DELETE')
       );
       return await handleResponse(response);
@@ -199,8 +224,23 @@ export const productApi = {
   getAll: async () => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.products);
-      const response = await fetch(`${API_BASE_URL}/products`);
-      return await handleResponse(response);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products`);
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs and ensure all fields are present
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0),
+          category_id: product.category_id,
+          status: product.status || 'available',
+          is_bestseller: product.is_bestseller || product.is_best_seller || false,
+          sold_count: product.sold_count || 0
+        }));
+      }
+      return result;
     } catch (error) {
       console.error('Error fetching products:', error);
       throw error;
@@ -211,8 +251,19 @@ export const productApi = {
   getById: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.products.find(p => p.id === Number(id)) || null);
-      const response = await fetch(`${API_BASE_URL}/products/${id}`);
-      return await handleResponse(response);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`);
+      const result = await handleResponse(response);
+      // Transform image path to full URL and ensure all fields are present
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+        result.data.status = result.data.status || 'available';
+        result.data.is_bestseller = result.data.is_bestseller || result.data.is_best_seller || false;
+        result.data.sold_count = result.data.sold_count || 0;
+      }
+      return result;
     } catch (error) {
       console.error(`Error fetching product ${id}:`, error);
       throw error;
@@ -277,7 +328,7 @@ export const productApi = {
         return await mockDelay(newProduct);
       }
       const response = await fetch(
-        `${API_BASE_URL}/products`,
+        `${API_BASE_URL}/v1/admin/products`,
         createRequestOptions('POST', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -320,7 +371,7 @@ export const productApi = {
         return await mockDelay(_mock.products[idx]);
       }
       const response = await fetch(
-        `${API_BASE_URL}/products/${id}`,
+        `${API_BASE_URL}/v1/admin/products/${id}`,
         createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -338,7 +389,7 @@ export const productApi = {
         return await mockDelay({ success: true });
       }
       const response = await fetch(
-        `${API_BASE_URL}/products/${id}`,
+        `${API_BASE_URL}/v1/admin/products/${id}`,
         createRequestOptions('DELETE')
       );
       return await handleResponse(response);
@@ -354,6 +405,139 @@ export const productApi = {
 // ===========================================
 
 const AUTH_BASE = `${API_BASE_URL}/v1/auth`;
+const CASHIER_BASE = `${API_BASE_URL}/v1/cashier`;
+
+// ===========================================
+// CASHIER API (No Mock Data - Always use real backend)
+// ===========================================
+
+export const cashierProductApi = {
+  getAll: async () => {
+    try {
+      const url = `${CASHIER_BASE}/products`;
+      console.log('🔵 Fetching cashier products from:', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      console.log('🔵 Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Cashier products raw result:', result);
+      
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      console.log('✅ Transformed products:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching cashier products:', error.message);
+      console.error('❌ Full error:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      const url = `${CASHIER_BASE}/products/${id}`;
+      console.debug(`cashierProductApi.getById -> ${url}`);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+      }
+      console.debug('cashierProductApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching cashier product ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+export const cashierCategoryApi = {
+  getAll: async () => {
+    try {
+      const url = `${CASHIER_BASE}/categories`;
+      console.log('🔵 Fetching cashier categories from:', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      console.log('🔵 Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Cashier categories raw result:', result);
+      
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      console.log('✅ Transformed categories:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching cashier categories:', error.message);
+      console.error('❌ Full error:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      const url = `${CASHIER_BASE}/categories/${id}`;
+      console.debug(`cashierCategoryApi.getById -> ${url}`);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      console.debug('cashierCategoryApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching cashier category ${id}:`, error);
+      throw error;
+    }
+  }
+};
 
 export const authProductApi = {
   getAll: async () => {
@@ -362,9 +546,19 @@ export const authProductApi = {
       const url = `${AUTH_BASE}/products`;
       console.debug('authProductApi.getAll ->', url);
       const response = await fetchWithAuth(url);
-      const data = await handleResponse(response);
-      console.debug('authProductApi.getAll response ->', data);
-      return data;
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      console.debug('authProductApi.getAll response ->', result);
+      return result;
     } catch (error) {
       console.error('Error fetching auth products:', error);
       throw error;
@@ -377,9 +571,16 @@ export const authProductApi = {
       const url = `${AUTH_BASE}/products/${id}`;
       console.debug(`authProductApi.getById -> ${url}`);
       const response = await fetchWithAuth(url);
-      const data = await handleResponse(response);
-      console.debug('authProductApi.getById response ->', data);
-      return data;
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+      }
+      console.debug('authProductApi.getById response ->', result);
+      return result;
     } catch (error) {
       console.error(`Error fetching auth product ${id}:`, error);
       throw error;
@@ -461,9 +662,17 @@ export const authCategoryApi = {
       const url = `${AUTH_BASE}/categories`;
       console.debug('authCategoryApi.getAll ->', url);
       const response = await fetchWithAuth(url);
-      const data = await handleResponse(response);
-      console.debug('authCategoryApi.getAll response ->', data);
-      return data;
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      console.debug('authCategoryApi.getAll response ->', result);
+      return result;
     } catch (error) {
       console.error('Error fetching auth categories:', error);
       throw error;
@@ -476,9 +685,14 @@ export const authCategoryApi = {
       const url = `${AUTH_BASE}/categories/${id}`;
       console.debug(`authCategoryApi.getById -> ${url}`);
       const response = await fetchWithAuth(url);
-      const data = await handleResponse(response);
-      console.debug('authCategoryApi.getById response ->', data);
-      return data;
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      console.debug('authCategoryApi.getById response ->', result);
+      return result;
     } catch (error) {
       console.error(`Error fetching auth category ${id}:`, error);
       throw error;
@@ -759,5 +973,9 @@ export default {
     product: authProductApi,
     category: authCategoryApi,
     cart: authCartApi,
+  },
+  cashier: {
+    product: cashierProductApi,
+    category: cashierCategoryApi,
   },
 };
