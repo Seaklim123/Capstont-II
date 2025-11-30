@@ -19,21 +19,15 @@ function Menu() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        console.log('Fetching categories from API:', import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api');
+        console.log('Fetching categories from API');
         const response = await categoryApi.getAll();
         console.log('Categories response:', response);
-        // Log image paths for debugging
-        if (response.data) {
-          response.data.forEach(cat => {
-            console.log(`Category "${cat.name}" image:`, cat.image);
-          });
-        }
+        console.log('First category:', response.data?.[0]);
         setCategories(response.data || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError(`Backend not running. Please start your Laravel server: php artisan serve`);
-        // No fallback - only use API data
         setCategories([]);
       } finally {
         setLoading(false);
@@ -48,9 +42,11 @@ function Menu() {
     const fetchProducts = async () => {
       try {
         setProductsLoading(true);
-        console.log('Fetching products from API...');
+        console.log('Fetching products from API');
         const response = await productApi.getAll();
         console.log('Products response:', response);
+        console.log('First product:', response.data?.[0]);
+        console.log('Product with image_path:', response.data?.find(p => p.image_path));
         setProducts(response.data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -65,11 +61,59 @@ function Menu() {
 
   // Get image URL for products
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/300x200?text=No+Image";
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/storage/')) return `http://127.0.0.1:8000${imagePath}`;
-    if (imagePath.startsWith('storage/')) return `http://127.0.0.1:8000/${imagePath}`;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
+    if (!imagePath) return null;
+    
+    // If it's already a full URL, use it directly
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // If it starts with a slash, use it as-is with the base URL
+    if (imagePath.startsWith('/')) {
+      return `http://localhost:8000${imagePath}`;
+    }
+    
+    // Otherwise, just append to base URL
+    return `http://localhost:8000/${imagePath}`;
+  };
+
+  // Render product image with fallback
+  const renderProductImage = (product) => {
+    // Try all possible image fields
+    const imagePath = product.image_path || product.image || product.image_url || product.imageUrl || product.img;
+    
+    if (!imagePath) {
+      return (
+        <div style={{ 
+          width: '100%', 
+          height: '100%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backgroundColor: '#f0f0f0',
+          color: '#999',
+          fontSize: '0.9rem'
+        }}>
+          {product.name}
+        </div>
+      );
+    }
+    
+    const imageUrl = getImageUrl(imagePath);
+    console.log('Product:', product.name, 'Using:', imageUrl);
+    
+    return (
+      <img 
+        src={imageUrl} 
+        alt={product.name}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        onError={(e) => { 
+          console.error('Failed:', imageUrl);
+          e.target.style.display = 'none';
+          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0; color: #999; font-size: 0.9rem;">${product.name}</div>`;
+        }}
+      />
+    );
   };
 
   // Default icon for categories without images
@@ -98,43 +142,10 @@ function Menu() {
 
   // Helper function to get category image URL
   const getCategoryImageUrl = (category) => {
-    // Backend now returns 'image' field with full URL
-    if (category.image && category.image !== null && category.image !== '') {
-      console.log(`Processing image for ${category.name}:`, category.image);
-      return category.image;
+    const imagePath = category.image_path || category.image || category.image_url || category.imageUrl || category.img;
+    if (imagePath) {
+      return getImageUrl(imagePath);
     }
-    
-    // Fallback to image_path if still using old format
-    if (category.image_path && category.image_path !== null && category.image_path !== '') {
-      console.log(`Processing image_path for ${category.name}:`, category.image_path);
-      
-      // If it's a full URL, use it as is
-      if (category.image_path.startsWith('http')) {
-        return category.image_path;
-      }
-      
-      // Handle different Laravel storage path formats
-      let imagePath = category.image_path;
-      
-      // Remove leading slash if present
-      if (imagePath.startsWith('/')) {
-        imagePath = imagePath.substring(1);
-      }
-      
-      // If it starts with 'storage/', construct URL
-      if (imagePath.startsWith('storage/')) {
-        return `http://127.0.0.1:8000/${imagePath}`;
-      }
-      
-      // If it's just a filename, assume it's in storage/app/public/categories
-      if (!imagePath.includes('/')) {
-        return `http://127.0.0.1:8000/storage/categories/${imagePath}`;
-      }
-      
-      // Default: add storage prefix
-      return `http://127.0.0.1:8000/storage/${imagePath}`;
-    }
-    
     return null;
   };
 
@@ -160,6 +171,11 @@ function Menu() {
   const allProducts = getFilteredProducts();
   const bestSellerProducts = products.filter(p => p.is_best_seller === 1 || p.is_best_seller === true);
   const discountProducts = products.filter(p => p.discount && parseFloat(p.discount) > 0);
+  
+  console.log('Total products:', products.length);
+  console.log('Best seller products:', bestSellerProducts.length, bestSellerProducts);
+  console.log('Discount products:', discountProducts.length, discountProducts);
+  console.log('All products (filtered):', allProducts.length);
 
   // Pagination logic
   const filteredMenuItems = getFilteredProducts();
@@ -240,19 +256,15 @@ function Menu() {
               </div>
               
               {/* Dynamic Categories from API */}
-              {categories.slice(0, 6).map(category => {
-                const imageUrl = getCategoryImageUrl(category);
-                console.log(`=== Category: ${category.name} ===`);
-                console.log('Raw image:', category.image);
-                console.log('Processed URL:', imageUrl);
-                console.log('Has image:', !!category.image);
-                console.log('========================');
+              {categories.map(category => {
+                // Use image_path from database or fallback to emoji
+                const imageUrl = category.image_path || category.image || category.image_url;
                 
                 return (
                   <div 
                     key={category.id} 
                     className={`menu-category-item ${activeCategory === category.name ? 'active' : ''}`}
-                    onClick={() => setActiveCategory(category.name)}
+                    onClick={() => handleCategoryChange(category.name)}
                   >
                     <div className="menu-category-circle">
                       {imageUrl ? (
@@ -261,10 +273,8 @@ function Menu() {
                             src={imageUrl} 
                             alt={category.name}
                             className="category-image"
-                            onLoad={() => console.log(`✅ SUCCESS: Image loaded for ${category.name}`)}
                             onError={(e) => {
-                              console.log(`❌ FAILED: Image failed for ${category.name}`);
-                              console.log('Failed URL:', imageUrl);
+                              // If image fails to load, show emoji
                               e.target.style.display = 'none';
                               e.target.nextSibling.style.display = 'flex';
                             }}
@@ -278,7 +288,6 @@ function Menu() {
                         </>
                       ) : (
                         <span className="category-emoji">
-                          {console.log(`🔄 Using emoji for ${category.name} (no image)`)}
                           {getDefaultIcon(category.name)}
                         </span>
                       )}
@@ -362,12 +371,7 @@ function Menu() {
                       zIndex: 2
                     }}>50+ Sold</span>
                     <div style={{ height: '200px', overflow: 'hidden' }}>
-                      <img 
-                        src={getImageUrl(product.image || product.image_path)} 
-                        alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
-                      />
+                      {renderProductImage(product)}
                     </div>
                   </div>
                   
@@ -534,12 +538,7 @@ function Menu() {
                       zIndex: 2
                     }}>50+ Sold</span>
                     <div style={{ height: '200px', overflow: 'hidden' }}>
-                      <img 
-                        src={getImageUrl(product.image || product.image_path)} 
-                        alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
-                      />
+                      {renderProductImage(product)}
                     </div>
                   </div>
                   
@@ -718,12 +717,7 @@ function Menu() {
                         }}>All</div>
                       )}
                       <div style={{ height: '200px', overflow: 'hidden' }}>
-                        <img 
-                          src={getImageUrl(product.image || product.image_path)} 
-                          alt={product.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
-                        />
+                        {renderProductImage(product)}
                       </div>
                     </div>
                     

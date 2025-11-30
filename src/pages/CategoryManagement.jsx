@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { categoryApi } from '../services/api';
+import { adminCategoryApi } from '../services/api';
 import '../styles/CategoryManagement.css';
 
 const CategoryManagement = () => {
@@ -22,7 +22,7 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await categoryApi.getAll();
+      const response = await adminCategoryApi.getAll();
       setCategories(response.data || []);
     } catch (err) {
       setError('Failed to fetch categories: ' + err.message);
@@ -40,10 +40,10 @@ const CategoryManagement = () => {
 
       if (editingCategory) {
         // Update existing category
-        await categoryApi.update(editingCategory.id, formData);
+        await adminCategoryApi.update(editingCategory.id, formData);
       } else {
         // Create new category
-        await categoryApi.create(formData);
+        await adminCategoryApi.create(formData);
       }
 
       // Refresh categories list
@@ -68,7 +68,7 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      await categoryApi.delete(id);
+      await adminCategoryApi.delete(id);
       
       // Refresh categories list
       await fetchCategories();

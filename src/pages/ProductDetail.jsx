@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Footer } from '../components/footer-component';
 import { productApi } from '../services/api';
 import '../styles/ProductDetail.css';
 
@@ -303,9 +302,6 @@ const ProductDetail = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

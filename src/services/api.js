@@ -1,6 +1,6 @@
 // API Base Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
-const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000';
 
 // Helper function to transform image paths to full URLs
 const getImageUrl = (imagePath) => {
@@ -68,9 +68,8 @@ const fetchWithAuth = async (url, options = {}) => {
 
 // -------------------------
 // Mock mode (in-memory) support
-// Use mocks when explicitly enabled OR when not running in production (dev mode)
-// Set VITE_USE_MOCKS=true in .env to force mocks in production if desired
-const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true' || import.meta.env.MODE !== 'production';
+// Disabled - always use real backend API
+const USE_MOCKS = false;
 
 // Simple in-memory mock data (used when USE_MOCKS === true)
 const _mock = {
@@ -102,16 +101,9 @@ export const categoryApi = {
   getAll: async () => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.categories);
-      const response = await fetch(`${API_BASE_URL}/v1/admin/categories`);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/categories`);
       const result = await handleResponse(response);
-      // Transform image paths to full URLs
-      if (result.data && Array.isArray(result.data)) {
-        result.data = result.data.map(cat => ({
-          ...cat,
-          image: getImageUrl(cat.image || cat.image_path),
-          image_url: getImageUrl(cat.image || cat.image_path)
-        }));
-      }
+      // Keep all original fields from backend including image_path
       return result;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -123,7 +115,7 @@ export const categoryApi = {
   getById: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
-      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`);
+      const response = await fetch(`${API_BASE_URL}/categories/${id}`);
       const result = await handleResponse(response);
       // Transform image path to full URL
       if (result.data) {
@@ -224,20 +216,15 @@ export const productApi = {
   getAll: async () => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.products);
-      const response = await fetch(`${API_BASE_URL}/v1/admin/products`);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/products`);
       const result = await handleResponse(response);
-      // Transform image paths to full URLs and ensure all fields are present
+      // Keep all original fields from backend including image_path
       if (result.data && Array.isArray(result.data)) {
         result.data = result.data.map(product => ({
           ...product,
-          image: getImageUrl(product.image || product.image_path),
-          image_url: getImageUrl(product.image || product.image_path),
           price: parseFloat(product.price || 0),
           discount: parseFloat(product.discount || 0),
-          category_id: product.category_id,
-          status: product.status || 'available',
-          is_bestseller: product.is_bestseller || product.is_best_seller || false,
-          sold_count: product.sold_count || 0
+          is_best_seller: product.is_bestseller || product.is_best_seller || false
         }));
       }
       return result;
@@ -251,17 +238,13 @@ export const productApi = {
   getById: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.products.find(p => p.id === Number(id)) || null);
-      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/products/${id}`);
       const result = await handleResponse(response);
-      // Transform image path to full URL and ensure all fields are present
+      // Keep all original fields from backend
       if (result.data) {
-        result.data.image = getImageUrl(result.data.image || result.data.image_path);
-        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
         result.data.price = parseFloat(result.data.price || 0);
         result.data.discount = parseFloat(result.data.discount || 0);
-        result.data.status = result.data.status || 'available';
-        result.data.is_bestseller = result.data.is_bestseller || result.data.is_best_seller || false;
-        result.data.sold_count = result.data.sold_count || 0;
+        result.data.is_best_seller = result.data.is_bestseller || result.data.is_best_seller || false;
       }
       return result;
     } catch (error) {
@@ -761,7 +744,7 @@ export const authCartApi = {
   getCart: async () => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.cart);
-      const url = `${AUTH_BASE}/cart`;
+      const url = `${AUTH_BASE}/carts`;
       console.debug('authCartApi.getCart ->', url);
       const response = await fetchWithAuth(url);
       const data = await handleResponse(response);
@@ -782,7 +765,7 @@ export const authCartApi = {
         _mock.cart.push(item);
         return await mockDelay(item);
       }
-      const url = `${AUTH_BASE}/cart`;
+      const url = `${AUTH_BASE}/carts`;
       console.debug('authCartApi.addItem ->', url, itemData);
       const response = await fetchWithAuth(
         url,
@@ -806,7 +789,7 @@ export const authCartApi = {
         _mock.cart[idx] = { ..._mock.cart[idx], ...data };
         return await mockDelay(_mock.cart[idx]);
       }
-      const url = `${AUTH_BASE}/cart/${id}`;
+      const url = `${AUTH_BASE}/carts/${id}`;
       console.debug(`authCartApi.updateItem -> ${url}`, data);
       const response = await fetchWithAuth(
         url,
@@ -828,7 +811,7 @@ export const authCartApi = {
         _mock.cart = _mock.cart.filter(i => i.id !== Number(id));
         return await mockDelay({ success: true });
       }
-      const url = `${AUTH_BASE}/cart/${id}`;
+      const url = `${AUTH_BASE}/carts/${id}`;
       console.debug(`authCartApi.removeItem -> ${url}`);
       const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
       const data = await handleResponse(response);
@@ -964,6 +947,322 @@ export const authPaymentApi = {
 };
 
 // ===========================================
+// ADMIN API (For Admin Dashboard)
+// ===========================================
+
+export const adminOrderApi = {
+  // GET: Get orders by status
+  getByStatus: async (status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders/status?status=${status}`;
+      console.debug('adminOrderApi.getByStatus ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.getByStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching orders with status ${status}:`, error);
+      throw error;
+    }
+  },
+
+  // GET: Get all orders
+  getAll: async () => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders`;
+      console.debug('adminOrderApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update order status
+  updateStatus: async (orderId, status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders/${orderId}/status`;
+      console.debug('adminOrderApi.updateStatus ->', url, { status });
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', { status }));
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.updateStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating order ${orderId} status:`, error);
+      throw error;
+    }
+  }
+};
+
+export const adminCategoryApi = {
+  getAll: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.categories);
+      const url = `${API_BASE_URL}/v1/admin/categories`;
+      console.debug('adminCategoryApi.getAll ->', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      return result;
+    } catch (error) {
+      console.error('Error fetching admin categories:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      return result;
+    } catch (error) {
+      console.error(`Error fetching admin category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  create: async (categoryData) => {
+    try {
+      const isFormData = categoryData instanceof FormData || categoryData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData && !(categoryData instanceof FormData)) {
+        requestData = new FormData();
+        requestData.append('name', categoryData.name);
+        if (categoryData.image_path) {
+          requestData.append('image_path', categoryData.image_path);
+        }
+      } else {
+        requestData = categoryData;
+      }
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      };
+
+      if (!(requestData instanceof FormData)) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(requestData);
+      } else {
+        options.body = requestData;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories`, options);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating admin category:', error);
+      throw error;
+    }
+  },
+
+  update: async (id, categoryData) => {
+    try {
+      const isFormData = categoryData instanceof FormData || categoryData.image_path instanceof File;
+      let requestData;
+      let method = 'PUT';
+
+      if (isFormData && !(categoryData instanceof FormData)) {
+        requestData = new FormData();
+        if (categoryData.name) requestData.append('name', categoryData.name);
+        if (categoryData.image_path) requestData.append('image_path', categoryData.image_path);
+        requestData.append('_method', 'PUT');
+        method = 'POST';
+      } else if (categoryData instanceof FormData) {
+        requestData = categoryData;
+        requestData.append('_method', 'PUT');
+        method = 'POST';
+      } else {
+        requestData = categoryData;
+      }
+
+      const options = {
+        method: method,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      };
+
+      if (!(requestData instanceof FormData)) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(requestData);
+      } else {
+        options.body = requestData;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, options);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating admin category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      if (USE_MOCKS) {
+        _mock.categories = _mock.categories.filter(c => c.id !== Number(id));
+        return await mockDelay({ success: true });
+      }
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error deleting admin category ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+export const adminProductApi = {
+  getAll: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.products);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      return result;
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      if (USE_MOCKS) {
+        const product = _mock.products.data.find(p => p.id === id);
+        return await mockDelay({ data: product });
+      }
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching admin product:', error);
+      throw error;
+    }
+  },
+
+  create: async (productData) => {
+    try {
+      if (USE_MOCKS) return await mockDelay({ data: { id: Date.now(), ...productData } });
+      
+      const formData = new FormData();
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating admin product:', error);
+      throw error;
+    }
+  },
+
+  update: async (id, productData) => {
+    try {
+      if (USE_MOCKS) return await mockDelay({ data: { id, ...productData } });
+      
+      const formData = new FormData();
+      formData.append('_method', 'PUT');
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error updating admin product:', error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      if (USE_MOCKS) return await mockDelay({ success: true });
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting admin product:', error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
 // EXPORT DEFAULT API OBJECT
 // ===========================================
 export default {
@@ -977,5 +1276,9 @@ export default {
   cashier: {
     product: cashierProductApi,
     category: cashierCategoryApi,
+  },
+  admin: {
+    category: adminCategoryApi,
+    product: adminProductApi,
   },
 };

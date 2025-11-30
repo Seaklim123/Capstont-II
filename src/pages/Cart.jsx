@@ -50,7 +50,12 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    alert('Checkout functionality coming soon!');
+    if (cartItems.length === 0) {
+      alert('Your cart is empty!');
+      return;
+    }
+    // Navigate to payment page
+    navigate('/payment');
   };
 
   return (
