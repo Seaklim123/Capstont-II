@@ -6,8 +6,10 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
 
   // Generate the QR content (URL that customers will scan)
   const generateQRContent = () => {
-    const baseUrl = window.location.origin; // Gets current domain  
-    return `${baseUrl}/order/${table.qr_code}`; // URL customers will visit
+    // Point to your customer menu app
+    const customerMenuBaseUrl = 'http://localhost:5173';//----need u guys change it klun eng depending on local frontend user customer -------
+    // Include table number as query parameter so the menu knows which table ordered
+    return `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
   };
 
   // Generate QR code URL using QR Server API
@@ -37,7 +39,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   const handleDownload = () => {
     if (qrCodeURL) {
       const link = document.createElement('a');
-      link.download = `${table.table_number}-qr-code.png`;
+      link.download = `table-${table.number}-menu-qr-code.png`;
       link.href = qrCodeURL;
       link.target = '_blank';
       link.click();
@@ -57,7 +59,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
         <div className="modal-header">
           <h3 className="modal-title">
             <QrCode size={20} />
-            QR Code - {table.table_name}
+            QR Code - Table {table.number}
           </h3>
           <button className="btn btn-secondary btn-sm" onClick={onClose}>
             <X size={16} />
@@ -86,10 +88,12 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
           </div>
           
           <div className="qr-info">
-            <p><strong>Table:</strong> {table.table_name} (#{table.table_number})</p>
-            <p><strong>QR ID:</strong> <code>{table.qr_code}</code></p>
-            <p><strong>Scan URL:</strong></p>
+            <p><strong>Table:</strong> Table {table.number} (#{table.number})</p>
+            <p><strong>Menu URL:</strong></p>
             <code className="qr-url">{generateQRContent()}</code>
+            <small className="text-gray block mt-2">
+              Customers scan this QR code to access the menu for Table {table.number}
+            </small>
           </div>
 
           <div className="qr-actions">
