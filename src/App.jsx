@@ -55,6 +55,7 @@ function App() {
                 <Reports />
               </ProtectedRoute>
             } />
+            
           </Route>
           
           {/* Fallback route */}

@@ -182,7 +182,7 @@ class ApiService {
 
   // Categories API methods
   async getCategories() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
+    const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
     const categories = this.handleResponse(response);
     
     // Transform categories to include properly formatted image URLs
