@@ -21,14 +21,16 @@ function Orders() {
 
       if (token) {
         // Authenticated user - fetch from API
-        // Note: You'll need to create this endpoint in backend
-        // For now, using a placeholder
-        // const response = await authOrdersApi.getAll();
-        // setOrders(response.data || []);
-        
-        // Temporary: Show message that API is needed
-        toast.info('Order history API endpoint needed');
-        setOrders([]);
+        try {
+          const response = await authOrdersApi.getAll();
+          console.log('Orders API response:', response);
+          setOrders(response.data || response || []);
+        } catch (apiError) {
+          console.error('API error, falling back to localStorage:', apiError);
+          // Fallback to localStorage if API fails
+          const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+          setOrders(guestOrders);
+        }
       } else {
         // Guest user - load from localStorage
         const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
@@ -36,7 +38,6 @@ function Orders() {
       }
     } catch (error) {
       console.error('Error loading orders:', error);
-      toast.error('Failed to load orders');
       
       // Fallback to localStorage
       const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
