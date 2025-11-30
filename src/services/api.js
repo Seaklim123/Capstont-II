@@ -963,6 +963,42 @@ export const authPaymentApi = {
 };
 
 // ===========================================
+// TABLE API (For Table Number Verification)
+// ===========================================
+
+export const tableApi = {
+  // GET: Verify table number exists
+  verify: async (tableNumber) => {
+    try {
+      const url = `${AUTH_BASE}/tables/verify/${tableNumber}`;
+      console.debug('tableApi.verify ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('tableApi.verify response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error verifying table ${tableNumber}:`, error);
+      throw error;
+    }
+  },
+
+  // GET: Get all tables
+  getAll: async () => {
+    try {
+      const url = `${AUTH_BASE}/tables`;
+      console.debug('tableApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('tableApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching tables:', error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
 // ADMIN API (For Admin Dashboard)
 // ===========================================
 

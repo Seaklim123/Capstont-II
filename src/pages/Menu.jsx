@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
-import { categoryApi, productApi, authCartApi } from "../services/api.js";
+import { categoryApi, productApi, authCartApi, tableApi } from "../services/api.js";
 import toast from 'react-hot-toast';
+import TableNumberModal from '../components/TableNumberModal';
 
 function Menu() {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ function Menu() {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [pendingItemId, setPendingItemId] = useState(null);
   const itemsPerPage = 8; // Show 8 items per page
 
   // Fetch categories from API
@@ -24,7 +27,20 @@ function Menu() {
         const response = await categoryApi.getAll();
         console.log('Categories response:', response);
         console.log('First category:', response.data?.[0]);
-        setCategories(response.data || []);
+        
+        // Remove duplicate categories by ID
+        const uniqueCategories = [];
+        const seenIds = new Set();
+        
+        (response.data || []).forEach(category => {
+          if (!seenIds.has(category.id)) {
+            seenIds.add(category.id);
+            uniqueCategories.push(category);
+          }
+        });
+        
+        console.log('Unique categories:', uniqueCategories);
+        setCategories(uniqueCategories);
         setError(null);
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -154,6 +170,87 @@ function Menu() {
   const handleAddToCart = async (itemId) => {
     console.log('🛒 handleAddToCart called with itemId:', itemId);
     
+    // Check for table number first
+    const tableNumber = localStorage.getItem('tableNumber');
+    if (!tableNumber) {
+      toast.error('Please enter your table number first', {
+        duration: 4000,
+        icon: '🔢',
+      });
+      
+      // Show modal instead of prompt
+      setPendingItemId(itemId);
+      setShowTableModal(true);
+      return;
+    }
+    
+    // Continue with adding to cart
+    await addItemToCart(itemId);
+  };
+
+  const handleTableNumberSubmit = async (userTableNumber) => {
+    setShowTableModal(false);
+    
+    if (!userTableNumber || !userTableNumber.trim()) {
+      toast.error('Table number is required to order. Redirecting to home...', {
+        duration: 3000,
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      return;
+    }
+    
+    // Save table number and proceed (skip verification if API not available)
+    try {
+      toast.loading('Verifying table number...', { id: 'verify-table' });
+      
+      // Try to verify, but don't fail if API not available
+      try {
+        const response = await tableApi.verify(userTableNumber);
+        
+        if (response.exists || response.data?.exists || response.valid) {
+          localStorage.setItem('tableNumber', userTableNumber);
+          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
+          window.dispatchEvent(new Event('cartUpdated'));
+          
+          // Add the pending item to cart
+          if (pendingItemId) {
+            await addItemToCart(pendingItemId);
+            setPendingItemId(null);
+          }
+        } else {
+          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
+        }
+      } catch (apiError) {
+        // If API fails, allow anyway (backend might not be ready)
+        console.log('Table verification API not available, allowing table number:', apiError);
+        localStorage.setItem('tableNumber', userTableNumber);
+        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        // Add the pending item to cart
+        if (pendingItemId) {
+          await addItemToCart(pendingItemId);
+          setPendingItemId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error in table number submission:', error);
+      // Allow proceeding anyway
+      localStorage.setItem('tableNumber', userTableNumber);
+      toast.success(`Table ${userTableNumber} set!`);
+      window.dispatchEvent(new Event('cartUpdated'));
+      
+      // Add the pending item to cart
+      if (pendingItemId) {
+        await addItemToCart(pendingItemId);
+        setPendingItemId(null);
+      }
+    }
+  };
+
+  const addItemToCart = async (itemId) => {
     const product = products.find(p => p.id === itemId);
     console.log('🛒 Product found:', product);
     
@@ -913,7 +1010,15 @@ function Menu() {
         </div>
       </section>
 
-      
+      {/* Table Number Modal */}
+      <TableNumberModal 
+        isOpen={showTableModal}
+        onClose={() => {
+          setShowTableModal(false);
+          setPendingItemId(null);
+        }}
+        onSubmit={handleTableNumberSubmit}
+      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authCartApi } from '../services/api';
+import { authCartApi, tableApi } from '../services/api';
 import toast from 'react-hot-toast';
+import TableNumberModal from '../components/TableNumberModal';
 // Footer removed from Cart to prevent About Us content appearing in cart
 import '../styles/Cart.css';
 
@@ -10,13 +11,14 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tableNumber, setTableNumber] = useState(null);
+  const [showTableModal, setShowTableModal] = useState(false);
 
   useEffect(() => {
     // Get table number from localStorage
     const storedTableNumber = localStorage.getItem('tableNumber');
     setTableNumber(storedTableNumber);
     
-    // Fetch cart from backend API
+    // Fetch cart from backend API (table number checked on checkout, not on view)
     fetchCart();
   }, []);
 
@@ -172,13 +174,77 @@ const Cart = () => {
     return (subtotal + tax).toFixed(2);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty!');
       return;
     }
-    // Navigate to payment page
+    
+    // Check for table number before checkout
+    const tableNumber = localStorage.getItem('tableNumber');
+    if (!tableNumber) {
+      toast.error('Please enter your table number to proceed', {
+        duration: 4000,
+        icon: '🔢',
+      });
+      
+      // Show modal to enter table number
+      setShowTableModal(true);
+      return;
+    }
+    
+    // Navigate to payment page directly
     navigate('/payment');
+  };
+
+  const handleTableNumberSubmit = async (userTableNumber) => {
+    setShowTableModal(false);
+    
+    if (!userTableNumber || !userTableNumber.trim()) {
+      toast.error('Table number is required to proceed. Redirecting to home...', {
+        duration: 3000,
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      return;
+    }
+    
+    // Save table number and proceed (skip verification if API not available)
+    try {
+      toast.loading('Verifying table number...', { id: 'verify-table' });
+      
+      // Try to verify, but don't fail if API not available
+      try {
+        const response = await tableApi.verify(userTableNumber);
+        
+        if (response.exists || response.data?.exists || response.valid) {
+          localStorage.setItem('tableNumber', userTableNumber);
+          setTableNumber(userTableNumber);
+          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
+          window.dispatchEvent(new Event('cartUpdated'));
+          navigate('/payment');
+        } else {
+          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
+        }
+      } catch (apiError) {
+        // If API fails, allow anyway (backend might not be ready)
+        console.log('Table verification API not available, allowing table number:', apiError);
+        localStorage.setItem('tableNumber', userTableNumber);
+        setTableNumber(userTableNumber);
+        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
+        window.dispatchEvent(new Event('cartUpdated'));
+        navigate('/payment');
+      }
+    } catch (error) {
+      console.error('Error in table number submission:', error);
+      // Allow proceeding anyway
+      localStorage.setItem('tableNumber', userTableNumber);
+      setTableNumber(userTableNumber);
+      toast.success(`Table ${userTableNumber} set!`);
+      window.dispatchEvent(new Event('cartUpdated'));
+      navigate('/payment');
+    }
   };
 
   return (
@@ -192,12 +258,19 @@ const Cart = () => {
               </svg>
             </button>
             <h1 className="cart-title">Shopping Cart</h1>
-            {/* Show table number if present (from QR or cart) */}
-            {(tableNumber || (cartItems.length > 0 && cartItems[0].table_id)) && (
+            {/* Show table number if present */}
+            {(tableNumber || (cartItems.length > 0 && (cartItems[0].table_number || cartItems[0].table_id))) && (
               <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.95rem', color: '#555', marginRight: '0.5rem' }}>Table</span>
-                <div style={{ background: '#f5f5f5', padding: '6px 10px', borderRadius: '8px', fontWeight: 600 }}>
-                  {tableNumber || cartItems[0]?.table_number?.table_number || cartItems[0]?.table_id}
+                <div style={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  padding: '8px 14px', 
+                  borderRadius: '12px', 
+                  fontWeight: 600,
+                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+                }}>
+                  {tableNumber || cartItems[0]?.table_number?.table_number || cartItems[0]?.table_number || cartItems[0]?.table_id}
                 </div>
               </div>
             )}
@@ -353,7 +426,12 @@ const Cart = () => {
         </div>
       </section>
       
-      
+      {/* Table Number Modal */}
+      <TableNumberModal 
+        isOpen={showTableModal}
+        onClose={() => setShowTableModal(false)}
+        onSubmit={handleTableNumberSubmit}
+      />
     </div>
   );
 };

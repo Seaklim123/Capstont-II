@@ -7,7 +7,6 @@ import '../styles/Payment.css';
 function Payment() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
@@ -131,7 +130,7 @@ function Payment() {
           refund: 0,
           phone_number: phoneNumber,
           status: 'starting', // starting, accepted, cancel
-          payment: paymentMethod, // card or cash
+          payment: 'cash', // always cash
           payment_status: 'nondone', // done or nondone
           customer_name: customerName,
           table_number: tableNumber || null,
@@ -207,7 +206,7 @@ function Payment() {
           note: notes || null,
           phone_number: phoneNumber,
           customer_name: customerName,
-          payment: paymentMethod,
+          payment: 'cash',
           status: 'starting',
           items: cartItems.map(item => ({
             product_id: item.id,
@@ -232,7 +231,7 @@ function Payment() {
           orderNumber: orderNumber,
           customerName: customerName,
           phoneNumber: phoneNumber,
-          paymentMethod: paymentMethod,
+          paymentMethod: 'cash',
           notes: notes,
           items: cartItems,
           totalPrice: totalPrice,
@@ -272,11 +271,11 @@ function Payment() {
         
         // Navigate to order confirmation with order details
         setTimeout(() => {
-          navigate(`/order-confirmation?order=${orderNumber}`, {
+          navigate(`/order-confirmation?order=${createdOrderNumber}`, {
             state: {
-              orderNumber: orderNumber,
+              orderNumber: createdOrderNumber,
               totalPrice: totalPrice,
-              payment: paymentMethod,
+              payment: 'cash',
               status: 'starting',
               phone_number: phoneNumber,
               customer_name: customerName
@@ -307,6 +306,48 @@ function Payment() {
           <h1 className="payment-title">
             Checkout
           </h1>
+        </div>
+
+        {/* Order Summary */}
+        <div className="payment-section">
+          <div className="order-summary">
+            <h2 className="section-title">
+              🛒 Order Summary
+            </h2>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              {cartItems.map(item => {
+                const productName = item.product?.name || item.name || 'Unknown Product';
+                const productPrice = item.product?.price || item.price || 0;
+                
+                return (
+                  <div key={item.id} className="order-item">
+                    <span className="order-item-name">
+                      {productName} <span className="order-item-quantity">×{item.quantity}</span>
+                    </span>
+                    <span className="order-item-price">
+                      ${(parseFloat(productPrice) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="order-summary-divider">
+              <div className="summary-row">
+                <span>Subtotal</span>
+                <span>${calculateSubtotal()}</span>
+              </div>
+              <div className="summary-row">
+                <span>Tax (10%)</span>
+                <span>${calculateTax()}</span>
+              </div>
+              <div className="summary-total">
+                <span>Total</span>
+                <span>${calculateTotal()}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Customer Information */}
@@ -352,93 +393,6 @@ function Payment() {
               rows="3"
               className="form-textarea"
             />
-          </div>
-        </div>
-
-        {/* Payment Method */}
-        <div className="payment-section">
-          <h2 className="section-title">
-            💳 Payment Method
-          </h2>
-          
-          <div className="payment-options">
-            <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                value="cash"
-                checked={paymentMethod === 'cash'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span className="payment-option-label">
-                💵 Cash Payment
-              </span>
-            </label>
-
-            <label className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                value="card"
-                checked={paymentMethod === 'card'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span className="payment-option-label">
-                💳 Credit/Debit Card
-              </span>
-            </label>
-
-            <label className={`payment-option ${paymentMethod === 'mobile' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                value="mobile"
-                checked={paymentMethod === 'mobile'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span className="payment-option-label">
-                📱 Mobile Payment
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* Order Summary */}
-        <div className="payment-section">
-          <div className="order-summary">
-            <h2 className="section-title">
-              🛒 Order Summary
-            </h2>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              {cartItems.map(item => {
-                const productName = item.product?.name || item.name || 'Unknown Product';
-                const productPrice = item.product?.price || item.price || 0;
-                
-                return (
-                  <div key={item.id} className="order-item">
-                    <span className="order-item-name">
-                      {productName} <span className="order-item-quantity">×{item.quantity}</span>
-                    </span>
-                    <span className="order-item-price">
-                      ${(parseFloat(productPrice) * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="order-summary-divider">
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>${calculateSubtotal()}</span>
-              </div>
-              <div className="summary-row">
-                <span>Tax (10%)</span>
-                <span>${calculateTax()}</span>
-              </div>
-              <div className="summary-total">
-                <span>Total</span>
-                <span>${calculateTotal()}</span>
-              </div>
-            </div>
           </div>
         </div>
 

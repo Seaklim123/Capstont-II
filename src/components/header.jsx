@@ -8,6 +8,7 @@ export function Header() {
   const isActive = (path) => location.pathname === path;
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [tableNumber, setTableNumber] = useState(null);
 
   useEffect(() => {
     // Update cart count when component mounts and when storage changes
@@ -20,6 +21,10 @@ export function Header() {
       } else {
         setCartCount(0);
       }
+      
+      // Update table number
+      const storedTableNumber = localStorage.getItem('tableNumber');
+      setTableNumber(storedTableNumber);
     };
 
     updateCartCount();
@@ -110,6 +115,26 @@ export function Header() {
 
         {/* Search and Icons */}
         <div className="header-actions">
+          {/* Table Number Display */}
+          {tableNumber && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              marginRight: '12px',
+              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+            }}>
+              <span>🪑</span>
+              <span>Table {tableNumber}</span>
+            </div>
+          )}
+          
           <div className="search-container">
             <input
               type="text"
