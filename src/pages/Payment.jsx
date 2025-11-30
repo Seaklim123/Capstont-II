@@ -10,7 +10,6 @@ function Payment() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,18 +17,23 @@ function Payment() {
   useEffect(() => {
     const loadCart = async () => {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const tableNumber = localStorage.getItem('tableNumber');
       
       try {
-        if (token) {
-          // Authenticated user - fetch from API
+        // Only use backend API if user has both token AND table number
+        if (token && tableNumber) {
+          // Authenticated user with table - fetch from API
           const response = await authCartApi.getCart();
           const carts = response.data || response.cart || response;
           setCartItems(Array.isArray(carts) ? carts : []);
         } else {
-          // Guest user - load from localStorage
+          // Guest user or no table - load from localStorage
           const savedCart = localStorage.getItem('cart');
+          console.log('💰 Loading cart from localStorage:', savedCart);
           if (savedCart) {
-            setCartItems(JSON.parse(savedCart));
+            const cart = JSON.parse(savedCart);
+            console.log('💰 Parsed cart items:', cart);
+            setCartItems(cart);
           }
         }
       } catch (error) {
@@ -46,9 +50,11 @@ function Payment() {
   }, []);
 
   const calculateSubtotal = () => {
+    console.log('💰 Calculate subtotal - cartItems:', cartItems);
     return cartItems.reduce((total, item) => {
       // Handle both API format (with product object) and localStorage format
       const price = item.product?.price || item.price || 0;
+      console.log('💰 Item:', item.name || item.product?.name, 'Price:', price, 'Qty:', item.quantity);
       return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
   };
@@ -62,6 +68,11 @@ function Payment() {
   };
 
   const handlePlaceOrder = async () => {
+    console.log('🚀 Place Order clicked!');
+    console.log('🚀 Customer Name:', customerName);
+    console.log('🚀 Phone Number:', phoneNumber);
+    console.log('🚀 Cart Items:', cartItems);
+    
     if (!customerName.trim()) {
       toast.error('Please enter your name');
       return;
@@ -69,11 +80,6 @@ function Payment() {
 
     if (!phoneNumber.trim()) {
       toast.error('Please enter your phone number');
-      return;
-    }
-
-    if (!location.trim()) {
-      toast.error('Please enter your location/place');
       return;
     }
 
@@ -87,9 +93,10 @@ function Payment() {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       const tableNumber = localStorage.getItem('tableNumber');
 
-      if (token) {
-        // AUTHENTICATED USER - Full backend flow
-        console.log('=== AUTHENTICATED ORDER FLOW ===');
+      // Only use backend API if user has both token AND table number
+      if (token && tableNumber) {
+        // AUTHENTICATED USER WITH TABLE - Full backend flow
+        console.log('=== AUTHENTICATED ORDER FLOW (WITH TABLE) ===');
         
         // Step 1: Update all cart items status from "starting" to "ordering"
         console.log('Step 1: Updating cart status to ordering...');
@@ -121,7 +128,6 @@ function Payment() {
           status: 'starting', // starting, accepted, cancel
           payment: paymentMethod, // card or cash
           payment_status: 'nondone', // done or nondone
-          location: location,
           customer_name: customerName,
           table_number: tableNumber || null,
           cart_items: cartItems.map(item => ({
@@ -171,16 +177,19 @@ function Payment() {
       } else {
         // GUEST USER - Simple localStorage flow
         console.log('=== GUEST ORDER FLOW ===');
+        console.log('📝 Generating order number...');
         
         const orderNumber = Date.now();
         const totalPrice = parseFloat(calculateTotal());
+        
+        console.log('📝 Order Number:', orderNumber);
+        console.log('📝 Total Price:', totalPrice);
         
         // Store order in localStorage for guest
         const guestOrder = {
           orderNumber: orderNumber,
           customerName: customerName,
           phoneNumber: phoneNumber,
-          location: location,
           paymentMethod: paymentMethod,
           notes: notes,
           items: cartItems,
@@ -189,17 +198,25 @@ function Payment() {
           createdAt: new Date().toISOString()
         };
         
+        console.log('📝 Guest Order Data:', guestOrder);
+        
         // Save to localStorage
         const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
         guestOrders.push(guestOrder);
         localStorage.setItem('guestOrders', JSON.stringify(guestOrders));
+        
+        console.log('✅ Order saved to localStorage');
         
         // Clear cart
         localStorage.removeItem('cart');
         setCartItems([]);
         window.dispatchEvent(new Event('cartUpdated'));
         
+        console.log('✅ Cart cleared');
+        
         toast.success(`Order #${orderNumber} placed successfully!`);
+        
+        console.log('🚀 Navigating to order confirmation...');
         
         // Navigate to order confirmation
         setTimeout(() => {
@@ -259,19 +276,6 @@ function Payment() {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="0252522"
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Location/Place *
-            </label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Where should we deliver? (e.g., Room 205, Office A)"
               className="form-input"
             />
           </div>

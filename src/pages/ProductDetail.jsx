@@ -79,18 +79,20 @@ const ProductDetail = () => {
 
     // Check if user is authenticated
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const tableNumber = localStorage.getItem('tableNumber');
     
-    if (token) {
-      // Authenticated user - use backend API
+    // Only use backend API if user has a valid table number
+    if (token && tableNumber) {
+      // Authenticated user with table - use backend API
       try {
-        const tableNumber = localStorage.getItem('tableNumber');
-        
-        await authCartApi.addItem({
+        const cartData = {
           product_id: product.id,
           quantity: quantity,
-          table_id: tableNumber || null,
-          status: 'starting'
-        });
+          status: 'starting',
+          table_id: tableNumber
+        };
+        
+        await authCartApi.addItem(cartData);
 
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));

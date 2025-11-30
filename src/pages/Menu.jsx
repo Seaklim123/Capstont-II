@@ -152,58 +152,78 @@ function Menu() {
 
   // Handle add to cart - try backend API first, fallback to localStorage
   const handleAddToCart = async (itemId) => {
+    console.log('🛒 handleAddToCart called with itemId:', itemId);
+    
     const product = products.find(p => p.id === itemId);
+    console.log('🛒 Product found:', product);
+    
     if (!product) {
+      console.error('❌ Product not found for id:', itemId);
       toast.error('Product not found');
       return;
     }
 
     // Check if user is authenticated
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const tableNumber = localStorage.getItem('tableNumber');
+    console.log('🛒 Token exists:', !!token);
+    console.log('🛒 Table number:', tableNumber);
     
-    if (token) {
-      // Authenticated user - use backend API
+    // Only use backend API if user has a valid table number
+    if (token && tableNumber) {
+      // Authenticated user with table - use backend API
+      console.log('🛒 Using authenticated cart (backend API)');
       try {
-        const tableNumber = localStorage.getItem('tableNumber');
-        
-        await authCartApi.addItem({
+        const cartData = {
           product_id: itemId,
           quantity: 1,
-          table_id: tableNumber || null,
-          status: 'starting'
-        });
+          status: 'starting',
+          table_id: tableNumber
+        };
+        console.log('🛒 Sending cart data:', cartData);
+        
+        const response = await authCartApi.addItem(cartData);
+        console.log('✅ Cart API response:', response);
 
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
       } catch (error) {
-        console.error('Error adding to cart:', error);
+        console.error('❌ Error adding to cart:', error);
+        console.error('❌ Error details:', error.response?.data);
         toast.error('Failed to add to cart. Please try again.');
       }
     } else {
       // Guest user - use localStorage
+      console.log('🛒 Using guest cart (localStorage)');
       try {
         const existingCart = localStorage.getItem('cart');
         const cart = existingCart ? JSON.parse(existingCart) : [];
+        console.log('🛒 Current cart:', cart);
 
         const existingItemIndex = cart.findIndex(item => item.id === itemId);
 
         if (existingItemIndex > -1) {
           cart[existingItemIndex].quantity += 1;
+          console.log('🛒 Updated existing item quantity');
         } else {
-          cart.push({
+          const newItem = {
             id: product.id,
             name: product.name,
             price: product.price,
             image_path: product.image_path || product.image,
             quantity: 1
-          });
+          };
+          cart.push(newItem);
+          console.log('🛒 Added new item:', newItem);
         }
 
         localStorage.setItem('cart', JSON.stringify(cart));
+        console.log('✅ Cart saved to localStorage:', cart);
+        
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
       } catch (error) {
-        console.error('Error adding to localStorage cart:', error);
+        console.error('❌ Error adding to localStorage cart:', error);
         toast.error('Failed to add to cart');
       }
     }
@@ -492,6 +512,7 @@ function Menu() {
                       
                       <button 
                         onClick={(e) => {
+                          console.log('🔘 [Popular Dishes] Button clicked! Product ID:', product.id);
                           e.stopPropagation();
                           handleAddToCart(product.id);
                         }}
@@ -655,6 +676,7 @@ function Menu() {
                       
                       <button 
                         onClick={(e) => {
+                          console.log('🔘 [Discount Dishes] Button clicked! Product ID:', product.id);
                           e.stopPropagation();
                           handleAddToCart(product.id);
                         }}
@@ -838,6 +860,7 @@ function Menu() {
                         
                         <button 
                           onClick={(e) => {
+                            console.log('🔘 [All Dishes Grid] Button clicked! Product ID:', product.id);
                             e.stopPropagation();
                             handleAddToCart(product.id);
                           }}

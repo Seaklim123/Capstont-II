@@ -47,24 +47,30 @@ const Cart = () => {
     try {
       setLoading(true);
       
-      // Check if user is authenticated
+      // Check if user is authenticated and has table number
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const tableNumber = localStorage.getItem('tableNumber');
       
-      if (token) {
-        // Authenticated user - fetch from backend API
+      // Only use backend API if user has both token AND table number
+      if (token && tableNumber) {
+        // Authenticated user with table - fetch from backend API
         const response = await authCartApi.getCart();
-        console.log('Cart response:', response);
+        console.log('Cart response from backend:', response);
         
         const carts = response.data || response.cart || response;
         setCartItems(Array.isArray(carts) ? carts : []);
       } else {
-        // Guest user - load from localStorage
+        // No table number or guest user - load from localStorage
         const savedCart = localStorage.getItem('cart');
+        console.log('📦 Raw localStorage cart:', savedCart);
         if (savedCart) {
           const cart = JSON.parse(savedCart);
-          console.log('Guest cart from localStorage:', cart);
+          console.log('📦 Parsed cart:', cart);
+          console.log('📦 Cart is array:', Array.isArray(cart));
+          console.log('📦 Cart length:', cart.length);
           setCartItems(cart);
         } else {
+          console.log('📦 No cart found in localStorage');
           setCartItems([]);
         }
       }
@@ -86,13 +92,15 @@ const Cart = () => {
     if (newQuantity < 1) return;
     
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const tableNumber = localStorage.getItem('tableNumber');
     
     try {
-      if (token) {
-        // Authenticated user - update via API
+      // Only use backend API if user has both token AND table number
+      if (token && tableNumber) {
+        // Authenticated user with table - update via API
         await authCartApi.updateItem(itemId, { quantity: newQuantity });
       } else {
-        // Guest user - update localStorage
+        // Guest user or no table - update localStorage
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
           const cart = JSON.parse(savedCart);
@@ -119,13 +127,15 @@ const Cart = () => {
 
   const removeItem = async (itemId) => {
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const tableNumber = localStorage.getItem('tableNumber');
     
     try {
-      if (token) {
-        // Authenticated user - remove via API
+      // Only use backend API if user has both token AND table number
+      if (token && tableNumber) {
+        // Authenticated user with table - remove via API
         await authCartApi.removeItem(itemId);
       } else {
-        // Guest user - remove from localStorage
+        // Guest user or no table - remove from localStorage
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
           const cart = JSON.parse(savedCart);
@@ -147,9 +157,11 @@ const Cart = () => {
   };
 
   const calculateSubtotal = () => {
+    console.log('🧮 Calculating subtotal for items:', cartItems);
     return cartItems.reduce((total, item) => {
       // Access price from product if available
       const price = item.product?.price || item.price || 0;
+      console.log('🧮 Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
       return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
   };

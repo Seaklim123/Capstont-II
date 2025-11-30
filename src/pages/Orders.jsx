@@ -176,10 +176,6 @@ function Orders() {
                       <span className="info-value">{order.phoneNumber || order.phone_number || 'N/A'}</span>
                     </div>
                     <div className="info-row">
-                      <span className="info-label">Location:</span>
-                      <span className="info-value">{order.location || 'N/A'}</span>
-                    </div>
-                    <div className="info-row">
                       <span className="info-label">Payment:</span>
                       <span className="info-value">{order.paymentMethod || order.payment || 'Cash'}</span>
                     </div>
