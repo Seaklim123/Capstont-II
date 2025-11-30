@@ -127,8 +127,8 @@ function Orders() {
           </button>
         </div>
 
-        {/* Orders List */}
-        <div className="orders-list">
+        {/* Orders Table */}
+        <div className="orders-table-container">
           {loading ? (
             <div className="orders-loading">
               <p>Loading orders...</p>
@@ -146,88 +146,75 @@ function Orders() {
               </button>
             </div>
           ) : (
-            filteredOrders.map((order, index) => (
-              <div key={index} className="order-card">
-                <div className="order-card-header">
-                  <div className="order-number">
-                    <span className="label">Order #</span>
-                    <span className="number">{order.orderNumber || order.numberOrder || 'N/A'}</span>
-                  </div>
-                  <div 
-                    className="order-status"
-                    style={{ 
-                      backgroundColor: getStatusColor(order.status),
-                      color: 'white'
-                    }}
-                  >
-                    {getStatusLabel(order.status)}
-                  </div>
-                </div>
-
-                <div className="order-card-body">
-                  {/* Customer Info */}
-                  <div className="order-info">
-                    <div className="info-row">
-                      <span className="info-label">Customer:</span>
-                      <span className="info-value">{order.customerName || order.customer_name || 'N/A'}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Phone:</span>
-                      <span className="info-value">{order.phoneNumber || order.phone_number || 'N/A'}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Payment:</span>
-                      <span className="info-value">{order.paymentMethod || order.payment || 'Cash'}</span>
-                    </div>
-                  </div>
-
-                  {/* Items */}
-                  {order.items && order.items.length > 0 && (
-                    <div className="order-items">
-                      <h4>Items:</h4>
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="order-item">
-                          <span>{item.product?.name || item.name || 'Unknown'}</span>
-                          <span>×{item.quantity}</span>
-                          <span>${((item.product?.price || item.price || 0) * item.quantity).toFixed(2)}</span>
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Order Number</th>
+                  <th>Total Price ($)</th>
+                  <th>Discount</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Phone Number</th>
+                  <th>Items</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map((order, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td className="order-number-cell">
+                      #{order.orderNumber || order.numberOrder || 'N/A'}
+                    </td>
+                    <td className="price-cell">
+                      ${(order.totalPrice || 0).toFixed(2)}
+                    </td>
+                    <td className="discount-cell">
+                      {order.discount ? `${order.discount}%` : '0%'}
+                    </td>
+                    <td>
+                      <span 
+                        className="status-badge"
+                        style={{ 
+                          backgroundColor: getStatusColor(order.status),
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '12px',
+                          fontSize: '0.85rem',
+                          fontWeight: '600'
+                        }}
+                      >
+                        {getStatusLabel(order.status)}
+                      </span>
+                    </td>
+                    <td className="payment-cell">
+                      {order.paymentMethod || order.payment || 'Cash'}
+                    </td>
+                    <td className="phone-cell">
+                      {order.phoneNumber || order.phone_number || 'N/A'}
+                    </td>
+                    <td className="items-cell">
+                      {order.items && order.items.length > 0 ? (
+                        <div className="items-summary">
+                          {order.items.length} item{order.items.length > 1 ? 's' : ''}
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Total */}
-                  <div className="order-total">
-                    <span>Total:</span>
-                    <span className="total-amount">${(order.totalPrice || 0).toFixed(2)}</span>
-                  </div>
-
-                  {/* Date */}
-                  {order.createdAt && (
-                    <div className="order-date">
-                      {new Date(order.createdAt).toLocaleString()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="order-card-footer">
-                  <button 
-                    className="view-details-btn"
-                    onClick={() => navigate(`/order-confirmation?order=${order.orderNumber || order.numberOrder}`)}
-                  >
-                    View Details
-                  </button>
-                  {(order.status === 'starting' || order.status === 'pending') && (
-                    <button 
-                      className="reorder-btn"
-                      onClick={() => navigate('/menu')}
-                    >
-                      Reorder
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
+                      ) : (
+                        'No items'
+                      )}
+                    </td>
+                    <td className="actions-cell">
+                      <button 
+                        className="view-btn"
+                        onClick={() => navigate(`/order-confirmation?order=${order.orderNumber || order.numberOrder}`)}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
