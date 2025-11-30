@@ -21,71 +21,110 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      console.log(' Checking auth status...');
       const token = localStorage.getItem('authToken');
       const userData = localStorage.getItem('user');
 
-      if (token && userData) {
-        // Parse stored user data
-        const parsedUser = JSON.parse(userData);
-        
-        // Try to verify token is still valid by making a request to profile endpoint
-        try {
-          const response = await fetch('http://localhost:8000/api/v1/auth/profile', {
-            method: 'GET',
-            headers: { 
-              'Content-Type': 'application/json', 
-              'Accept': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-          });
+      console.log(' Token exists:', !!token);
+      console.log(' User data exists:', !!userData);
 
-          if (response.ok) {
-            const profileData = await response.json();
-            const currentUser = profileData.user || profileData;
-            setUser(currentUser);
-            setIsAuthenticated(true);
-            // Update stored user data if needed
-            localStorage.setItem('user', JSON.stringify(currentUser));
-          } else if (response.status === 401) {
-            // Token is expired or invalid, clear auth data
-            throw new Error('Token expired');
-          } else {
-            // Profile endpoint error but token might be valid, use stored data
-            console.warn('Profile endpoint error, using stored user data');
-            setUser(parsedUser);
-            setIsAuthenticated(true);
+      if (token && userData) {
+        try {
+          // Parse stored user data
+          const parsedUser = JSON.parse(userData);
+          console.log(' Parsed user data:', parsedUser);
+          
+          // Set user immediately with stored data to avoid logout during token validation
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          console.log(' User authenticated with stored data');
+
+          // Try to verify token is still valid by making a request to profile endpoint
+          try {
+            console.log(' Validating token with backend...');
+            const response = await fetch('http://localhost:8000/api/v1/auth/profile', {
+              method: 'GET',
+              headers: { 
+                'Content-Type': 'application/json', 
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+            });
+
+            if (response.ok) {
+              const profileData = await response.json();
+              console.log(' Raw profile response:', profileData);
+              
+              // Extract user data correctly - handle different response formats
+              let currentUser;
+              if (profileData.data) {
+                // Response format: { success: true, message: "...", data: { user_data } }
+                currentUser = profileData.data;
+              } else if (profileData.user) {
+                // Response format: { user: { user_data } }
+                currentUser = profileData.user;
+              } else if (profileData.id) {
+                // Response format: { id, username, email, ... } (direct user object)
+                currentUser = profileData;
+              } else {
+                // Fallback - use the stored data
+                console.warn(' Unexpected profile response format, keeping stored data');
+                currentUser = parsedUser;
+              }
+              
+              console.log('Extracted user data:', currentUser);
+              setUser(currentUser);
+              // Update stored user data with clean user object
+              localStorage.setItem('user', JSON.stringify(currentUser));
+            } else if (response.status === 401) {
+              // Token is expired or invalid, clear auth data
+              console.warn(' Token expired or invalid');
+              throw new Error('Token expired');
+            } else {
+              // Profile endpoint error but token might be valid, keep stored data
+              console.warn(' Profile endpoint error, keeping stored user data');
+            }
+          } catch (tokenError) {
+            if (tokenError.message === 'Token expired') {
+              console.log(' Token expired, clearing auth data');
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('user');
+              setUser(null);
+              setIsAuthenticated(false);
+            } else {
+              // Network or other error, keep stored data as fallback
+              console.warn(' Token validation failed, keeping stored data:', tokenError.message);
+              // Keep the user authenticated with stored data
+            }
           }
-        } catch (tokenError) {
-          if (tokenError.message === 'Token expired') {
-            console.log('Token expired, clearing auth data');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            setUser(null);
-            setIsAuthenticated(false);
-          } else {
-            // Network or other error, use stored data as fallback
-            console.warn('Token validation failed, using stored data:', tokenError);
-            setUser(parsedUser);
-            setIsAuthenticated(true);
-          }
+        } catch (parseError) {
+          console.error(' Failed to parse stored user data:', parseError);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } else {
+        console.log(' No token or user data found');
         setUser(null);
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error(' Error checking auth status:', error);
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
     } finally {
+      console.log(' Auth check completed');
       setLoading(false);
     }
   };
 
   const login = async (credentials) => {
     try {
+      console.log(' Attempting login...');
+      
       // Step 1: Login to get token
       const loginResponse = await fetch('http://localhost:8000/api/v1/auth/login', {
         method: 'POST',
@@ -99,14 +138,11 @@ export const AuthProvider = ({ children }) => {
       }
 
       const loginData = await loginResponse.json();
-      
-      // Debug: Log the entire response to see structure
-      console.log('Login response data:', loginData);
+      console.log('Login response received:', loginData);
       
       // Try different possible token property names
       const token = loginData.token || loginData.access_token || loginData.data?.token || loginData.data?.access_token;
-      
-      console.log('Extracted token:', token);
+      console.log(' Extracted token:', token ? '***' + token.slice(-10) : 'NO TOKEN');
       
       if (!token) {
         console.error('No token found in response. Response structure:', Object.keys(loginData));
@@ -117,6 +153,7 @@ export const AuthProvider = ({ children }) => {
 
       // Step 2: Try to fetch user profile with the token
       try {
+        console.log(' Fetching user profile...');
         const profileResponse = await fetch('http://localhost:8000/api/v1/auth/profile', {
           method: 'GET',
           headers: { 
@@ -128,12 +165,26 @@ export const AuthProvider = ({ children }) => {
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          userData = profileData.user || profileData.data || profileData;
+          console.log(' Raw profile response:', profileData);
+          
+          // Extract user data correctly - handle different response formats
+          if (profileData.data) {
+            // Response format: { success: true, message: "...", data: { user_data } }
+            userData = profileData.data;
+          } else if (profileData.user) {
+            // Response format: { user: { user_data } }
+            userData = profileData.user;
+          } else if (profileData.id) {
+            // Response format: { id, username, email, ... } (direct user object)
+            userData = profileData;
+          }
+          
+          console.log(' Extracted profile data:', userData);
         } else {
-          console.warn('Profile endpoint failed, using fallback user data');
+          console.warn(' Profile endpoint failed, using fallback user data');
         }
       } catch (profileError) {
-        console.warn('Profile fetch failed, using fallback user data:', profileError);
+        console.warn(' Profile fetch failed, using fallback user data:', profileError);
       }
 
       // Step 3: If profile fetch failed, create basic user data from credentials
@@ -145,16 +196,27 @@ export const AuthProvider = ({ children }) => {
           name: credentials.username,
           email: `${credentials.username}@example.com`, // Placeholder email
         };
+        console.log(' Created fallback user data:', userData);
       }
 
       // Step 4: Store token and user data
+      console.log(' Storing authentication data...');
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Verify storage
+      const storedToken = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      console.log(' Token stored:', !!storedToken);
+      console.log(' User stored:', !!storedUser);
+      
       setUser(userData);
       setIsAuthenticated(true);
+      console.log('Login successful!');
+      
       return userData;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error(' Login error:', error);
       throw error;
     }
   };

@@ -564,6 +564,118 @@ class ApiService {
     const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/search/products?q=${encodeURIComponent(query)}`);
     return this.handleResponse(response);
   }
+
+  // Reports API methods
+  async getReportsSummary() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/summary`);
+    return this.handleResponse(response);
+  }
+
+  async getReportsDetailed() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/detailed`);
+    return this.handleResponse(response);
+  }
+
+  async getSalesSummary() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/sales-summary`);
+    return this.handleResponse(response);
+  }
+
+  async getTotalEarnings() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/total-earnings`);
+    return this.handleResponse(response);
+  }
+
+  async getCurrentMonthEarnings() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/current-month-earnings`);
+    return this.handleResponse(response);
+  }
+
+  async getDailyEarnings() {
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/reports/daily-earnings`);
+      return this.handleResponse(response);
+    } catch (error) {
+      // Expected error when no order data exists - use mock data instead
+      console.info(' Daily earnings endpoint unavailable (using demo data):', error.message);
+      throw new Error('Daily earnings data unavailable');
+    }
+  }
+
+  async getMonthlyEarningsChart(year = null) {
+    try {
+      const url = year 
+        ? `${API_ADMIN_PREFIX}/reports/monthly-earnings-chart?year=${year}`
+        : `${API_ADMIN_PREFIX}/reports/monthly-earnings-chart`;
+      const response = await this.request(url);
+      return this.handleResponse(response);
+    } catch (error) {
+      // Expected error when no order data exists - use mock data instead
+      console.info('Monthly earnings chart endpoint unavailable (using demo data):', error.message);
+      throw new Error('Monthly earnings chart data unavailable');
+    }
+  }
+
+  async getCashierPerformance() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/cashier-performance`);
+    return this.handleResponse(response);
+  }
+
+  async getTotalCashiers() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/total-cashiers`);
+    return this.handleResponse(response);
+  }
+
+  async getProductPerformance() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/product-performance`);
+    return this.handleResponse(response);
+  }
+
+  async getProductsMostEarnings(limit = 10) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/products-most-earnings?limit=${limit}`);
+    return this.handleResponse(response);
+  }
+
+  async getCategoryRevenue() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/category-revenue`);
+    return this.handleResponse(response);
+  }
+
+  async getOrderStatus() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/order-status`);
+    return this.handleResponse(response);
+  }
+
+  async getPaymentMethods() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/payment-methods`);
+    return this.handleResponse(response);
+  }
+
+  async getTopCustomers(limit = 10) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/top-customers?limit=${limit}`);
+    return this.handleResponse(response);
+  }
+
+  async getRevenueComparison() {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/revenue-comparison`);
+    return this.handleResponse(response);
+  }
+
+  async exportReportsPDF(data) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/export/pdf`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return this.handleResponse(response);
+  }
+
+  async exportReportsExcel(data) {
+    const response = await this.request(`${API_ADMIN_PREFIX}/reports/export/excel`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // Export singleton instance
