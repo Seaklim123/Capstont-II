@@ -87,23 +87,31 @@ const TableForm = ({
     
     if (!trimmedNumber) {
       newErrors.number = 'Table number is required';
-    } else if (trimmedNumber.length > 10) {
-      newErrors.number = 'Table number must be less than 10 characters';
-    } else if (!/^[a-zA-Z0-9]+$/.test(trimmedNumber)) {
-      newErrors.number = 'Table number can only contain letters and numbers';
+    } else if (!/^\d+$/.test(trimmedNumber)) {
+      newErrors.number = 'Table number must be a valid number (digits only)';
     } else {
-      // Check for duplicate table number (case-insensitive)
-      const isDuplicate = existingTables.some(table => {
-        const existingNumber = String(table.number || table.table_number || '').toLowerCase().trim();
-        const newNumber = trimmedNumber.toLowerCase();
-        return existingNumber === newNumber && 
-               (!editingTable || table.id !== editingTable.id);
-      });
-      
-      if (isDuplicate) {
-        newErrors.number = `Table number "${trimmedNumber}" already exists. Please choose a different number.`;
+      // Check if the number is within range
+      const numericValue = parseInt(trimmedNumber);
+      if (numericValue < 1) {
+        newErrors.number = 'Table number must be at least 1';
+      } else if (numericValue > 100) {
+        newErrors.number = 'Table number must be 100 or less';
       }
     }
+      
+    // Check for duplicate table number (case-insensitive)
+    if (!newErrors.number) {
+        const isDuplicate = existingTables.some(table => {
+          const existingNumber = String(table.number || table.table_number || '').toLowerCase().trim();
+          const newNumber = trimmedNumber.toLowerCase();
+          return existingNumber === newNumber && 
+                 (!editingTable || table.id !== editingTable.id);
+        });
+        
+        if (isDuplicate) {
+          newErrors.number = `Table number "${trimmedNumber}" already exists. Please choose a different number.`;
+        }
+      }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -168,17 +176,23 @@ const TableForm = ({
                   Table Number *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   id="number"
                   name="number"
                   value={formData.number}
                   onChange={handleInputChange}
-                  placeholder="e.g., 1, 2, A1, B2 (letters and numbers only)"
+                  placeholder="Enter table number (1-100)"
                   className={`form-input ${errors.number ? 'border-error' : ''}`}
-                  maxLength={10}
+                  min="1"
+                  max="100"
                 />
                 {errors.number && (
-                  <span className="text-error text-sm">{errors.number}</span>
+                  <span className="text-error text-sm font-medium error-message">{errors.number}</span>
+                )}
+                {!errors.number && (
+                  <small className="text-gray text-sm">
+                    Enter a number between 1 and 100 only.
+                  </small>
                 )}
               </div>
 
