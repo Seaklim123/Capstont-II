@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Users, Wrench } from 'lucide-react';
+import { CheckCircle, Users } from 'lucide-react';
 
 const StatusChangeButton = ({ table, onStatusChange }) => {
   const statusOptions = [
@@ -10,16 +10,10 @@ const StatusChangeButton = ({ table, onStatusChange }) => {
       className: 'status-success'
     },
     { 
-      value: 'occupied', 
-      label: 'Occupied', 
+      value: 'unavailable', 
+      label: 'Unavailable', 
       icon: <Users size={12} />,
       className: 'status-danger'
-    },
-    { 
-      value: 'maintenance', 
-      label: 'Maintenance', 
-      icon: <Wrench size={12} />,
-      className: 'status-secondary'
     }
   ];
 

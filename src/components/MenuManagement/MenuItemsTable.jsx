@@ -46,12 +46,34 @@ const MenuItemsTable = ({
                         alt={item.name}
                         className="img-thumbnail hover-scale transition"
                         onError={(e) => {
+                          console.error('Image failed to load:', item.image, 'for item:', item.name);
+                          console.error('Original path:', item.originalImagePath);
+                          console.error('Trying to fetch from:', item.image);
+                          
+                          // Test if URL is accessible
+                          fetch(item.image, { method: 'HEAD' })
+                            .then(response => {
+                              console.error('URL fetch test result:', response.status, response.statusText);
+                            })
+                            .catch(err => {
+                              console.error('URL not accessible:', err.message);
+                            });
+                          
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
+                          // Add error indicator to placeholder
+                          const placeholder = e.target.nextSibling;
+                          if (placeholder) {
+                            placeholder.style.borderColor = '#ef4444';
+                            placeholder.title = `Image failed to load: ${item.image}\nOriginal path: ${item.originalImagePath || 'N/A'}`;
+                          }
+                        }}
+                        onLoad={(e) => {
+                          console.log(' Image loaded successfully:', item.image, 'for item:', item.name);
                         }}
                       />
                     ) : null}
-                    <div className="img-placeholder" style={{display: item.image ? 'none' : 'flex'}}>
+                    <div className="img-placeholder" style={{display: item.image ? 'none' : 'flex'}} title={item.image ? `Loading image: ${item.image}` : `No image available. Original path: ${item.originalImagePath || 'N/A'}`}>
                       <ImageIcon size={12} />
                     </div>
                   </td>
@@ -64,14 +86,29 @@ const MenuItemsTable = ({
                     </span>
                   </td>
                   <td>
-                    <span className="font-semibold text-success">
-                      ${(item.price || 0).toFixed(2)}
-                    </span>
+                    {item.discount > 0 && item.price > 0 ? (
+                      <div className="text-sm">
+                        <span className="font-semibold text-success">
+                          ${(item.price - item.discount).toFixed(2)}
+                        </span>
+                        <br />
+                        <span className="text-muted line-through text-xs">
+                          ${item.price.toFixed(2)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-success">
+                        ${(item.price || 0).toFixed(2)}
+                      </span>
+                    )}
                   </td>
                   <td>
-                    {item.discount > 0 ? (
-                      <span className="badge badge-error">
-                        {item.discount}%
+                    {item.discount > 0 && item.price > 0 ? (
+                      <span 
+                        className="badge badge-error"
+                        title={`${Math.round((item.discount / item.price) * 100)}% discount = $${item.discount.toFixed(2)} off`}
+                      >
+                        {Math.round((item.discount / item.price) * 100)}%
                       </span>
                     ) : (
                       <span className="text-muted">-</span>

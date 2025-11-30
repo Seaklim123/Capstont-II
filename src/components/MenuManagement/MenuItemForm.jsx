@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Link, FileImage } from 'lucide-react';
+import '../../styles/image-preview.css';
 
 const MenuItemForm = ({
   isOpen,
@@ -14,41 +15,62 @@ const MenuItemForm = ({
     price: '',
     description: '',
     image: '',
-    available: true
+    available: true,
+    discount: '',
+    status: 'available'
   });
 
   const [imageFile, setImageFile] = useState(null); // Store the actual file
   const [imagePreview, setImagePreview] = useState(''); // Store preview URL
-  const [imageMode, setImageMode] = useState('url'); // 'url' or 'file'
+  const [imageMode, setImageMode] = useState('file'); // Always use file mode
   const [errors, setErrors] = useState({});
 
   // Initialize form when editing or reset when adding
   useEffect(() => {
     if (editingItem) {
+      // Convert discount amount back to percentage for display
+      const discountPercent = editingItem.discount && editingItem.price ? 
+        Math.round((editingItem.discount / editingItem.price) * 100) : '';
+
       setFormData({
         name: editingItem.name || '',
-        category: editingItem.category?.toString() || (categories[0]?.value || ''),
+        category: editingItem.category_id?.toString() || editingItem.category?.toString() || (categories[0]?.value || ''),
         price: editingItem.price || '',
         description: editingItem.description || '',
-        image: editingItem.image || '',
-        available: editingItem.available ?? true
+        image: editingItem.image_url || editingItem.image || '',
+        available: editingItem.status === 'available',
+        discount: discountPercent,
+        status: editingItem.status || 'available'
       });
-      setImagePreview(editingItem.image || '');
+      // Show existing image when editing (if it exists)
+      setImagePreview(editingItem.image_url || editingItem.image || '');
       setImageFile(null);
-      // Auto-detect mode based on existing image
-      setImageMode(editingItem.image && editingItem.image.startsWith('http') ? 'url' : 'file');
+      setImageMode('file'); // Always use file mode
+      
+      console.log('Editing item initialized:', {
+        item: editingItem,
+        discountAmount: editingItem.discount,
+        calculatedDiscountPercent: discountPercent,
+        imageMode: 'file',
+        hasImage: !!(editingItem.image_url || editingItem.image),
+        imageUrl: editingItem.image_url || editingItem.image
+      });
     } else {
       setFormData({
         name: '',
-        category: categories[0]?.value || '',
+        category: categories[0]?.value || categories[0]?.id || '',
         price: '',
         description: '',
         image: '',
-        available: true
+        available: true,
+        discount: '',
+        status: 'available'
       });
       setImagePreview('');
       setImageFile(null);
-      setImageMode('url'); // Default to URL mode
+      setImageMode('file'); // Always use file mode
+      
+      console.log('New item form initialized');
     }
     setErrors({});
   }, [editingItem, isOpen, categories]);
@@ -115,6 +137,21 @@ const MenuItemForm = ({
       newErrors.description = 'Description must be less than 200 characters';
     }
 
+    // Validate discount percentage if provided
+    if (formData.discount) {
+      const discountPercent = parseFloat(formData.discount);
+      if (discountPercent < 0 || discountPercent > 100) {
+        newErrors.discount = 'Discount must be between 0% and 100%';
+      }
+    }
+
+    // Validate category selection
+    if (!formData.category) {
+      newErrors.category = 'Please select a category';
+    }
+
+    // Image is optional - no validation needed
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -126,13 +163,42 @@ const MenuItemForm = ({
       return;
     }
 
+    // Calculate discount amount from percentage
+    const price = parseFloat(formData.price) || 0;
+    const discountPercent = formData.discount ? parseFloat(formData.discount) : 0;
+    const discountAmount = discountPercent > 0 ? (price * discountPercent / 100) : 0;
+
     const itemData = {
-      ...formData,
-      price: parseFloat(formData.price),
       name: formData.name.trim(),
+      category_id: formData.category,
+      price: price,
+      discount: discountAmount, // Always save as dollar amount
       description: formData.description.trim(),
-      imageMode: imageMode // Include mode information
+      status: formData.status,
+      imageMode: 'file', // Always file mode
+      // Include image file name if selected
+      image: imageFile ? imageFile.name : '',
+      // Include percentage for frontend display only (not saved to DB)
+      discountPercent: discountPercent
     };
+
+    console.log('Form submission with discount calculation:', {
+      originalPrice: price,
+      discountPercent: discountPercent,
+      calculatedDiscountAmount: discountAmount,
+      finalPrice: price - discountAmount,
+      willSaveToDatabase: {
+        price: price,
+        discount: discountAmount // This dollar amount goes to database
+      }
+    });
+
+    console.log('Form submission data:', {
+      itemData,
+      imageFile,
+      imageMode,
+      imagePreview
+    });
 
     // Pass both item data and image file to parent
     onSave(itemData, imageMode === 'file' ? imageFile : null);
@@ -163,53 +229,17 @@ const MenuItemForm = ({
         ...prev,
         image: file.name
       }));
+      
+      console.log('File uploaded successfully:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        previewUrl
+      });
     }
   };
 
-  const handleImageUrlChange = (e) => {
-    const url = e.target.value.trim();
-    setFormData(prev => ({
-      ...prev,
-      image: url
-    }));
-    
-    // Clear preview immediately when URL is being edited
-    if (!url) {
-      setImagePreview('');
-      setImageFile(null);
-      return;
-    }
-    
-    // Only set preview if URL looks like a complete valid image URL
-    const isValidImageUrl = url.startsWith('http') && 
-      (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(url) || 
-       url.includes('unsplash.com') || 
-       url.includes('imgur.com') ||
-       url.includes('cloudinary.com'));
-    
-    if (isValidImageUrl) {
-      setImagePreview(url);
-    } else {
-      setImagePreview('');
-    }
-    
-    setImageFile(null); // Clear file if using URL
-  };
 
-  const handleImageModeChange = (mode) => {
-    setImageMode(mode);
-    // Clear previous data when switching modes
-    setImageFile(null);
-    setImagePreview('');
-    setFormData(prev => ({
-      ...prev,
-      image: ''
-    }));
-    
-    // Clear file input
-    const fileInput = document.getElementById('image-upload');
-    if (fileInput) fileInput.value = '';
-  };
 
   const removeImage = () => {
     setImageFile(null);
@@ -283,20 +313,47 @@ const MenuItemForm = ({
                   </option>
                 ))}
               </select>
-            </div>            <div className="form-group">
-              <label className="form-label" htmlFor="price">Price ($) *</label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="0.00"
-                step="0.01"
-                min="0"
-                className={`form-input ${errors.price ? 'border-error' : ''}`}
-              />
-              {errors.price && <span className="text-error text-sm">{errors.price}</span>}
+            </div>            <div className="form-row">
+              <div className="form-group flex-1">
+                <label className="form-label" htmlFor="price">Price ($) *</label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  className={`form-input ${errors.price ? 'border-error' : ''}`}
+                />
+                {errors.price && <span className="text-error text-sm">{errors.price}</span>}
+              </div>
+
+              <div className="form-group flex-1">
+                <label className="form-label" htmlFor="discount">Discount (%)</label>
+                <input
+                  type="number"
+                  id="discount"
+                  name="discount"
+                  value={formData.discount}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                  step="1"
+                  min="0"
+                  max="100"
+                  className="form-input"
+                />
+                <small className="text-gray text-sm">
+                  Enter percentage (0-100%)
+                  {formData.price && formData.discount ? (
+                    <span className="text-primary ml-2">
+                      • ${(parseFloat(formData.price) * parseFloat(formData.discount) / 100).toFixed(2)} off
+                      • Final price: ${(parseFloat(formData.price) - (parseFloat(formData.price) * parseFloat(formData.discount) / 100)).toFixed(2)}
+                    </span>
+                  ) : null}
+                </small>
+              </div>
             </div>
 
             <div className="form-group">
@@ -315,133 +372,91 @@ const MenuItemForm = ({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Image</label>
+              <label className="form-label">Upload Image (Optional)</label>
               
-              {/* Image Mode Toggle */}
-              <div className="flex gap-2 mb-3">
-                <button
-                  type="button"
-                  className={`btn btn-sm ${imageMode === 'url' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleImageModeChange('url')}
-                >
-                  <Link size={16} />
-                  Image URL
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${imageMode === 'file' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => handleImageModeChange('file')}
-                >
-                  <FileImage size={16} />
-                  Upload File
-                </button>
-              </div>
-
-              {/* URL Input Mode */}
-              {imageMode === 'url' && (
-                <div className="mb-3">
+              {/* File Upload Area */}
+              {!imagePreview ? (
+                <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
+                  <ImageIcon size={32} className="mx-auto mb-3 text-gray" />
+                  <label htmlFor="image-upload" className="btn btn-primary btn-sm cursor-pointer">
+                    <Upload size={16} />
+                    Choose Image from Device
+                  </label>
                   <input
-                    type="url"
-                    placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                    value={formData.image}
-                    onChange={handleImageUrlChange}
-                    className="form-input"
+                    type="file"
+                    id="image-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
                   />
-                  <small className="text-gray text-sm">Paste a direct link to an image (JPG, PNG, WebP)</small>
-              </div>
-            )}
-
-              {/* File Upload Mode */}
-              {imageMode === 'file' && (
-                <div className="mb-3">
-                  {!imagePreview ? (
-                    <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
-                      <ImageIcon size={24} className="mx-auto mb-2 text-gray" />
-                      <label htmlFor="image-upload" className="btn btn-secondary btn-sm cursor-pointer">
-                        <Upload size={16} />
-                        Choose Image File
-                      </label>
-                      <input
-                        type="file"
-                        id="image-upload"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        style={{ display: 'none' }}
-                      />
-                      <p className="text-gray text-sm mt-2">
-                        Recommended: 400x300px, JPG or PNG (Max 5MB)
-                      </p>
-                    </div>
-                  ) : null}
+                  <p className="text-gray text-sm mt-3">
+                    Upload JPG, PNG, or WebP (Max 5MB)<br/>
+                    Recommended size: 400x300px for best display
+                  </p>
                 </div>
-              )}
-
-              {/* Image Preview (for both modes) */}
-              {imagePreview && (
+              ) : (
+                // Image Preview
                 <div className="mb-3">
-                  <div className="border rounded overflow-hidden bg-gray-light" style={{ maxWidth: '200px' }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full h-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                      onLoad={(e) => {
-                        e.target.style.display = 'block';
-                        e.target.nextSibling.style.display = 'none';
-                      }}
-                    />
-                    <div style={{display: 'none'}} className="p-4 text-center text-gray">
-                      <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
+                  <div className="image-preview-container menu-item-image-preview">
+                    <div className="image-preview-wrapper">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="image-preview-img"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.nextElementSibling.style.display = 'flex';
+                        }}
+                        onLoad={(e) => {
+                          e.target.style.display = 'block';
+                          e.target.parentElement.nextElementSibling.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div style={{display: 'none'}} className="image-error-state">
+                      <ImageIcon size={24} className="opacity-50" />
                       <p className="text-sm">Unable to load image</p>
-                      <small>Please check the URL or try a different image</small>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="image-actions">
+                    <label htmlFor="image-change" className="btn btn-secondary btn-sm cursor-pointer">
+                      <Upload size={14} />
+                      Change Image
+                    </label>
                     <button
                       type="button"
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-danger btn-sm"
                       onClick={removeImage}
-                      title="Remove image"
                     >
                       <X size={14} />
                       Remove
                     </button>
-                    {imageMode === 'file' && (
-                      <label htmlFor="image-change" className="btn btn-secondary btn-sm cursor-pointer">
-                        <Upload size={14} />
-                        Change File
-                      </label>
-                    )}
-                    <input
-                      type="file"
-                      id="image-change"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                    />
                   </div>
-              </div>
-            )}
-          </div>
+                  <input
+                    type="file"
+                    id="image-change"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              )}
+            </div>
 
             <div className="form-group">
-              <label className="form-label">Availability</label>
-              <div className="availability-section">
-                <input
-                  type="checkbox"
-                  id="available"
-                  name="available"
-                  checked={formData.available}
-                  onChange={handleInputChange}
-                  className="availability-checkbox"
-                />
-                <label className="availability-label" htmlFor="available">
-                  Available for order
-                </label>
-              </div>
+              <label className="form-label" htmlFor="status">Status</label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="form-input"
+              >
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+                <option value="out_of_stock">Out of Stock</option>
+              </select>
+              <small className="text-gray text-sm">Set item availability status</small>
             </div>
 
             <div className="modal-footer">

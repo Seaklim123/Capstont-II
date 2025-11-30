@@ -1,4 +1,164 @@
+/* Login form error input border */
+.form-input-container .input-wrapper.error .form-input {
+  border: 1.5px solid var(--error) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08);
+}
+/* === ENHANCED USER DROPDOWN === */
+.enhanced-dropdown {
+  min-width: 240px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg) 0;
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: var(--z-dropdown);
+  animation: fadeInDropdown 0.2s ease;
+}
+
+@keyframes fadeInDropdown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.enhanced-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: 0 var(--space-xl) var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.enhanced-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-xl);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.enhanced-user-name {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.enhanced-user-role {
+  font-size: var(--font-sm);
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.enhanced-user-email {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+.enhanced-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--space-md) 0;
+  border: none;
+}
+
+.enhanced-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 var(--space-xl);
+}
+
+
+.enhanced-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--font-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  justify-content: flex-start;
+  text-align: left;
+}
+.enhanced-dropdown-item span {
+  text-align: left;
+  flex: 1;
+}
+.enhanced-dropdown-item:hover {
+  background: var(--gray-100);
+  color: var(--primary);
+}
+
+.enhanced-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md) var(--space-xl);
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: var(--font-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  margin-top: var(--space-sm);
+  justify-content: flex-start;
+  text-align: left;
+}
+.enhanced-logout span {
+  text-align: left;
+  flex: 1;
+}
+.enhanced-logout:hover {
+  background: var(--error);
+  color: var(--white);
+}
+.enhanced-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md) var(--space-xl);
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: var(--font-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  margin-top: var(--space-sm);
+}
+.enhanced-logout:hover {
+  background: var(--error);
+  color: var(--white);
+}
 /* ===== ADMIN DASHBOARD SPECIFIC STYLES ===== */
+
+/* === FORM LAYOUT === */
+.form-row {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
 
 /* === LAYOUT === */
 .admin-layout {

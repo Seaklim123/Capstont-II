@@ -1,0 +1,123 @@
+/* Image Preview Styling for Forms */
+
+/* Category Form Image Preview */
+.image-preview-container {
+  width: 100%;
+  max-width: 400px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-wrapper {
+  width: 100%;
+  aspect-ratio: 4/3; /* Consistent aspect ratio for category images */
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+              linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.image-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This ensures the full image is shown and properly scaled */
+  object-position: center; /* Centers the image if it needs cropping */
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.image-preview-img:hover {
+  transform: scale(1.02);
+}
+
+/* Error state styling */
+.image-error-state {
+  width: 100%;
+  aspect-ratio: 4/3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 2px dashed #dee2e6;
+  border-radius: 6px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .image-preview-container {
+    max-width: 100%;
+  }
+  
+  .image-preview-wrapper {
+    aspect-ratio: 16/9; /* Slightly wider on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .image-preview-wrapper {
+    aspect-ratio: 3/2; /* Even wider on very small screens */
+  }
+}
+
+/* Menu Item Form Image Preview (if needed separately) */
+.menu-item-image-preview {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 4/3;
+}
+
+.menu-item-image-preview .image-preview-wrapper {
+  aspect-ratio: 4/3;
+}
+
+/* Upload area enhancements */
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.border-dashed:hover {
+  border-color: #007bff !important;
+  background-color: #f8f9ff !important;
+}
+
+/* File input styling improvements */
+.file-input-hidden {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Button group spacing */
+.image-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.image-actions .btn {
+  flex: 1;
+  min-width: max-content;
+}
+
+@media (max-width: 480px) {
+  .image-actions {
+    flex-direction: column;
+  }
+  
+  .image-actions .btn {
+    flex: none;
+    width: 100%;
+  }
+}

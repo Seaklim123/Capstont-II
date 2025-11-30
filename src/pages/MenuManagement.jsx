@@ -51,9 +51,10 @@ const MenuManagement = () => {
         ...item,
         available: item.status === 'available' || item.available,
         category: item.category_id || item.category,
-        price: parseFloat(item.price || 0), // Use actual price field from database
-        discount: parseFloat(item.discount || 0), // Keep discount separate
-        image: item.image_path || item.image_url || item.image // Support both file uploads and URL images
+        price: parseFloat(item.price || 0),
+        discount: parseFloat(item.discount || 0), // Discount is stored as dollar amount
+        image: item.image_url || '',
+        originalImagePath: item.originalImagePath
       }));
       
       // Transform categories data to ensure consistent field names
@@ -62,13 +63,22 @@ const MenuManagement = () => {
         name: category.name,
         value: category.id.toString(),
         label: category.name,
-        image: category.image_path || category.image, // Support category images
+        image: category.image_url || '', // Use image URL from API service
+        originalImagePath: category.originalImagePath, // Keep original path for debugging
         created_at: category.created_at,
         updated_at: category.updated_at
       }));
       
       setItems(transformedItems);
       setCategoriesList(transformedCategories);
+      
+      // Debug: Log image URLs for troubleshooting (first 3 items only)
+      console.log('Loaded items sample:', transformedItems.slice(0, 3).map(item => ({
+        name: item.name,
+        originalPath: item.originalImagePath,
+        imageUrl: item.image,
+        available: item.available
+      })));
       
       if (showToast && loadingToast) {
         toast.success('Menu data loaded successfully', { id: loadingToast });
@@ -122,17 +132,27 @@ const MenuManagement = () => {
       // Transform data for backend
       const backendData = {
         name: itemData.name?.trim() || '',
-        category_id: parseInt(itemData.category) || 1,
+        category_id: parseInt(itemData.category_id) || parseInt(itemData.category) || 1,
         price: parseFloat(itemData.price) || 0,
+        discount: itemData.discount ? parseFloat(itemData.discount) : 0,
         description: itemData.description?.trim() || '',
-        status: itemData.available ? 'available' : 'unavailable'
+        status: itemData.status || (itemData.available ? 'available' : 'unavailable')
       };
 
-      // Handle image based on mode
+      // Handle image based on mode - don't send image_path for URLs to avoid validation error
       if (itemData.imageMode === 'url' && itemData.image) {
-        // For URL mode, use 'image_url' field instead of 'image_path'
+        // For URL mode, send as separate field or handle differently
         backendData.image_url = itemData.image;
+        // Don't send image_path to avoid file validation
       }
+
+      // Debug logging
+      console.log('Saving item data:', {
+        itemData,
+        backendData,
+        imageFile,
+        isEditing: !!editingItem
+      });
 
       if (editingItem) {
         // Update existing item
@@ -141,8 +161,26 @@ const MenuManagement = () => {
         if (imageFile && itemData.imageMode === 'file') {
           // Update with new image file
           result = await ApiService.updateProductWithFile(editingItem.id, backendData, imageFile);
+          console.log('File update result:', result);
+        } else if (itemData.imageMode === 'url' && itemData.image) {
+          // Update with image URL - use FormData to avoid JSON validation issues
+          const formData = new FormData();
+          Object.keys(backendData).forEach(key => {
+            if (key !== 'image_url' && backendData[key] !== null && backendData[key] !== undefined) {
+              formData.append(key, backendData[key]);
+            }
+          });
+          // Send URL as image_path
+          formData.append('image_path', itemData.image);
+          formData.append('_method', 'PUT');
+          
+          result = await ApiService.request(`/products/${editingItem.id}`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData,
+          });
         } else {
-          // Update without file upload (includes URL mode)
+          // Update without image changes
           result = await ApiService.updateProduct(editingItem.id, backendData);
         }
         toast.success('Menu item updated successfully!', { id: saveToast });
@@ -153,8 +191,34 @@ const MenuManagement = () => {
         if (imageFile && itemData.imageMode === 'file') {
           // Create with image file
           result = await ApiService.createProductWithFile(backendData, imageFile);
+          console.log('File upload result from backend:', result);
+          console.log('Image path returned:', result?.image_path || result?.data?.image_path);
+        } else if (itemData.imageMode === 'url' && itemData.image) {
+          // Create with image URL - use FormData to avoid JSON validation issues
+          const formData = new FormData();
+          Object.keys(backendData).forEach(key => {
+            if (key !== 'image_url' && backendData[key] !== null && backendData[key] !== undefined) {
+              formData.append(key, backendData[key]);
+            }
+          });
+          // Send URL as image_path
+          formData.append('image_path', itemData.image);
+          
+          console.log('DEBUG: Sending URL via FormData:', {
+            imageUrl: itemData.image,
+            imageMode: itemData.imageMode,
+            formDataEntries: [...formData.entries()].map(([key, value]) => [key, value])
+          });
+          
+          result = await ApiService.request('/products', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData,
+          });
+          
+          console.log('DEBUG: URL FormData result:', result);
         } else {
-          // Create without file (includes URL mode)
+          // Create without image
           result = await ApiService.createProduct(backendData);
         }
         toast.success('Menu item added successfully!', { id: saveToast });
@@ -229,36 +293,42 @@ const MenuManagement = () => {
     
     try {
       const backendData = {
-        name: categoryData.label
+        name: categoryData.name // Use the correct field name
       };
 
-      // Handle image based on mode
-      if (categoryData.imageMode === 'url' && categoryData.image) {
-        backendData.image_url = categoryData.image;
-      }
+      console.log('Saving category:', {
+        categoryData,
+        backendData,
+        imageFile,
+        hasImageFile: !!imageFile
+      });
 
       if (editingCategory) {
         // Update existing category
         let result;
         
-        if (imageFile && categoryData.imageMode === 'file') {
+        if (imageFile) {
           // Update with new image file
           result = await ApiService.updateCategoryWithFile(editingCategory.id, backendData, imageFile);
+          console.log('Category updated with file:', result);
         } else {
-          // Update without file upload (includes URL mode)
+          // Update without image file
           result = await ApiService.updateCategory(editingCategory.id, backendData);
+          console.log('Category updated without file:', result);
         }
         toast.success('Category updated successfully!', { id: saveToast });
       } else {
         // Add new category
         let result;
         
-        if (imageFile && categoryData.imageMode === 'file') {
+        if (imageFile) {
           // Create with image file
           result = await ApiService.createCategoryWithFile(backendData, imageFile);
+          console.log('Category created with file:', result);
         } else {
-          // Create without file (includes URL mode)
+          // Create without image file
           result = await ApiService.createCategory(backendData);
+          console.log('Category created without file:', result);
         }
         toast.success('Category added successfully!', { id: saveToast });
       }

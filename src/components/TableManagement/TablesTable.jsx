@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, QrCode, Users, Plus, MapPin, CheckCircle, XCircle, Clock, Wrench } from 'lucide-react';
+import { Edit, Trash2, QrCode, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import QRCodeModal from './QRCodeModal';
 import StatusChangeButton from './StatusChangeButton';
 
@@ -13,15 +13,10 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
         text: 'Available', 
         icon: <CheckCircle size={12} /> 
       },
-      occupied: { 
+      unavailable: { 
         className: 'status-badge status-danger', 
-        text: 'Occupied', 
-        icon: <Users size={12} /> 
-      },
-      maintenance: { 
-        className: 'status-badge status-secondary', 
-        text: 'Maintenance', 
-        icon: <Wrench size={12} /> 
+        text: 'Unavailable', 
+        icon: <XCircle size={12} /> 
       }
     };
     return statusMap[status] || { 
@@ -53,15 +48,9 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
           <p>
             {searchTerm 
               ? `No tables match "${searchTerm}". Try a different search term.`
-              : 'Get started by adding your first restaurant table.'
+              : 'Get started by adding your first restaurant table using the "Add Table" button above.'
             }
           </p>
-          {!searchTerm && (
-            <button className="btn btn-primary">
-              <Plus size={16} />
-              Add First Table
-            </button>
-          )}
         </div>
       </div>
     );
@@ -75,9 +64,7 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
         <table className="data-table">
           <thead>
             <tr>
-              <th>Table Info</th>
-              <th>Capacity</th>
-              <th>Location</th>
+              <th>Table Number</th>
               <th>Status</th>
               <th>QR Code</th>
               <th>Current Order</th>
@@ -93,19 +80,10 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
                   <td>
                     <div className="cell-content">
                       <div className="table-info">
-                        <span className="font-medium">{table.table_name}</span>
-                        <span className="text-sm text-gray">#{table.table_number}</span>
+                        <span className="font-medium">Table {table.number}</span>
+                        <span className="text-sm text-gray">#{table.number}</span>
                       </div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="capacity-info">
-                      <Users size={14} className="inline mr-1" />
-                      <span className="font-medium">{table.capacity}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="location-badge">{table.location}</span>
                   </td>
                   <td>
                     <StatusChangeButton 
@@ -115,7 +93,7 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
                   </td>
                   <td>
                     <div className="qr-info">
-                      <code className="qr-code">{table.qr_code}</code>
+                      <code className="qr-code">QR-{table.number}-{new Date().getFullYear()}</code>
                       <button
                         className="btn btn-primary btn-sm transition hover-lift"
                         title="View QR Code"

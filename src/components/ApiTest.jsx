@@ -11,18 +11,18 @@ const ApiTest = () => {
   useEffect(() => {
     const testApi = async () => {
       try {
-        setStep('🔄 Starting API test...');
-        console.log('🚀 Starting API test');
+        setStep(' Starting API test...');
+        console.log(' Starting API test');
         
-        setStep('📡 Testing products endpoint...');
+        setStep(' Testing products endpoint...');
         const products = await ApiService.getProducts();
-        console.log('✅ Products loaded:', products);
+        console.log(' Products loaded:', products);
         
-        setStep('📡 Testing categories endpoint...');
+        setStep(' Testing categories endpoint...');
         const categories = await ApiService.getCategories();
-        console.log('✅ Categories loaded:', categories);
+        console.log(' Categories loaded:', categories);
         
-        setStep('✅ All tests completed successfully!');
+        setStep(' All tests completed successfully!');
         setData({
           products,
           categories,
@@ -30,9 +30,9 @@ const ApiTest = () => {
           envVar: import.meta.env.VITE_API_BASE_URL
         });
       } catch (err) {
-        console.error('❌ API Test failed:', err);
+        console.error(' API Test failed:', err);
         setError(err.message);
-        setStep('❌ Test failed');
+        setStep(' Test failed');
       } finally {
         setLoading(false);
       }
@@ -43,7 +43,7 @@ const ApiTest = () => {
 
   return (
     <div style={{padding: '20px', border: '2px solid #ddd', borderRadius: '8px', margin: '20px 0'}}>
-      <h3>🔍 API Connection Test</h3>
+      <h3> API Connection Test</h3>
       <p><strong>Current Step:</strong> {step}</p>
       
       {loading && (
@@ -55,7 +55,7 @@ const ApiTest = () => {
       
       {error && (
         <div style={{color: 'red', backgroundColor: '#ffebee', padding: '10px', borderRadius: '4px'}}>
-          <h4>❌ Error Details:</h4>
+          <h4> Error Details:</h4>
           <p>{error}</p>
           <p><strong>Troubleshooting:</strong></p>
           <ul>
@@ -68,7 +68,7 @@ const ApiTest = () => {
       
       {data && (
         <div style={{color: 'green'}}>
-          <h4>✅ Success!</h4>
+          <h4>Success!</h4>
           <p><strong>API URL:</strong> {data.apiUrl}</p>
           <p><strong>Env Variable:</strong> {data.envVar || 'Not loaded'}</p>
           <p><strong>Products Found:</strong> {data.products?.length || 0}</p>

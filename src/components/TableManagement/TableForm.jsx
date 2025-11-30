@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Users, Hash, FileText } from 'lucide-react';
+import { X, Hash } from 'lucide-react';
+import ApiService from '../../services/api';
 
 const TableForm = ({
   isOpen,
@@ -9,56 +10,36 @@ const TableForm = ({
   existingTables
 }) => {
   const [formData, setFormData] = useState({
-    table_number: '',
-    table_name: '',
-    capacity: '',
-    location: '',
-    description: '',
+    number: '',
     status: 'available'
   });
 
   const [errors, setErrors] = useState({});
+  const [statusOptions, setStatusOptions] = useState([]);
 
-  // Location options
-  const locationOptions = [
-    'Main Hall',
-    'Terrace',
-    'VIP Section',
-    'Private Room',
-    'Bar Area',
-    'Garden'
-  ];
-
-  // Status options for scan-to-order restaurant
-  const statusOptions = [
-    { value: 'available', label: 'Available' },
-    { value: 'occupied', label: 'Occupied' },
-    { value: 'maintenance', label: 'Maintenance' }
-  ];
+  // Set status options (matching database enum values)
+  useEffect(() => {
+    setStatusOptions([
+      { value: 'available', label: 'Available' },
+      { value: 'unavailable', label: 'Unavailable' }
+    ]);
+  }, []);
 
   // Initialize form when editing or reset when adding
   useEffect(() => {
     if (editingTable) {
       setFormData({
-        table_number: editingTable.table_number || '',
-        table_name: editingTable.table_name || '',
-        capacity: editingTable.capacity?.toString() || '',
-        location: editingTable.location || '',
-        description: editingTable.description || '',
+        number: editingTable.number || '',
         status: editingTable.status || 'available'
       });
     } else {
       setFormData({
-        table_number: '',
-        table_name: '',
-        capacity: '',
-        location: '',
-        description: '',
-        status: 'available'
+        number: '',
+        status: statusOptions.length > 0 ? statusOptions[0].value : 'available'
       });
     }
     setErrors({});
-  }, [editingTable, isOpen]);
+  }, [editingTable, isOpen, statusOptions]);
 
   // Handle body scroll lock when modal is open
   useEffect(() => {
@@ -101,47 +82,27 @@ const TableForm = ({
     const newErrors = {};
 
     // Table number validation
-    if (!formData.table_number.trim()) {
-      newErrors.table_number = 'Table number is required';
-    } else if (formData.table_number.length > 10) {
-      newErrors.table_number = 'Table number must be less than 10 characters';
+    const numberValue = formData.number || '';
+    const trimmedNumber = String(numberValue).trim();
+    
+    if (!trimmedNumber) {
+      newErrors.number = 'Table number is required';
+    } else if (trimmedNumber.length > 10) {
+      newErrors.number = 'Table number must be less than 10 characters';
+    } else if (!/^[a-zA-Z0-9]+$/.test(trimmedNumber)) {
+      newErrors.number = 'Table number can only contain letters and numbers';
     } else {
-      // Check for duplicate table number
-      const isDuplicate = existingTables.some(table => 
-        table.table_number === formData.table_number.trim() && 
-        (!editingTable || table.id !== editingTable.id)
-      );
+      // Check for duplicate table number (case-insensitive)
+      const isDuplicate = existingTables.some(table => {
+        const existingNumber = String(table.number || table.table_number || '').toLowerCase().trim();
+        const newNumber = trimmedNumber.toLowerCase();
+        return existingNumber === newNumber && 
+               (!editingTable || table.id !== editingTable.id);
+      });
       
       if (isDuplicate) {
-        newErrors.table_number = 'Table number already exists';
+        newErrors.number = `Table number "${trimmedNumber}" already exists. Please choose a different number.`;
       }
-    }
-
-    // Table name validation
-    if (!formData.table_name.trim()) {
-      newErrors.table_name = 'Table name is required';
-    } else if (formData.table_name.length > 50) {
-      newErrors.table_name = 'Table name must be less than 50 characters';
-    }
-
-    // Capacity validation
-    if (!formData.capacity) {
-      newErrors.capacity = 'Capacity is required';
-    } else {
-      const capacityNum = parseInt(formData.capacity);
-      if (isNaN(capacityNum) || capacityNum < 1 || capacityNum > 20) {
-        newErrors.capacity = 'Capacity must be between 1 and 20';
-      }
-    }
-
-    // Location validation
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    }
-
-    // Description validation (optional but with limit)
-    if (formData.description && formData.description.length > 200) {
-      newErrors.description = 'Description must be less than 200 characters';
     }
 
     setErrors(newErrors);
@@ -149,9 +110,9 @@ const TableForm = ({
   };
 
   const generateQRCode = () => {
-    const tableNum = formData.table_number.trim();
+    const tableNum = formData.number ? String(formData.number).trim() : '';
     const year = new Date().getFullYear();
-    return `QR-${tableNum}-${year}`;
+    return tableNum ? `QR-${tableNum}-${year}` : '';
   };
 
   const handleSubmit = (e) => {
@@ -163,12 +124,7 @@ const TableForm = ({
 
     const tableData = {
       ...formData,
-      table_number: formData.table_number.trim(),
-      table_name: formData.table_name.trim(),
-      capacity: parseInt(formData.capacity),
-      location: formData.location.trim(),
-      description: formData.description.trim(),
-      qr_code: editingTable ? editingTable.qr_code : generateQRCode()
+      number: formData.number ? String(formData.number).trim() : ''
     };
 
     onSave(tableData);
@@ -207,87 +163,22 @@ const TableForm = ({
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label" htmlFor="table_number">
+                <label className="form-label" htmlFor="number">
                   <Hash size={14} />
                   Table Number *
                 </label>
                 <input
                   type="text"
-                  id="table_number"
-                  name="table_number"
-                  value={formData.table_number}
+                  id="number"
+                  name="number"
+                  value={formData.number}
                   onChange={handleInputChange}
-                  placeholder="e.g., T001, A1, 101"
-                  className={`form-input ${errors.table_number ? 'border-error' : ''}`}
+                  placeholder="e.g., 1, 2, A1, B2 (letters and numbers only)"
+                  className={`form-input ${errors.number ? 'border-error' : ''}`}
+                  maxLength={10}
                 />
-                {errors.table_number && (
-                  <span className="text-error text-sm">{errors.table_number}</span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="capacity">
-                  <Users size={14} />
-                  Capacity *
-                </label>
-                <input
-                  type="number"
-                  id="capacity"
-                  name="capacity"
-                  value={formData.capacity}
-                  onChange={handleInputChange}
-                  placeholder="2"
-                  min="1"
-                  max="20"
-                  className={`form-input ${errors.capacity ? 'border-error' : ''}`}
-                />
-                {errors.capacity && (
-                  <span className="text-error text-sm">{errors.capacity}</span>
-                )}
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="table_name">
-                <MapPin size={14} />
-                Table Name *
-              </label>
-              <input
-                type="text"
-                id="table_name"
-                name="table_name"
-                value={formData.table_name}
-                onChange={handleInputChange}
-                placeholder="e.g., Table 1, VIP Table, Window Table"
-                className={`form-input ${errors.table_name ? 'border-error' : ''}`}
-              />
-              {errors.table_name && (
-                <span className="text-error text-sm">{errors.table_name}</span>
-              )}
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label" htmlFor="location">
-                  <MapPin size={14} />
-                  Location *
-                </label>
-                <select
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className={`form-input ${errors.location ? 'border-error' : ''}`}
-                >
-                  <option value="">Select location</option>
-                  {locationOptions.map(location => (
-                    <option key={location} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
-                {errors.location && (
-                  <span className="text-error text-sm">{errors.location}</span>
+                {errors.number && (
+                  <span className="text-error text-sm">{errors.number}</span>
                 )}
               </div>
 
@@ -309,29 +200,7 @@ const TableForm = ({
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="description">
-                <FileText size={14} />
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Optional description (e.g., Near window, good for families)"
-                rows={3}
-                className={`form-input ${errors.description ? 'border-error' : ''}`}
-              />
-              {errors.description && (
-                <span className="text-error text-sm">{errors.description}</span>
-              )}
-              <small className="text-gray text-sm">
-                {formData.description.length}/200 characters
-              </small>
-            </div>
-
-            {formData.table_number && (
+            {formData.number && (
               <div className="form-group">
                 <label className="form-label">QR Code Preview</label>
                 <div className="qr-preview">
