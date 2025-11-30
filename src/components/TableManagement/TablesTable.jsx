@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, QrCode, MapPin, CheckCircle, XCircle } from 'lucide-react';
+import { Edit, Trash2, QrCode, MapPin, CheckCircle, XCircle, Plus } from 'lucide-react';
 import QRCodeModal from './QRCodeModal';
 import StatusChangeButton from './StatusChangeButton';
 
-const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDeleteTable, onStatusChange }) => {
+const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDeleteTable, onStatusChange, onAddTable }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
   const getStatusInfo = (status) => {
@@ -42,15 +42,30 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
   if (filteredTables.length === 0) {
     return (
       <div className="table-container">
-        <div className="empty-state">
-          <MapPin size={48} className="empty-icon" />
-          <h3>No Tables Found</h3>
-          <p>
-            {searchTerm 
-              ? `No tables match "${searchTerm}". Try a different search term.`
-              : 'Get started by adding your first restaurant table using the "Add Table" button above.'
-            }
-          </p>
+        <div className="empty-state-enhanced">
+          <div className="empty-icon-wrapper">
+            <MapPin size={64} className="empty-icon-large" />
+          </div>
+          <div className="empty-content">
+            <h2 className="empty-title">No Tables Found</h2>
+            <p className="empty-description">
+              {searchTerm 
+                ? `No tables match "${searchTerm}". Try a different search term or clear your search.`
+                : 'Get started by adding your first restaurant table to begin managing your seating arrangements.'
+              }
+            </p>
+            {!searchTerm && onAddTable && (
+              <div className="empty-actions">
+                <button 
+                  className="btn btn-primary btn-lg"
+                  onClick={onAddTable}
+                >
+                  <Plus size={20} />
+                  Add Your First Table
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
