@@ -10,7 +10,7 @@ const CategoryManagement = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    image_path: null
+    image_path: ''
   });
 
   // Fetch all categories on component mount
@@ -84,22 +84,22 @@ const CategoryManagement = () => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      image_path: null // Don't pre-fill file input
+      image_path: category.image_path || ''
     });
     setIsModalOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', image_path: null });
+    setFormData({ name: '', image_path: '' });
     setEditingCategory(null);
     setError(null);
   };
 
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: files ? files[0] : value
+      [name]: value
     }));
   };
 
@@ -223,15 +223,16 @@ const CategoryManagement = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="image_path">Category Image</label>
+                <label htmlFor="image_path">Category Image URL</label>
                 <input
-                  type="file"
+                  type="text"
                   id="image_path"
                   name="image_path"
+                  value={formData.image_path}
                   onChange={handleInputChange}
-                  accept="image/jpeg,image/jpg,image/png"
+                  placeholder="https://example.com/image.jpg"
                 />
-                <small>Optional. Accepts JPG, JPEG, PNG files (max 2MB)</small>
+                <small>Optional. Enter the full URL of the image</small>
               </div>
 
               <div className="modal-actions">

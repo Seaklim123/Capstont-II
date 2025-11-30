@@ -10,10 +10,8 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDiscountPage, setCurrentDiscountPage] = useState(0);
   const [currentNewFoodPage, setCurrentNewFoodPage] = useState(0);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Mock data for discount section (your friend is working on the real discount page)
+  // Mock data for discount section
   const discountItems = [
     {
       id: 1,
@@ -59,25 +57,45 @@ const Home = () => {
     }
   ];
 
-  // Fetch all products from API for "New Food" section
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await productApi.getAll();
-        
-        if (response.data) {
-          setProducts(response.data);
-        }
-      } catch (err) {
-        console.error('Error fetching products:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  // Mock data for popular dishes section
+  const popularDishes = [
+    {
+      id: 7,
+      name: "Spicy Ramen",
+      price: 13.99,
+      image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400"
+    },
+    {
+      id: 8,
+      name: "Margherita Pizza",
+      price: 15.99,
+      image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400"
+    },
+    {
+      id: 9,
+      name: "Sushi Platter",
+      price: 22.99,
+      image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400"
+    },
+    {
+      id: 10,
+      name: "Steak & Fries",
+      price: 24.99,
+      image: "https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=400"
+    },
+    {
+      id: 11,
+      name: "Thai Green Curry",
+      price: 16.99,
+      image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400"
+    },
+    {
+      id: 12,
+      name: "Fish Tacos",
+      price: 14.99,
+      image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400"
+    }
+  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -87,18 +105,13 @@ const Home = () => {
   // Get image URL for products
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/150";
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/storage/')) return `http://127.0.0.1:8000${imagePath}`;
-    if (imagePath.startsWith('storage/')) return `http://127.0.0.1:8000/${imagePath}`;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
+    // Use the image path directly (should be a full URL from database)
+    return imagePath;
   };
-
-  // Get newest products (last 16) for "New Food" section
-  const newFoodItems = products.slice(-12).reverse();
 
   const itemsPerPage = 3;
   const totalPages = Math.ceil(discountItems.length / itemsPerPage);
-  const totalNewFoodPages = Math.ceil(newFoodItems.length / itemsPerPage);
+  const totalNewFoodPages = Math.ceil(popularDishes.length / itemsPerPage);
   
   const getCurrentPageItems = () => {
     const startIndex = currentDiscountPage * itemsPerPage;
@@ -109,7 +122,7 @@ const Home = () => {
   const getCurrentNewFoodItems = () => {
     const startIndex = currentNewFoodPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return newFoodItems.slice(startIndex, endIndex);
+    return popularDishes.slice(startIndex, endIndex);
   };
 
   const handleAddToCart = (itemId) => {
@@ -141,7 +154,7 @@ const Home = () => {
           </div>
           <div className="landing-image">
             <img 
-              src="http://127.0.0.1:8000/Image/classic-burger-fries.jpg" 
+              src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" 
               alt="Delicious Food"
               onError={(e) => {
                 console.error('Image failed to load:', e.target.src);
@@ -347,7 +360,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* New Food Section */}
+      {/* Popular Dish Section */}
       <section className="new-food-section" style={{ padding: '4rem 0', backgroundColor: '#ffffff' }}>
         <div className="new-food-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
           <div className="new-food-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
@@ -360,10 +373,10 @@ const Home = () => {
               fontSize: '0.875rem',
               fontWeight: '600',
               marginBottom: '1rem'
-            }}>New Food</span>
-            <h2 className="new-food-title" style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Our New Food</h2>
+            }}>Popular</span>
+            <h2 className="new-food-title" style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Popular Dish</h2>
             <p className="new-food-subtitle" style={{ color: '#666', fontSize: '1rem' }}>
-              Explore our latest menu additions and exciting new flavors.
+              Discover our most loved dishes by customers.
             </p>
           </div>
           
@@ -375,10 +388,8 @@ const Home = () => {
             margin: '0 auto',
             padding: '0 2rem'
           }}>
-            {loading ? (
-              <p style={{ textAlign: 'center', padding: '20px', gridColumn: '1/-1' }}>Loading products...</p>
-            ) : getCurrentNewFoodItems().length === 0 ? (
-              <p style={{ textAlign: 'center', padding: '20px', gridColumn: '1/-1' }}>No new products available</p>
+            {getCurrentNewFoodItems().length === 0 ? (
+              <p style={{ textAlign: 'center', padding: '20px', gridColumn: '1/-1' }}>No popular dishes available</p>
             ) : (
               getCurrentNewFoodItems().map((item) => (
                 <div key={item.id} style={{

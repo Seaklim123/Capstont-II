@@ -18,7 +18,7 @@ const MenuManagement = () => {
     price: '',
     discount_percentage: '',
     category_id: '',
-    image_path: null,
+    image_path: '',
     status: 'active'
   });
 
@@ -29,7 +29,7 @@ const MenuManagement = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryFormData, setCategoryFormData] = useState({
     name: '',
-    image_path: null
+    image_path: ''
   });
 
   // Fetch data on component mount and tab change
@@ -104,17 +104,17 @@ const MenuManagement = () => {
       price: product.price || '',
       discount_percentage: product.discount_percentage || '',
       category_id: product.category_id || '',
-      image_path: null,
+      image_path: product.image_path || '',
       status: product.status || 'active'
     });
     setIsProductModalOpen(true);
   };
 
   const handleProductInputChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value } = e.target;
     setProductFormData(prev => ({
       ...prev,
-      [name]: type === 'file' ? files[0] : value
+      [name]: value
     }));
   };
 
@@ -126,7 +126,7 @@ const MenuManagement = () => {
       price: '',
       discount_percentage: '',
       category_id: '',
-      image_path: null,
+      image_path: '',
       status: 'active'
     });
   };
@@ -191,16 +191,16 @@ const MenuManagement = () => {
     setEditingCategory(category);
     setCategoryFormData({
       name: category.name || '',
-      image_path: null
+      image_path: category.image_path || ''
     });
     setIsCategoryModalOpen(true);
   };
 
   const handleCategoryInputChange = (e) => {
-    const { name, value, type, files } = e.target;
+    const { name, value } = e.target;
     setCategoryFormData(prev => ({
       ...prev,
-      [name]: type === 'file' ? files[0] : value
+      [name]: value
     }));
   };
 
@@ -208,7 +208,7 @@ const MenuManagement = () => {
     setEditingCategory(null);
     setCategoryFormData({
       name: '',
-      image_path: null
+      image_path: ''
     });
   };
 
@@ -506,15 +506,16 @@ const MenuManagement = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="image_path">Product Image</label>
+                <label htmlFor="image_path">Product Image URL</label>
                 <input
-                  type="file"
+                  type="text"
                   id="image_path"
                   name="image_path"
+                  value={productFormData.image_path}
                   onChange={handleProductInputChange}
-                  accept="image/jpeg,image/jpg,image/png"
+                  placeholder="https://example.com/image.jpg"
                 />
-                <small>Optional. Accepts JPG, JPEG, PNG files</small>
+                <small>Optional. Enter the full URL of the image</small>
               </div>
 
               <div className="modal-actions">
@@ -575,15 +576,16 @@ const MenuManagement = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="cat-image">Category Image</label>
+                <label htmlFor="cat-image">Category Image URL</label>
                 <input
-                  type="file"
+                  type="text"
                   id="cat-image"
                   name="image_path"
+                  value={categoryFormData.image_path}
                   onChange={handleCategoryInputChange}
-                  accept="image/jpeg,image/jpg,image/png"
+                  placeholder="https://example.com/image.jpg"
                 />
-                <small>Optional. Accepts JPG, JPEG, PNG files</small>
+                <small>Optional. Enter the full URL of the image</small>
               </div>
 
               <div className="modal-actions">
