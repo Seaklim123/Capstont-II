@@ -68,7 +68,7 @@ const ProtectedRoute = ({ children, requiredRole = null, requiredPermission = nu
           <div style={{
             fontSize: '48px',
             marginBottom: '1rem'
-          }}>🚫</div>
+          }}></div>
           <h2 style={{
             color: '#ef4444',
             fontSize: '24px',

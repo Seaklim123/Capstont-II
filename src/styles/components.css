@@ -660,3 +660,30 @@ body.modal-open {
     padding: var(--space-sm) var(--space-lg);
   }
 }
+
+/* Enhanced Error Message Styling for Forms */
+.error-message {
+  color: #dc2626 !important;
+  font-weight: 500 !important;
+  display: block;
+  margin-top: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid #dc2626;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Enhanced border for inputs with errors */
+.border-error {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+/* Input focus state when there's an error */
+.form-input.border-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
+}
