@@ -51,12 +51,17 @@ function Payment() {
 
   const calculateSubtotal = () => {
     console.log('💰 Calculate subtotal - cartItems:', cartItems);
-    return cartItems.reduce((total, item) => {
+    console.log('💰 Cart items length:', cartItems.length);
+    
+    const subtotal = cartItems.reduce((total, item) => {
       // Handle both API format (with product object) and localStorage format
       const price = item.product?.price || item.price || 0;
       console.log('💰 Item:', item.name || item.product?.name, 'Price:', price, 'Qty:', item.quantity);
       return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
+    
+    console.log('💰 Calculated subtotal:', subtotal);
+    return subtotal;
   };
 
   const calculateTax = () => {
@@ -164,9 +169,18 @@ function Payment() {
           setCartItems([]);
           window.dispatchEvent(new Event('cartUpdated'));
           
-          // Navigate to order confirmation
+          // Navigate to order confirmation with order details
           setTimeout(() => {
-            navigate(`/order-confirmation?order=${createdOrderNumber}`);
+            navigate(`/order-confirmation?order=${createdOrderNumber}`, {
+              state: {
+                orderNumber: createdOrderNumber,
+                totalPrice: totalPrice,
+                payment: paymentMethod,
+                status: 'starting',
+                phone_number: phoneNumber,
+                customer_name: customerName
+              }
+            });
           }, 1500);
         } catch (apiError) {
           console.error('API Error:', apiError);
@@ -175,7 +189,7 @@ function Payment() {
         }
         
       } else {
-        // GUEST USER - Simple localStorage flow
+        // GUEST USER OR NO TABLE - Send to backend AND save to localStorage
         console.log('=== GUEST ORDER FLOW ===');
         console.log('📝 Generating order number...');
         
@@ -185,7 +199,35 @@ function Payment() {
         console.log('📝 Order Number:', orderNumber);
         console.log('📝 Total Price:', totalPrice);
         
-        // Store order in localStorage for guest
+        // Prepare order data for backend
+        const orderData = {
+          numberOrder: orderNumber,
+          totalPrice: totalPrice,
+          discount: 0,
+          note: notes || null,
+          phone_number: phoneNumber,
+          customer_name: customerName,
+          payment: paymentMethod,
+          status: 'starting',
+          items: cartItems.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price
+          }))
+        };
+        
+        console.log('📤 Sending order to backend:', orderData);
+        
+        // Try to send to backend API
+        try {
+          const response = await authOrdersApi.create(orderData);
+          console.log('✅ Order sent to backend successfully:', response);
+        } catch (apiError) {
+          console.error('⚠️ Backend API failed (order will be saved locally only):', apiError);
+          // Continue anyway - save to localStorage as fallback
+        }
+        
+        // Also store in localStorage for guest (backup/fallback)
         const guestOrder = {
           orderNumber: orderNumber,
           customerName: customerName,
@@ -198,14 +240,24 @@ function Payment() {
           createdAt: new Date().toISOString()
         };
         
-        console.log('📝 Guest Order Data:', guestOrder);
+        console.log('📝 Saving to localStorage as backup:', guestOrder);
         
         // Save to localStorage
-        const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+        const existingOrders = localStorage.getItem('guestOrders');
+        console.log('📝 Existing orders in localStorage:', existingOrders);
+        
+        const guestOrders = JSON.parse(existingOrders || '[]');
+        console.log('📝 Parsed existing orders:', guestOrders);
+        
         guestOrders.push(guestOrder);
+        console.log('📝 Orders after adding new order:', guestOrders);
+        
         localStorage.setItem('guestOrders', JSON.stringify(guestOrders));
         
-        console.log('✅ Order saved to localStorage');
+        // Verify it was saved
+        const verifyOrders = localStorage.getItem('guestOrders');
+        console.log('✅ Order saved to localStorage - Verification:', verifyOrders);
+        console.log('✅ Total orders now:', JSON.parse(verifyOrders).length);
         
         // Clear cart
         localStorage.removeItem('cart');
@@ -218,9 +270,18 @@ function Payment() {
         
         console.log('🚀 Navigating to order confirmation...');
         
-        // Navigate to order confirmation
+        // Navigate to order confirmation with order details
         setTimeout(() => {
-          navigate(`/order-confirmation?order=${orderNumber}`);
+          navigate(`/order-confirmation?order=${orderNumber}`, {
+            state: {
+              orderNumber: orderNumber,
+              totalPrice: totalPrice,
+              payment: paymentMethod,
+              status: 'starting',
+              phone_number: phoneNumber,
+              customer_name: customerName
+            }
+          });
         }, 1500);
       }
       

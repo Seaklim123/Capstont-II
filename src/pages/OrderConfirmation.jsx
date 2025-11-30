@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { authOrdersApi } from '../services/api';
 import '../styles/OrderConfirmation.css';
 
 function OrderConfirmation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const orderNumber = searchParams.get('order');
   const [orderDetails, setOrderDetails] = useState(null);
@@ -17,18 +18,50 @@ function OrderConfirmation() {
         return;
       }
 
+      // First, check if order data was passed via navigation state
+      if (location.state) {
+        console.log('✅ Using order data from navigation state:', location.state);
+        setOrderDetails(location.state);
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise, try to fetch from backend API
       try {
+        console.log('🔍 Fetching order from API:', orderNumber);
         const response = await authOrdersApi.findByNumber(orderNumber);
+        console.log('✅ Order fetched from API:', response.data);
         setOrderDetails(response.data);
       } catch (error) {
-        console.error('Error fetching order:', error);
+        console.error('❌ Error fetching order from API:', error);
+        
+        // Fallback: check localStorage for guest orders
+        try {
+          const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+          const order = guestOrders.find(o => o.orderNumber == orderNumber);
+          if (order) {
+            console.log('✅ Found order in localStorage:', order);
+            setOrderDetails({
+              orderNumber: order.orderNumber,
+              totalPrice: order.totalPrice,
+              payment: order.paymentMethod,
+              status: order.status || 'starting',
+              phone_number: order.phoneNumber,
+              customer_name: order.customerName
+            });
+          } else {
+            console.log('❌ Order not found in localStorage');
+          }
+        } catch (localError) {
+          console.error('❌ Error reading from localStorage:', localError);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrderDetails();
-  }, [orderNumber]);
+  }, [orderNumber, location.state]);
 
   return (
     <div className="order-confirmation-container">

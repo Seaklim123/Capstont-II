@@ -12,6 +12,18 @@ function Orders() {
 
   useEffect(() => {
     loadOrders();
+    
+    // Listen for cart updates (which might indicate a new order was placed)
+    const handleCartUpdate = () => {
+      console.log('🔄 Cart updated, reloading orders...');
+      loadOrders();
+    };
+    
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
   }, []);
 
   const loadOrders = async () => {
@@ -19,28 +31,36 @@ function Orders() {
       setLoading(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
 
+      console.log('🔄 Loading orders... Token exists:', !!token);
+
       if (token) {
         // Authenticated user - fetch from API
         try {
           const response = await authOrdersApi.getAll();
-          console.log('Orders API response:', response);
-          setOrders(response.data || response || []);
+          console.log('📦 Orders API response:', response);
+          const ordersData = response.data || response || [];
+          console.log('📦 Parsed orders from API:', ordersData);
+          setOrders(ordersData);
         } catch (apiError) {
-          console.error('API error, falling back to localStorage:', apiError);
+          console.error('❌ API error, falling back to localStorage:', apiError);
           // Fallback to localStorage if API fails
           const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+          console.log('📦 Fallback to localStorage orders:', guestOrders);
           setOrders(guestOrders);
         }
       } else {
         // Guest user - load from localStorage
         const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+        console.log('📦 Loading guest orders from localStorage:', guestOrders);
+        console.log('📦 Number of orders:', guestOrders.length);
         setOrders(guestOrders);
       }
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error('❌ Error loading orders:', error);
       
       // Fallback to localStorage
       const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+      console.log('📦 Final fallback orders:', guestOrders);
       setOrders(guestOrders);
     } finally {
       setLoading(false);
@@ -49,6 +69,14 @@ function Orders() {
 
   const getFilteredOrders = () => {
     if (activeFilter === 'all') return orders;
+    if (activeFilter === 'starting') {
+      // Include both 'starting' and 'pending' in Processing filter
+      return orders.filter(order => order.status === 'starting' || order.status === 'pending');
+    }
+    if (activeFilter === 'cancel') {
+      // Include both 'cancel' and 'cancelled' in Cancelled filter
+      return orders.filter(order => order.status === 'cancel' || order.status === 'cancelled');
+    }
     return orders.filter(order => order.status === activeFilter);
   };
 
