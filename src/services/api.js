@@ -893,6 +893,22 @@ export const authOrdersApi = {
       console.error('Error fetching auth order statuses:', error);
       throw error;
     }
+  },
+
+  // GET: get all orders for authenticated user
+  getAll: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.orders);
+      const url = `${AUTH_BASE}/orders`;
+      console.debug('authOrdersApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching auth orders:', error);
+      throw error;
+    }
   }
 };
 
