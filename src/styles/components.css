@@ -143,6 +143,42 @@
   background: var(--error);
   color: var(--white);
 }
+
+/* Remove unwanted focus/active effects from logout button */
+.enhanced-logout:focus,
+.enhanced-logout:active,
+.enhanced-logout:focus-visible,
+.enhanced-logout:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  text-shadow: none !important;
+  border: none !important;
+  background: var(--error) !important;
+  color: var(--white) !important;
+}
+
+.enhanced-logout:focus:not(:hover),
+.enhanced-logout:active:not(:hover) {
+  background: none !important;
+  color: var(--error) !important;
+}
+
+/* Ensure completely clean appearance */
+.enhanced-logout {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  text-shadow: none !important;
+}
+
 /* ===== ADMIN DASHBOARD SPECIFIC STYLES ===== */
 
 /* === FORM LAYOUT === */
