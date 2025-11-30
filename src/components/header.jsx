@@ -88,6 +88,12 @@ export function Header() {
               Menu
             </Link>
             <Link 
+              to="/orders" 
+              className={`nav-link ${isActive('/orders') ? 'active' : ''}`}
+            >
+              Orders
+            </Link>
+            <Link 
               to="/discount" 
               className={`nav-link ${isActive('/discount') ? 'active' : ''}`}
             >
@@ -145,6 +151,13 @@ export function Header() {
             onClick={() => setMobileMenuOpen(false)}
           >
             Menu
+          </Link>
+          <Link 
+            to="/orders" 
+            className={`mobile-nav-link ${isActive('/orders') ? 'active' : ''}`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Orders
           </Link>
           <Link 
             to="/discount" 

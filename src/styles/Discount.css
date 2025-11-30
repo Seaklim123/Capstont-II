@@ -140,3 +140,56 @@
   font-size: 0.9rem;
   color: #ccc;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .discount-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .category-buttons {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .category-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .section-title {
+    margin-left: 5%;
+    font-size: 1.2rem;
+  }
+
+  .dishes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 0 5%;
+  }
+
+  .footer-section {
+    padding: 30px 5%;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .discount-hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .dishes-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .category-btn {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+}

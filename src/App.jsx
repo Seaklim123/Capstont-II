@@ -8,6 +8,8 @@ import Discount from "./pages/Discount";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Payment from "./pages/Payment";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import Orders from "./pages/Orders";
 import ApiTest from "./pages/ApiTest";
 // import Order from "./pages/Order";
 import { Header } from "./components/header";
@@ -30,6 +32,8 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/api-test" element={<ApiTest />} />
           </Routes>
         </main>

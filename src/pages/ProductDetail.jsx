@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { productApi } from '../services/api';
+import { productApi, authCartApi } from '../services/api';
+import toast from 'react-hot-toast';
 import '../styles/ProductDetail.css';
 
 const ProductDetail = () => {
@@ -11,6 +12,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [selectedSize, setSelectedSize] = useState('Regular');
+  const [selectedAddons, setSelectedAddons] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -71,46 +74,66 @@ const ProductDetail = () => {
     navigate(-1);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
-    // Get existing cart from localStorage
-    const existingCart = localStorage.getItem('cart');
-    const cart = existingCart ? JSON.parse(existingCart) : [];
+    // Check if user is authenticated
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    
+    if (token) {
+      // Authenticated user - use backend API
+      try {
+        const tableNumber = localStorage.getItem('tableNumber');
+        
+        await authCartApi.addItem({
+          product_id: product.id,
+          quantity: quantity,
+          table_id: tableNumber || null,
+          status: 'starting'
+        });
 
-    // Check if product already in cart
-    const existingItemIndex = cart.findIndex(item => item.id === product.id);
-
-    if (existingItemIndex > -1) {
-      // Update quantity if already in cart
-      cart[existingItemIndex].quantity += quantity;
+        toast.success(`${product.name} added to cart!`);
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        setShowSuccessPopup(true);
+        setTimeout(() => setShowSuccessPopup(false), 2000);
+        setQuantity(1);
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        toast.error('Failed to add to cart. Please try again.');
+      }
     } else {
-      // Add new item to cart
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: getProductImageUrl(product.image || product.image_path),
-        quantity: quantity
-      });
+      // Guest user - use localStorage
+      try {
+        const existingCart = localStorage.getItem('cart');
+        const cart = existingCart ? JSON.parse(existingCart) : [];
+
+        const existingItemIndex = cart.findIndex(item => item.id === product.id);
+
+        if (existingItemIndex > -1) {
+          cart[existingItemIndex].quantity += quantity;
+        } else {
+          cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image_path: product.image_path || product.image,
+            quantity: quantity
+          });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        toast.success(`${product.name} added to cart!`);
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        setShowSuccessPopup(true);
+        setTimeout(() => setShowSuccessPopup(false), 2000);
+        setQuantity(1);
+      } catch (error) {
+        console.error('Error adding to localStorage cart:', error);
+        toast.error('Failed to add to cart');
+      }
     }
-
-    // Save to localStorage
-    localStorage.setItem('cart', JSON.stringify(cart));
-
-    // Trigger event to update cart badge
-    window.dispatchEvent(new Event('cartUpdated'));
-
-    // Show success popup
-    setShowSuccessPopup(true);
-
-    // Hide popup after 2 seconds
-    setTimeout(() => {
-      setShowSuccessPopup(false);
-    }, 2000);
-
-    // Reset quantity to 1
-    setQuantity(1);
   };
 
   if (loading) {
@@ -198,22 +221,50 @@ const ProductDetail = () => {
               </div>
 
               <div className="product-options">
+                {/* Size Selection */}
                 <div className="option-group">
                   <label className="option-label">Size</label>
-                  <select className="option-select">
-                    <option>Regular</option>
-                    <option>Large</option>
-                    <option>Extra Large</option>
-                  </select>
+                  <div className="size-options">
+                    {['Regular', 'Large', 'Extra Large'].map((size) => (
+                      <button
+                        key={size}
+                        className={`size-option-btn ${selectedSize === size ? 'active' : ''}`}
+                        onClick={() => setSelectedSize(size)}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
+                {/* Add-ons Selection */}
                 <div className="option-group">
-                  <label className="option-label">Add-ons</label>
-                  <select className="option-select">
-                    <option>None</option>
-                    <option>Extra Sauce</option>
-                    <option>Extra Cheese</option>
-                  </select>
+                  <label className="option-label">Add-ons (Optional)</label>
+                  <div className="addons-options">
+                    {[
+                      { id: 'extra-sauce', label: 'Extra Sauce', price: 0.5 },
+                      { id: 'extra-cheese', label: 'Extra Cheese', price: 1.0 },
+                      { id: 'vegetables', label: 'Extra Vegetables', price: 0.75 }
+                    ].map((addon) => (
+                      <label key={addon.id} className="addon-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedAddons.includes(addon.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAddons([...selectedAddons, addon.id]);
+                            } else {
+                              setSelectedAddons(selectedAddons.filter(id => id !== addon.id));
+                            }
+                          }}
+                        />
+                        <span className="addon-label">
+                          {addon.label}
+                          <span className="addon-price">+${addon.price.toFixed(2)}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 

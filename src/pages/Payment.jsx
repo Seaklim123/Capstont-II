@@ -1,20 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../contexts/CartContext';
-import { authOrdersApi } from '../services/api';
+import { authOrdersApi, authCartApi } from '../services/api';
+import toast from 'react-hot-toast';
+import '../styles/Payment.css';
 
 function Payment() {
   const navigate = useNavigate();
-  const { cartItems, clearCart } = useCart();
+  const [cartItems, setCartItems] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Load cart items on component mount
+  useEffect(() => {
+    const loadCart = async () => {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      
+      try {
+        if (token) {
+          // Authenticated user - fetch from API
+          const response = await authCartApi.getCart();
+          const carts = response.data || response.cart || response;
+          setCartItems(Array.isArray(carts) ? carts : []);
+        } else {
+          // Guest user - load from localStorage
+          const savedCart = localStorage.getItem('cart');
+          if (savedCart) {
+            setCartItems(JSON.parse(savedCart));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        // Fallback to localStorage
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
+      }
+    };
+    
+    loadCart();
+  }, []);
+
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (parseFloat(item.price) * item.quantity);
+      // Handle both API format (with product object) and localStorage format
+      const price = item.product?.price || item.price || 0;
+      return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
   };
 
@@ -28,345 +63,272 @@ function Payment() {
 
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) {
-      alert('Please enter your name');
+      toast.error('Please enter your name');
       return;
     }
 
     if (!phoneNumber.trim()) {
-      alert('Please enter your phone number');
+      toast.error('Please enter your phone number');
+      return;
+    }
+
+    if (!location.trim()) {
+      toast.error('Please enter your location/place');
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast.error('Your cart is empty');
       return;
     }
 
     try {
       setLoading(true);
-
-      // Get table number from localStorage (if scanned QR code)
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       const tableNumber = localStorage.getItem('tableNumber');
 
-      const orderData = {
-        customer_name: customerName,
-        phone_number: phoneNumber,
-        table_number: tableNumber || null,
-        payment_method: paymentMethod,
-        notes: notes,
-        items: cartItems.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        subtotal: parseFloat(calculateSubtotal()),
-        tax: parseFloat(calculateTax()),
-        total: parseFloat(calculateTotal())
-      };
+      if (token) {
+        // AUTHENTICATED USER - Full backend flow
+        console.log('=== AUTHENTICATED ORDER FLOW ===');
+        
+        // Step 1: Update all cart items status from "starting" to "ordering"
+        console.log('Step 1: Updating cart status to ordering...');
+        for (const item of cartItems) {
+          try {
+            await authCartApi.updateItem(item.id, { status: 'ordering' });
+            console.log(`Updated cart item ${item.id} to ordering`);
+          } catch (error) {
+            console.error('Error updating cart status:', error);
+          }
+        }
 
-      console.log('Placing order:', orderData);
+        // Step 2: Generate order number
+        const orderNumber = Date.now();
+        
+        // Step 3: Calculate totals
+        const subtotal = parseFloat(calculateSubtotal());
+        const discount = 0;
+        const totalPrice = parseFloat(calculateTotal());
 
-      // Send order to backend
-      const response = await authOrdersApi.create(orderData);
-      
-      console.log('Order response:', response);
+        // Step 4: Create order_information entry
+        const orderInformationData = {
+          numberOrder: orderNumber,
+          totalPrice: totalPrice,
+          discount: discount,
+          note: notes || null,
+          refund: 0,
+          phone_number: phoneNumber,
+          status: 'starting', // starting, accepted, cancel
+          payment: paymentMethod, // card or cash
+          payment_status: 'nondone', // done or nondone
+          location: location,
+          customer_name: customerName,
+          table_number: tableNumber || null,
+          cart_items: cartItems.map(item => ({
+            cart_id: item.id,
+            product_id: item.product_id || item.id,
+            quantity: item.quantity,
+            price: item.product?.price || item.price || 0
+          }))
+        };
 
-      // Show success message
-      alert(`Order placed successfully!\n\nOrder Number: ${response.data?.order_number || 'N/A'}\nTotal: $${calculateTotal()}\n\nThank you, ${customerName}!`);
-      
-      // Clear cart
-      clearCart();
-      
-      // Navigate to home
-      navigate('/');
+        console.log('Step 2: Creating order information...', orderInformationData);
+        
+        try {
+          // Step 5: Create order via API
+          const response = await authOrdersApi.create(orderInformationData);
+          console.log('Order created successfully:', response);
+          
+          const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || orderNumber;
+          
+          toast.success(`Order #${createdOrderNumber} placed successfully!`);
+          
+          // Step 6: Clear cart after successful order
+          console.log('Step 3: Clearing cart...');
+          for (const item of cartItems) {
+            try {
+              await authCartApi.removeItem(item.id);
+              console.log(`Removed cart item ${item.id}`);
+            } catch (err) {
+              console.error('Error clearing cart item:', err);
+            }
+          }
+          
+          // Clear local state
+          setCartItems([]);
+          window.dispatchEvent(new Event('cartUpdated'));
+          
+          // Navigate to order confirmation
+          setTimeout(() => {
+            navigate(`/order-confirmation?order=${createdOrderNumber}`);
+          }, 1500);
+        } catch (apiError) {
+          console.error('API Error:', apiError);
+          toast.error(`Failed to create order: ${apiError.message}`);
+          throw apiError;
+        }
+        
+      } else {
+        // GUEST USER - Simple localStorage flow
+        console.log('=== GUEST ORDER FLOW ===');
+        
+        const orderNumber = Date.now();
+        const totalPrice = parseFloat(calculateTotal());
+        
+        // Store order in localStorage for guest
+        const guestOrder = {
+          orderNumber: orderNumber,
+          customerName: customerName,
+          phoneNumber: phoneNumber,
+          location: location,
+          paymentMethod: paymentMethod,
+          notes: notes,
+          items: cartItems,
+          totalPrice: totalPrice,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+        
+        // Save to localStorage
+        const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+        guestOrders.push(guestOrder);
+        localStorage.setItem('guestOrders', JSON.stringify(guestOrders));
+        
+        // Clear cart
+        localStorage.removeItem('cart');
+        setCartItems([]);
+        window.dispatchEvent(new Event('cartUpdated'));
+        
+        toast.success(`Order #${orderNumber} placed successfully!`);
+        
+        // Navigate to order confirmation
+        setTimeout(() => {
+          navigate(`/order-confirmation?order=${orderNumber}`);
+        }, 1500);
+      }
       
     } catch (error) {
       console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
+      toast.error(error.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '2rem 1rem'
-    }}>
-      <div style={{ 
-        maxWidth: '650px', 
-        margin: '0 auto',
-        backgroundColor: 'white',
-        borderRadius: '20px',
-        padding: '2.5rem',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-      }}>
+    <div className="payment-container">
+      <div className="payment-card">
         {/* Header */}
-        <div style={{ marginBottom: '2.5rem', borderBottom: '2px solid #f0f0f0', paddingBottom: '1.5rem' }}>
+        <div className="payment-header">
           <button 
             onClick={() => navigate('/cart')}
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              color: 'white',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              padding: '0.5rem 1.2rem',
-              borderRadius: '25px',
-              marginBottom: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              transition: 'transform 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateX(-4px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(0)'}
+            className="back-button"
           >
             ← Back to Cart
           </button>
-          <h1 style={{ 
-            fontSize: '2.2rem', 
-            fontWeight: '700',
-            margin: '0 0 0.5rem 0',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
+          <h1 className="payment-title">
             Checkout
           </h1>
-          {localStorage.getItem('tableNumber') && (
-            <div style={{ 
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '25px',
-              fontSize: '0.9rem',
-              fontWeight: '600'
-            }}>
-              🍽️ Table {localStorage.getItem('tableNumber')}
-            </div>
-          )}
         </div>
 
         {/* Customer Information */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ 
-            fontSize: '1.3rem', 
-            fontWeight: '700',
-            marginBottom: '1.5rem',
-            color: '#333',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
+        <div className="payment-section">
+          <h2 className="section-title">
             👤 Customer Information
           </h2>
           
-          <div style={{ marginBottom: '1.2rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.6rem',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              color: '#555'
-            }}>
+          <div className="form-group">
+            <label className="form-label">
               Name *
             </label>
             <input
               type="text"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Enter your name"
-              style={{
-                width: '100%',
-                padding: '0.9rem 1rem',
-                border: '2px solid #e0e0e0',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-                transition: 'all 0.3s',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              placeholder="Seaklim"
+              className="form-input"
             />
           </div>
 
-          <div style={{ marginBottom: '1.2rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.6rem',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              color: '#555'
-            }}>
+          <div className="form-group">
+            <label className="form-label">
               Phone Number *
             </label>
             <input
               type="tel"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Enter your phone number"
-              style={{
-                width: '100%',
-                padding: '0.9rem 1rem',
-                border: '2px solid #e0e0e0',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-                transition: 'all 0.3s',
-                outline: 'none'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              placeholder="0252522"
+              className="form-input"
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.6rem',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              color: '#555'
-            }}>
+          <div className="form-group">
+            <label className="form-label">
+              Location/Place *
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Where should we deliver? (e.g., Room 205, Office A)"
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
               Special Notes (Optional)
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any special requests? (e.g., no onions, extra spicy)"
+              placeholder="Any special requests?"
               rows="3"
-              style={{
-                width: '100%',
-                padding: '0.9rem 1rem',
-                border: '2px solid #e0e0e0',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-                resize: 'vertical',
-                transition: 'all 0.3s',
-                outline: 'none',
-                fontFamily: 'inherit'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#667eea'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              className="form-textarea"
             />
           </div>
         </div>
 
         {/* Payment Method */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ 
-            fontSize: '1.3rem', 
-            fontWeight: '700',
-            marginBottom: '1.5rem',
-            color: '#333',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
+        <div className="payment-section">
+          <h2 className="section-title">
             💳 Payment Method
           </h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '1.2rem',
-              border: `3px solid ${paymentMethod === 'cash' ? '#667eea' : '#e0e0e0'}`,
-              borderRadius: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              background: paymentMethod === 'cash' ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' : 'white',
-              boxShadow: paymentMethod === 'cash' ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-              transform: paymentMethod === 'cash' ? 'scale(1.02)' : 'scale(1)'
-            }}>
+          <div className="payment-options">
+            <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 value="cash"
                 checked={paymentMethod === 'cash'}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                style={{ 
-                  marginRight: '1rem', 
-                  width: '22px', 
-                  height: '22px',
-                  accentColor: '#667eea',
-                  cursor: 'pointer'
-                }}
               />
-              <span style={{ 
-                fontSize: '1.05rem', 
-                fontWeight: '600',
-                color: paymentMethod === 'cash' ? '#667eea' : '#555'
-              }}>
+              <span className="payment-option-label">
                 💵 Cash Payment
               </span>
             </label>
 
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '1.2rem',
-              border: `3px solid ${paymentMethod === 'card' ? '#667eea' : '#e0e0e0'}`,
-              borderRadius: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              background: paymentMethod === 'card' ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' : 'white',
-              boxShadow: paymentMethod === 'card' ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-              transform: paymentMethod === 'card' ? 'scale(1.02)' : 'scale(1)'
-            }}>
+            <label className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 value="card"
                 checked={paymentMethod === 'card'}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                style={{ 
-                  marginRight: '1rem', 
-                  width: '22px', 
-                  height: '22px',
-                  accentColor: '#667eea',
-                  cursor: 'pointer'
-                }}
               />
-              <span style={{ 
-                fontSize: '1.05rem', 
-                fontWeight: '600',
-                color: paymentMethod === 'card' ? '#667eea' : '#555'
-              }}>
+              <span className="payment-option-label">
                 💳 Credit/Debit Card
               </span>
             </label>
 
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '1.2rem',
-              border: `3px solid ${paymentMethod === 'mobile' ? '#667eea' : '#e0e0e0'}`,
-              borderRadius: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              background: paymentMethod === 'mobile' ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)' : 'white',
-              boxShadow: paymentMethod === 'mobile' ? '0 4px 12px rgba(102, 126, 234, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-              transform: paymentMethod === 'mobile' ? 'scale(1.02)' : 'scale(1)'
-            }}>
+            <label className={`payment-option ${paymentMethod === 'mobile' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 value="mobile"
                 checked={paymentMethod === 'mobile'}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                style={{ 
-                  marginRight: '1rem', 
-                  width: '22px', 
-                  height: '22px',
-                  accentColor: '#667eea',
-                  cursor: 'pointer'
-                }}
               />
-              <span style={{ 
-                fontSize: '1.05rem', 
-                fontWeight: '600',
-                color: paymentMethod === 'mobile' ? '#667eea' : '#555'
-              }}>
+              <span className="payment-option-label">
                 📱 Mobile Payment
               </span>
             </label>
@@ -374,85 +336,43 @@ function Payment() {
         </div>
 
         {/* Order Summary */}
-        <div style={{ 
-          marginBottom: '2rem',
-          padding: '2rem',
-          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)',
-          borderRadius: '16px',
-          border: '2px solid rgba(102, 126, 234, 0.2)'
-        }}>
-          <h2 style={{ 
-            fontSize: '1.3rem', 
-            fontWeight: '700',
-            marginBottom: '1.5rem',
-            color: '#333',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            🛒 Order Summary
-          </h2>
-          
-          <div style={{ marginBottom: '1.2rem' }}>
-            {cartItems.map(item => (
-              <div key={item.id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                padding: '1rem',
-                backgroundColor: 'white',
-                borderRadius: '10px',
-                fontSize: '0.95rem',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-              }}>
-                <span style={{ fontWeight: '500', color: '#333' }}>
-                  {item.name} <span style={{ color: '#888', fontSize: '0.9rem' }}>×{item.quantity}</span>
-                </span>
-                <span style={{ fontWeight: '700', color: '#667eea', fontSize: '1.05rem' }}>
-                  ${(parseFloat(item.price) * item.quantity).toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
+        <div className="payment-section">
+          <div className="order-summary">
+            <h2 className="section-title">
+              🛒 Order Summary
+            </h2>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              {cartItems.map(item => {
+                const productName = item.product?.name || item.name || 'Unknown Product';
+                const productPrice = item.product?.price || item.price || 0;
+                
+                return (
+                  <div key={item.id} className="order-item">
+                    <span className="order-item-name">
+                      {productName} <span className="order-item-quantity">×{item.quantity}</span>
+                    </span>
+                    <span className="order-item-price">
+                      ${(parseFloat(productPrice) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
-          <div style={{ 
-            borderTop: '2px solid rgba(102, 126, 234, 0.2)',
-            paddingTop: '1.2rem',
-            marginTop: '0.5rem'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '0.8rem',
-              fontSize: '1rem',
-              color: '#555'
-            }}>
-              <span style={{ fontWeight: '500' }}>Subtotal</span>
-              <span style={{ fontWeight: '600' }}>${calculateSubtotal()}</span>
-            </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '1rem',
-              fontSize: '1rem',
-              color: '#555'
-            }}>
-              <span style={{ fontWeight: '500' }}>Tax (10%)</span>
-              <span style={{ fontWeight: '600' }}>${calculateTax()}</span>
-            </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: '1.4rem',
-              fontWeight: '700',
-              padding: '1rem',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '10px',
-              color: 'white'
-            }}>
-              <span>Total</span>
-              <span>${calculateTotal()}</span>
+            <div className="order-summary-divider">
+              <div className="summary-row">
+                <span>Subtotal</span>
+                <span>${calculateSubtotal()}</span>
+              </div>
+              <div className="summary-row">
+                <span>Tax (10%)</span>
+                <span>${calculateTax()}</span>
+              </div>
+              <div className="summary-total">
+                <span>Total</span>
+                <span>${calculateTotal()}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -461,33 +381,7 @@ function Payment() {
         <button
           onClick={handlePlaceOrder}
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '1.3rem',
-            background: loading ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '16px',
-            fontSize: '1.2rem',
-            fontWeight: '700',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'all 0.3s',
-            boxShadow: loading ? 'none' : '0 8px 20px rgba(102, 126, 234, 0.4)',
-            transform: 'scale(1)',
-            letterSpacing: '0.5px'
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) {
-              e.target.style.transform = 'scale(1.02)';
-              e.target.style.boxShadow = '0 12px 28px rgba(102, 126, 234, 0.5)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading) {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.4)';
-            }
-          }}
+          className="place-order-button"
         >
           {loading ? 'Placing Order...' : `Place Order - $${calculateTotal()}`}
         </button>

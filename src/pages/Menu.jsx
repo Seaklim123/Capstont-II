@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
-import { categoryApi, productApi } from "../services/api.js";
+import { categoryApi, productApi, authCartApi } from "../services/api.js";
+import toast from 'react-hot-toast';
 
 function Menu() {
   const navigate = useNavigate();
@@ -149,9 +150,63 @@ function Menu() {
     return null;
   };
 
-  // Handle add to cart click — navigate to product detail (legacy behavior)
-  const handleAddToCart = (itemId) => {
-    navigate(`/product/${itemId}`);
+  // Handle add to cart - try backend API first, fallback to localStorage
+  const handleAddToCart = async (itemId) => {
+    const product = products.find(p => p.id === itemId);
+    if (!product) {
+      toast.error('Product not found');
+      return;
+    }
+
+    // Check if user is authenticated
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    
+    if (token) {
+      // Authenticated user - use backend API
+      try {
+        const tableNumber = localStorage.getItem('tableNumber');
+        
+        await authCartApi.addItem({
+          product_id: itemId,
+          quantity: 1,
+          table_id: tableNumber || null,
+          status: 'starting'
+        });
+
+        toast.success(`${product.name} added to cart!`);
+        window.dispatchEvent(new Event('cartUpdated'));
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        toast.error('Failed to add to cart. Please try again.');
+      }
+    } else {
+      // Guest user - use localStorage
+      try {
+        const existingCart = localStorage.getItem('cart');
+        const cart = existingCart ? JSON.parse(existingCart) : [];
+
+        const existingItemIndex = cart.findIndex(item => item.id === itemId);
+
+        if (existingItemIndex > -1) {
+          cart[existingItemIndex].quantity += 1;
+        } else {
+          cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image_path: product.image_path || product.image,
+            quantity: 1
+          });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        toast.success(`${product.name} added to cart!`);
+        window.dispatchEvent(new Event('cartUpdated'));
+      } catch (error) {
+        console.error('Error adding to localStorage cart:', error);
+        toast.error('Failed to add to cart');
+      }
+    }
   };
 
   // Filter products by category
