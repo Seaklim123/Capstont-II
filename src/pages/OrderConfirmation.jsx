@@ -122,6 +122,67 @@ function OrderConfirmation() {
           </p>
         </div>
 
+        {/* Customer Information */}
+        {(orderDetails?.phone_number || orderDetails?.special_notes) && (
+          <div style={{
+            background: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1.5rem'
+          }}>
+            <h3 style={{
+              margin: '0 0 0.75rem 0',
+              fontSize: '1rem',
+              fontWeight: '600',
+              color: '#333'
+            }}>
+              Customer Information
+            </h3>
+            
+            {orderDetails.phone_number && (
+              <div style={{ marginBottom: orderDetails.special_notes ? '0.75rem' : '0' }}>
+                <span style={{ 
+                  fontSize: '0.85rem', 
+                  color: '#666',
+                  fontWeight: '500'
+                }}>Phone Number:</span>
+                <span style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#333',
+                  marginLeft: '0.5rem',
+                  fontWeight: '600'
+                }}>
+                  {orderDetails.phone_number}
+                </span>
+              </div>
+            )}
+            
+            {orderDetails.special_notes && (
+              <div>
+                <span style={{ 
+                  fontSize: '0.85rem', 
+                  color: '#666',
+                  fontWeight: '500',
+                  display: 'block',
+                  marginBottom: '0.25rem'
+                }}>Special Notes:</span>
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#333',
+                  background: '#fff',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid #e9ecef',
+                  fontStyle: 'italic'
+                }}>
+                  {orderDetails.special_notes}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Order Details */}
         {loading ? (
           <p className="loading-spinner">Loading order details...</p>

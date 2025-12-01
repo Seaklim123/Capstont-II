@@ -7,7 +7,6 @@ import '../styles/Payment.css';
 function Payment() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
-  const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,15 +72,9 @@ function Payment() {
 
   const handlePlaceOrder = async () => {
     console.log('🚀 Place Order clicked!');
-    console.log('🚀 Customer Name:', customerName);
     console.log('🚀 Phone Number:', phoneNumber);
     console.log('🚀 Cart Items:', cartItems);
     
-    if (!customerName.trim()) {
-      toast.error('Please enter your name');
-      return;
-    }
-
     if (!phoneNumber.trim()) {
       toast.error('Please enter your phone number');
       return;
@@ -132,7 +125,6 @@ function Payment() {
           status: 'starting', // starting, accepted, cancel
           payment: 'cash', // always cash
           payment_status: 'nondone', // done or nondone
-          customer_name: customerName,
           table_number: tableNumber || null,
           cart_items: cartItems.map(item => ({
             cart_id: item.id,
@@ -177,7 +169,7 @@ function Payment() {
                 payment: paymentMethod,
                 status: 'starting',
                 phone_number: phoneNumber,
-                customer_name: customerName
+                special_notes: notes
               }
             });
           }, 1500);
@@ -205,7 +197,6 @@ function Payment() {
           discount: 0,
           note: notes || null,
           phone_number: phoneNumber,
-          customer_name: customerName,
           payment: 'cash',
           status: 'starting',
           items: cartItems.map(item => ({
@@ -229,7 +220,6 @@ function Payment() {
         // Also store in localStorage for guest (backup/fallback)
         const guestOrder = {
           orderNumber: orderNumber,
-          customerName: customerName,
           phoneNumber: phoneNumber,
           paymentMethod: 'cash',
           notes: notes,
@@ -278,7 +268,7 @@ function Payment() {
               payment: 'cash',
               status: 'starting',
               phone_number: phoneNumber,
-              customer_name: customerName
+              special_notes: notes
             }
           });
         }, 1500);
@@ -356,19 +346,6 @@ function Payment() {
             👤 Customer Information
           </h2>
           
-          <div className="form-group">
-            <label className="form-label">
-              Name *
-            </label>
-            <input
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Seaklim"
-              className="form-input"
-            />
-          </div>
-
           <div className="form-group">
             <label className="form-label">
               Phone Number *
