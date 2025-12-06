@@ -181,7 +181,7 @@ function Orders() {
                   <th>ID</th>
                   <th>Order Number</th>
                   <th>Total Price ($)</th>
-                  <th>Discount</th>
+                  <th>Price After Accept</th>
                   <th>Status</th>
                   <th>Payment</th>
                   <th>Phone Number</th>
@@ -197,10 +197,10 @@ function Orders() {
                       #{order.orderNumber || order.numberOrder || 'N/A'}
                     </td>
                     <td className="price-cell">
-                      ${(order.totalPrice || 0).toFixed(2)}
+                      ${Number(order.totalPrice ?? 0).toFixed(2)}
                     </td>
                     <td className="discount-cell">
-                      {order.discount ? `${order.discount}%` : '0%'}
+                      $ {order.priceperorder }
                     </td>
                     <td>
                       <span 
@@ -221,7 +221,7 @@ function Orders() {
                       {order.paymentMethod || order.payment || 'Cash'}
                     </td>
                     <td className="phone-cell">
-                      {order.phoneNumber || order.phone_number || 'N/A'}
+                      {order.numberOrder || order.numberOrder || 'N/A'}
                     </td>
                     <td className="items-cell">
                       {order.items && order.items.length > 0 ? (

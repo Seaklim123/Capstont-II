@@ -56,7 +56,7 @@ const Cart = () => {
       // Only use backend API if user has both token AND table number
       if (token && tableNumber) {
         // Authenticated user with table - fetch from backend API
-        const response = await authCartApi.getCart();
+        const response = await authCartApi.getCart(tableNumber);
         console.log('Cart response from backend:', response);
         
         const carts = response.data || response.cart || response;
@@ -257,7 +257,7 @@ const Cart = () => {
                 <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-            <h1 className="cart-title">Shopping Cart</h1>
+            <h1 className="cart-title">Shopping Cart </h1>
             {/* Show table number if present */}
             {(tableNumber || (cartItems.length > 0 && (cartItems[0].table_number || cartItems[0].table_id))) && (
               <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>

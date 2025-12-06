@@ -191,7 +191,7 @@ function OrderConfirmation() {
             <h3 className="order-details-title">Order Details</h3>
             <div className="order-detail-row">
               <span className="order-detail-label">Total:</span>
-              <span className="order-detail-value">${orderDetails.totalPrice?.toFixed(2) || '0.00'}</span>
+              <span className="order-detail-value">${orderDetails.numberOrder?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="order-detail-row">
               <span className="order-detail-label">Payment:</span>

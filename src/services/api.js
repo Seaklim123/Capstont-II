@@ -741,10 +741,10 @@ export const authCategoryApi = {
 
 export const authCartApi = {
   // GET: get current cart
-  getCart: async () => {
+  getCart: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.cart);
-      const url = `${AUTH_BASE}/carts`;
+      const url = `${AUTH_BASE}/carts/${id}`;
       console.debug('authCartApi.getCart ->', url);
       const response = await fetchWithAuth(url);
       const data = await handleResponse(response);

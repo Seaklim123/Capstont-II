@@ -21,7 +21,7 @@ function Payment() {
         // Only use backend API if user has both token AND table number
         if (token && tableNumber) {
           // Authenticated user with table - fetch from API
-          const response = await authCartApi.getCart();
+          const response = await authCartApi.getCart(tableNumber);
           const carts = response.data || response.cart || response;
           setCartItems(Array.isArray(carts) ? carts : []);
         } else {
@@ -126,6 +126,7 @@ function Payment() {
           payment: 'cash', // always cash
           payment_status: 'nondone', // done or nondone
           table_number: tableNumber || null,
+          table_id: tableNumber || null,
           cart_items: cartItems.map(item => ({
             cart_id: item.id,
             product_id: item.product_id || item.id,
@@ -144,7 +145,7 @@ function Payment() {
           const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || orderNumber;
           
           toast.success(`Order #${createdOrderNumber} placed successfully!`);
-          
+          // navigate(`/order-confirmation?order=${createdOrderNumber || order.numberOrder}`)
           // Step 6: Clear cart after successful order
           console.log('Step 3: Clearing cart...');
           for (const item of cartItems) {
@@ -167,6 +168,7 @@ function Payment() {
                 orderNumber: createdOrderNumber,
                 totalPrice: totalPrice,
                 payment: paymentMethod,
+                
                 status: 'starting',
                 phone_number: phoneNumber,
                 special_notes: notes
