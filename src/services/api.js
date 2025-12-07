@@ -123,11 +123,34 @@ class ApiService {
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}`;
+        let errorDetails = null;
+        
         try {
           const errorData = await response.json();
+          errorDetails = errorData;
           
+          // Handle specific 500 errors
+          if (response.status === 500) {
+            console.error('500 Server Error Details:', {
+              url,
+              method: config.method || 'GET',
+              errorData,
+              status: response.status
+            });
+            
+            if (errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
+              const tableNumber = this.extractTableNumberFromError(errorData.message);
+              errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
+            } else if (errorData.message && errorData.message.includes('foreign key constraint')) {
+              errorMessage = 'Cannot delete this item because it is being used by other records.';
+            } else if (errorData.message) {
+              errorMessage = errorData.message;
+            } else {
+              errorMessage = 'Internal server error. Please check the server logs for details.';
+            }
+          }
           // Handle duplicate table number error specifically
-          if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
+          else if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
             const tableNumber = this.extractTableNumberFromError(errorData.message);
             errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
           } 
@@ -360,6 +383,27 @@ class ApiService {
     return response.data || response;
   }
 
+  async getProductById(id) {
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`);
+      const product = this.handleResponse(response);
+      
+      if (product) {
+        const imageUrl = this.getImageUrl(product.image_path);
+        return {
+          ...product,
+          image_url: imageUrl,
+          originalImagePath: product.image_path
+        };
+      }
+      
+      return product;
+    } catch (error) {
+      console.error(`Error fetching product ${id}:`, error);
+      throw error;
+    }
+  }
+
   // Update product with file upload
   async updateProductWithFile(id, productData, imageFile) {
     const formData = new FormData();
@@ -390,9 +434,37 @@ class ApiService {
   }
 
   async deleteProduct(id) {
-      return this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
+        method: 'DELETE',
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error(`Error deleting product ${id}:`, error);
+      
+      // Provide more specific error messages
+      if (error.message.includes('Foreign key constraint')) {
+        throw new Error('Cannot delete this product because it is being used in orders or other records. Please remove those references first.');
+      } else if (error.message.includes('Not found') || error.message.includes('404')) {
+        throw new Error('Product not found. It may have already been deleted.');
+      } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+        throw new Error('You do not have permission to delete this product.');
+      } else {
+        throw new Error(`Failed to delete product: ${error.message}`);
+      }
+    }
+  }
+
+  // Check if product can be deleted (optional method to check dependencies)
+  async checkProductDependencies(id) {
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}/dependencies`);
+      return this.handleResponse(response);
+    } catch (error) {
+      // If endpoint doesn't exist, assume no dependencies
+      console.log('Dependencies check not available, proceeding with delete');
+      return { canDelete: true, dependencies: [] };
+    }
   }
 
   async toggleProductStatus(id, status) {

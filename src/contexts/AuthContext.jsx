@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
           // Try to verify token is still valid by making a request to profile endpoint
           try {
             console.log(' Validating token with backend...');
-            const response = await fetch('http://localhost:8000/api/v1/auth/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/profile`, {
               method: 'GET',
               headers: { 
                 'Content-Type': 'application/json', 
@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
       console.log(' Attempting login...');
       
       // Step 1: Login to get token
-      const loginResponse = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const loginResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(credentials),
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
       // Step 2: Try to fetch user profile with the token
       try {
         console.log(' Fetching user profile...');
-        const profileResponse = await fetch('http://localhost:8000/api/v1/auth/profile', {
+        const profileResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/profile`, {
           method: 'GET',
           headers: { 
             'Content-Type': 'application/json', 
@@ -226,7 +226,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (token) {
         // Call backend logout endpoint
-        await fetch('http://localhost:8000/api/v1/auth/logout', {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/logout`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',

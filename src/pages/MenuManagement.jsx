@@ -163,22 +163,14 @@ const MenuManagement = () => {
           result = await ApiService.updateProductWithFile(editingItem.id, backendData, imageFile);
           console.log('File update result:', result);
         } else if (itemData.imageMode === 'url' && itemData.image) {
-          // Update with image URL - use FormData to avoid JSON validation issues
-          const formData = new FormData();
-          Object.keys(backendData).forEach(key => {
-            if (key !== 'image_url' && backendData[key] !== null && backendData[key] !== undefined) {
-              formData.append(key, backendData[key]);
-            }
-          });
-          // Send URL as image_path
-          formData.append('image_path', itemData.image);
-          formData.append('_method', 'PUT');
+          // Update with image URL using the proper API method
+          const urlData = {
+            ...backendData,
+            image_path: itemData.image
+          };
           
-          result = await ApiService.request(`/products/${editingItem.id}`, {
-            method: 'POST',
-            headers: { 'Accept': 'application/json' },
-            body: formData,
-          });
+          result = await ApiService.updateProduct(editingItem.id, urlData);
+          console.log('URL update result:', result);
         } else {
           // Update without image changes
           result = await ApiService.updateProduct(editingItem.id, backendData);
@@ -210,13 +202,13 @@ const MenuManagement = () => {
             formDataEntries: [...formData.entries()].map(([key, value]) => [key, value])
           });
           
-          result = await ApiService.request('/products', {
-            method: 'POST',
-            headers: { 'Accept': 'application/json' },
-            body: formData,
-          });
-          
-          console.log('DEBUG: URL FormData result:', result);
+          // Use the proper createProduct method
+          const urlData = {
+            ...backendData,
+            image_path: itemData.image
+          };
+          result = await ApiService.createProduct(urlData);
+          console.log('URL create result:', result);
         } else {
           // Create without image
           result = await ApiService.createProduct(backendData);
@@ -253,7 +245,9 @@ const MenuManagement = () => {
         setShowDeleteConfirm(null);
         toast.success('Menu item deleted successfully!', { id: deleteToast });
       } catch (err) {
-        toast.error('Failed to delete menu item. Please try again.', { id: deleteToast });
+        console.error('Delete error:', err);
+        const errorMessage = err.message || 'Failed to delete menu item. Please try again.';
+        toast.error(errorMessage, { id: deleteToast });
         setShowDeleteConfirm(null);
       }
     }

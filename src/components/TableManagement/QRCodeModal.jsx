@@ -7,7 +7,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   // Generate the QR content (URL that customers will scan)
   const generateQRContent = () => {
     // Point to your customer menu app
-    const customerMenuBaseUrl = 'http://localhost:5173';//----need u guys change it klun eng depending on local frontend user customer -------
+    const customerMenuBaseUrl = 'http://localhost:5174';//----need u guys change it klun eng depending on local frontend user customer -------
     // Include table number as query parameter so the menu knows which table ordered
     return `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
   };
