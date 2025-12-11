@@ -27,7 +27,8 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
       bgcolor: 'ffffff',    // White background
       color: '000000',      // Black foreground
       qzone: '1',          // Quiet zone
-      format: 'png'        // Image format
+      format: 'png',       // Image format
+      timestamp: Date.now() // Cache busting parameter
     });
     return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
   };
@@ -35,9 +36,15 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   useEffect(() => {
     console.log('QRCodeModal useEffect triggered:', { isOpen, table }); // Debug log
     if (isOpen && table) {
+      // Clear previous QR code to force regeneration
+      setQrCodeURL('');
       const qrContent = generateQRContent();
       const qrURL = generateQRCodeURL(qrContent);
+      console.log('Generated QR Code URL:', qrURL); // Debug log
       setQrCodeURL(qrURL);
+    } else {
+      // Clear QR code when modal closes
+      setQrCodeURL('');
     }
   }, [isOpen, table]);
 
