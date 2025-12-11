@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from '../components/LoginModal';
+import RegisterModal from '../components/RegisterModal';
 import '../styles/login.css';
 
 const LoginPage = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -35,6 +37,40 @@ const LoginPage = () => {
 
   const closeLoginModal = () => {
     setIsLoginModalOpen(false);
+  };
+
+  const openRegisterModal = () => {
+    setIsRegisterModalOpen(true);
+  };
+
+  const closeRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+  };
+
+  const handleRegister = async (userData) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      const result = await response.json();
+      toast.success('Registration successful! Please login with your credentials.');
+      setIsRegisterModalOpen(false);
+      setIsLoginModalOpen(true);
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   };
 
   return (
@@ -75,12 +111,40 @@ const LoginPage = () => {
               width: '100%', 
               justifyContent: 'center',
               fontSize: '18px',
-              padding: '16px 24px'
+              padding: '16px 24px',
+              marginBottom: '16px'
             }}
           >
             <LogIn size={20} />
             <span>Sign In to Dashboard</span>
           </button>
+
+          <button
+            onClick={openRegisterModal}
+            className="btn btn-secondary"
+            disabled={loading}
+            style={{ 
+              width: '100%', 
+              justifyContent: 'center',
+              fontSize: '18px',
+              padding: '16px 24px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none'
+            }}
+          >
+            <UserPlus size={20} />
+            <span>Create New Account</span>
+          </button>
+
+          <p style={{ 
+            textAlign: 'center', 
+            marginTop: '16px', 
+            color: '#64748b', 
+            fontSize: '14px' 
+          }}>
+            Need an account? Register as admin or cashier
+          </p>
         </div>
       </div>
 
@@ -90,6 +154,14 @@ const LoginPage = () => {
         onClose={closeLoginModal}
         onLogin={handleLogin}
         title="Admin Login"
+      />
+
+      {/* Register Modal */}
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={closeRegisterModal}
+        onRegister={handleRegister}
+        title="Create Admin Account"
       />
     </div>
   );

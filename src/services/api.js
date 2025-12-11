@@ -12,6 +12,14 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+
+  async register(userData) {
+    const response = await this.request(`${API_AUTH_PREFIX}/register`, {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    return this.handleResponse(response);
+  }
   constructor() {
     this.baseURL = API_BASE_URL;
     this.storageURL = API_BASE_URL.replace('/api', '') + '/storage';
