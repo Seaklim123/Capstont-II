@@ -149,7 +149,10 @@ export function Header() {
             </button>
           </div>
 
-          <button className="icon-button cart" onClick={() => navigate('/cart')}>
+          <button className="icon-button cart" onClick={() => {
+            console.log('Cart button clicked, navigating to /cart');
+            navigate('/cart');
+          }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle cx="9" cy="21" r="1"></circle>
               <circle cx="20" cy="21" r="1"></circle>

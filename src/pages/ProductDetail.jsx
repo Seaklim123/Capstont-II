@@ -89,7 +89,7 @@ const ProductDetail = () => {
           product_id: product.id,
           quantity: quantity,
           status: 'starting',
-          table_id: tableNumber
+          table_id: parseInt(tableNumber, 10)
         };
         
         await authCartApi.addItem(cartData);
@@ -100,6 +100,9 @@ const ProductDetail = () => {
         setShowSuccessPopup(true);
         setTimeout(() => setShowSuccessPopup(false), 2000);
         setQuantity(1);
+        
+        // Navigate to cart page
+        setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
         console.error('Error adding to cart:', error);
         toast.error('Failed to add to cart. Please try again.');
@@ -131,6 +134,9 @@ const ProductDetail = () => {
         setShowSuccessPopup(true);
         setTimeout(() => setShowSuccessPopup(false), 2000);
         setQuantity(1);
+        
+        // Navigate to cart page
+        setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
         console.error('Error adding to localStorage cart:', error);
         toast.error('Failed to add to cart');

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import "../styles/Discount.css";
-import { categoryApi, productApi } from '../services/api';
+import { categoryApi, productApi, authCartApi } from '../services/api';
+import toast from 'react-hot-toast';
 
 function Discount() {
   const navigate = useNavigate();
   // State management
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,30 +34,10 @@ function Discount() {
     fetchProducts();
   }, []);
 
-  // STEP 2: Fetch categories from API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoryApi.getAll();
-        console.log('Categories response:', response);
-        
-        if (response.data) {
-          setCategories(response.data);
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-    };
+  // Filter to show only products with discount
+  const discountProducts = products.filter(p => p.discount && parseFloat(p.discount) > 0);
 
-    fetchCategories();
-  }, []);
-
-  // STEP 3: Filter products by category
-  const filteredProducts = activeCategory === "All" 
-    ? products 
-    : products.filter(product => product.category_id === categories.find(cat => cat.name === activeCategory)?.id);
-
-  // STEP 4: Get image URL for products
+  // Get image URL for products
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "https://via.placeholder.com/150";
     if (imagePath.startsWith('http')) return imagePath;
@@ -94,68 +73,50 @@ function Discount() {
       <section className="discount-hero text-center py-12">
         <button className="discount-btn">Discount</button>
         <h1>Our Discount</h1>
-        <p className="subtitle">Learn wonderful or smart connection.</p>
-
-        {/* Category Buttons */}
-        <div className="category-buttons">
-          <button 
-            className={`category-btn ${activeCategory === "All" ? "active" : ""}`}
-            onClick={() => setActiveCategory("All")}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button 
-              key={cat.id} 
-              className={`category-btn ${activeCategory === cat.name ? "active" : ""}`}
-              onClick={() => setActiveCategory(cat.name)}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
+        <p className="subtitle">Save big with our exclusive limited-time offers.</p>
       </section>
 
       {/* Dishes Section */}
       <section className="dishes-section">
-        <h2 className="section-title">All Dishes ({filteredProducts.length})</h2>
-        {filteredProducts.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '20px' }}>No products found</p>
+        <h2 className="section-title">Discount Dishes ({discountProducts.length})</h2>
+        {discountProducts.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '20px' }}>No discount products available</p>
           ) : (
           <div className="dishes-grid">
-            {filteredProducts.map((product) => (
+            {discountProducts.map((product) => (
               <div className="dish-card" key={product.id} style={{ cursor: 'pointer' }}>
                 <div style={{ position: 'relative' }}>
                   {product.is_best_seller && (
                     <span style={{
                       position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      backgroundColor: '#333',
+                      top: '16px',
+                      left: '16px',
+                      backgroundColor: '#1f2937',
                       color: 'white',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      fontSize: '0.65rem',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.7rem',
                       fontWeight: '600',
-                      zIndex: 2
-                    }}>Best Seller</span>
+                      zIndex: 2,
+                      letterSpacing: '0.5px'
+                    }}>BEST SELLER</span>
                   )}
                   {product.sold_count > 0 && (
                     <span style={{
                       position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      backgroundColor: '#333',
+                      top: '16px',
+                      right: '16px',
+                      backgroundColor: '#1f2937',
                       color: 'white',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      fontSize: '0.65rem',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.7rem',
                       fontWeight: '600',
                       zIndex: 2
                     }}>{product.sold_count}+ Sold</span>
                   )}
 
-                  <div style={{ height: '200px', overflow: 'hidden' }}>
+                  <div style={{ height: '240px', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
                     <img
                       src={getImageUrl(product.image || product.image_path)}
                       alt={product.name}
@@ -165,23 +126,98 @@ function Discount() {
                   </div>
                 </div>
 
-                <div style={{ padding: '1.0rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <h4 style={{ margin: 0 }}>{product.name}</h4>
+                <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#1f2937', lineHeight: '1.4' }}>{product.name}</h4>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>${parseFloat(product.price).toFixed(2)}</span>
+                        <span style={{ fontSize: '1.35rem', fontWeight: '700', color: '#1f2937' }}>${parseFloat(product.price).toFixed(2)}</span>
                         {product.discount > 0 && (
-                          <span style={{ textDecoration: 'line-through', color: '#777' }}>${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}</span>
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.95rem' }}>${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}</span>
                         )}
                       </div>
                       {product.discount > 0 && (
-                        <span style={{ fontSize: '0.85rem', color: '#d9534f' }}>{product.discount}% OFF</span>
+                        <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: '600', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '4px', display: 'inline-block', width: 'fit-content' }}>{product.discount}% OFF</span>
                       )}
                     </div>
 
-                    <button className="add-btn" onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}>Add to Cart</button>
+                    <button 
+                      onClick={async (e) => { 
+                        e.stopPropagation();
+                        
+                        const tableNumber = localStorage.getItem('tableNumber');
+                        if (!tableNumber) {
+                          toast.error('Please enter your table number first', { duration: 4000, icon: '🔢' });
+                          navigate('/menu');
+                          return;
+                        }
+                        
+                        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                        
+                        try {
+                          if (token && tableNumber) {
+                            await authCartApi.addItem({
+                              product_id: product.id,
+                              quantity: 1,
+                              status: 'starting',
+                              table_id: parseInt(tableNumber, 10)
+                            });
+                          } else {
+                            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                            const existingIndex = cart.findIndex(item => item.id === product.id);
+                            
+                            if (existingIndex > -1) {
+                              cart[existingIndex].quantity += 1;
+                            } else {
+                              cart.push({
+                                id: product.id,
+                                name: product.name,
+                                price: product.price,
+                                image_path: product.image_path || product.image,
+                                quantity: 1
+                              });
+                            }
+                            
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                          }
+                          
+                          toast.success('Added to cart!');
+                          window.dispatchEvent(new Event('cartUpdated'));
+                          setTimeout(() => navigate('/cart'), 500);
+                        } catch (error) {
+                          console.error('Error adding to cart:', error);
+                          toast.error('Failed to add to cart');
+                        }
+                      }}
+                      style={{
+                        padding: '0.7rem 1.75rem',
+                        backgroundColor: '#1f2937',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '0.875rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#111827';
+                        e.target.style.transform = 'translateY(-1px)';
+                        e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = '#1f2937';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                      }}
+                    >
+                      Add to Cart
+                    </button>
                   </div>
                 </div>
               </div>

@@ -282,7 +282,7 @@ const MenuManagement = () => {
                     <td>
                       {product.image_path ? (
                         <img
-                          src={`http://localhost:8000${product.image_path}`}
+                          src={`${import.meta.env.VITE_STORAGE_URL || ''}${product.image_path}`}
                           alt={product.name}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
                         />
@@ -366,7 +366,7 @@ const MenuManagement = () => {
                     <td>
                       {category.image_path ? (
                         <img
-                          src={`http://localhost:8000${category.image_path}`}
+                          src={`${import.meta.env.VITE_STORAGE_URL || ''}${category.image_path}`}
                           alt={category.name}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
                         />

@@ -189,18 +189,57 @@ function OrderConfirmation() {
         ) : orderDetails ? (
           <div className="order-details-section">
             <h3 className="order-details-title">Order Details</h3>
+            
+            {/* Order Items */}
+            {orderDetails.items && orderDetails.items.length > 0 && (
+              <div style={{
+                marginBottom: '1.5rem',
+                background: '#f8f9fa',
+                padding: '1rem',
+                borderRadius: '8px',
+                border: '1px solid #e9ecef'
+              }}>
+                <h4 style={{
+                  margin: '0 0 1rem 0',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  color: '#333'
+                }}>Items Ordered:</h4>
+                {orderDetails.items.map((item, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: index < orderDetails.items.length - 1 ? '1px solid #dee2e6' : 'none'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: '#333', marginBottom: '0.25rem' }}>
+                        {item.name || item.product?.name || item.product_name || 'Product'}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                        Qty: {item.quantity} × ${parseFloat(item.price || item.product?.price || 0).toFixed(2)}
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: '700', color: '#667eea' }}>
+                      ${(parseFloat(item.price || item.product?.price || 0) * item.quantity).toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             <div className="order-detail-row">
               <span className="order-detail-label">Total:</span>
-              <span className="order-detail-value">${orderDetails.numberOrder?.toFixed(2) || '0.00'}</span>
+              <span className="order-detail-value">${parseFloat(orderDetails.totalPrice || 0).toFixed(2)}</span>
             </div>
             <div className="order-detail-row">
               <span className="order-detail-label">Payment:</span>
-              <span className="order-detail-value">{orderDetails.payment || 'Cash'}</span>
+              <span className="order-detail-value">{orderDetails.payment || 'cash'}</span>
             </div>
             <div className="order-detail-row">
               <span className="order-detail-label">Status:</span>
               <span className={`order-status-badge status-${orderDetails.status?.toLowerCase() || 'starting'}`}>
-                {orderDetails.status || 'Starting'}
+                {orderDetails.status?.toUpperCase() || 'STARTING'}
               </span>
             </div>
           </div>

@@ -192,38 +192,42 @@ function Orders() {
               <tbody>
                 {filteredOrders.map((order, index) => (
                   <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td className="order-number-cell">
+                    <td data-label="ID">{index + 1}</td>
+                    <td data-label="Order Number" className="order-number-cell">
                       #{order.orderNumber || order.numberOrder || 'N/A'}
                     </td>
-                    <td className="price-cell">
+                    <td data-label="Total Price" className="price-cell">
                       ${Number(order.totalPrice ?? 0).toFixed(2)}
                     </td>
-                    <td className="discount-cell">
-                      $ {order.priceperorder }
+                    <td data-label="Price After Accept" className="discount-cell">
+                      ${order.priceperorder || '0.00'}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span 
                         className="status-badge"
                         style={{ 
                           backgroundColor: getStatusColor(order.status),
                           color: 'white',
-                          padding: '4px 12px',
-                          borderRadius: '12px',
-                          fontSize: '0.85rem',
-                          fontWeight: '600'
+                          padding: '3px 10px',
+                          borderRadius: '6px',
+                          fontSize: '0.65rem',
+                          fontWeight: '600',
+                          letterSpacing: '0.2px',
+                          display: 'inline-block',
+                          width: 'fit-content',
+                          maxWidth: '85px'
                         }}
                       >
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="payment-cell">
+                    <td data-label="Payment" className="payment-cell">
                       {order.paymentMethod || order.payment || 'Cash'}
                     </td>
-                    <td className="phone-cell">
-                      {order.numberOrder || order.numberOrder || 'N/A'}
+                    <td data-label="Phone Number" className="phone-cell">
+                      {order.phoneNumber || order.numberOrder || 'N/A'}
                     </td>
-                    <td className="items-cell">
+                    <td data-label="Items" className="items-cell">
                       {order.items && order.items.length > 0 ? (
                         <div className="items-summary">
                           {order.items.length} item{order.items.length > 1 ? 's' : ''}
@@ -232,10 +236,19 @@ function Orders() {
                         'No items'
                       )}
                     </td>
-                    <td className="actions-cell">
+                    <td data-label="Actions" className="actions-cell">
                       <button 
                         className="view-btn"
-                        onClick={() => navigate(`/order-confirmation?order=${order.orderNumber || order.numberOrder}`)}
+                        onClick={() => navigate(`/order-confirmation?order=${order.orderNumber || order.numberOrder}`, {
+                          state: {
+                            orderNumber: order.orderNumber || order.numberOrder,
+                            totalPrice: order.totalPrice,
+                            payment: order.paymentMethod || order.payment || 'cash',
+                            status: order.status || 'starting',
+                            phone_number: order.phoneNumber || order.phone_number,
+                            items: order.items || []
+                          }
+                        })}
                       >
                         View Details
                       </button>

@@ -9,7 +9,7 @@
 }
 
 .discount-btn {
-  background-color: #4b8ee2;
+  background-color: black;
   color: white;
   padding: 6px 16px;
   border-radius: 20px;
@@ -39,41 +39,52 @@
 }
 
 .category-btn:hover {
-  background-color: #4b8ee2;
+  background-color: black;
   color: white;
 }
 
 .section-title {
   text-align: left;
-  margin-left: 8%;
   margin-bottom: 20px;
   font-size: 1.5rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
 }
 
 .dishes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 25px;
-  padding: 0 8%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
 }
 
 .dish-card {
-  border: 1px solid #ddd;
-  padding: 16px;
-  border-radius: 12px;
-  text-align: center;
-  transition: 0.3s;
-  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  padding: 0;
+  border-radius: 16px;
+  text-align: left;
+  transition: all 0.3s ease;
+  background: white;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .dish-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  border-color: #d1d5db;
 }
 
 .dish-card img {
   width: 100%;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  border-radius: 0;
+  margin-bottom: 0;
 }
 
 .add-btn {
@@ -163,9 +174,8 @@
   }
 
   .dishes-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-    padding: 0 5%;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 
   .footer-section {

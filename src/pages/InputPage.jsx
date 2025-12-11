@@ -54,7 +54,7 @@ const InputPage = () => {
       
       try {
         // Save to public folder
-        const response = await fetch('http://localhost:3001/api/upload', {
+        const response = await fetch(`${import.meta.env.VITE_UPLOAD_SERVER_URL || 'http://localhost:3001'}/api/upload`, {
           method: 'POST',
           body: formData
         });
@@ -72,7 +72,7 @@ const InputPage = () => {
     } else if (inputMode === 'text' && textInput.trim()) {
       // Handle text input
       try {
-        const response = await fetch('http://localhost:3001/api/text', {
+        const response = await fetch(`${import.meta.env.VITE_UPLOAD_SERVER_URL || 'http://localhost:3001'}/api/text`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

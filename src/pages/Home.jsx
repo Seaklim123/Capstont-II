@@ -1,8 +1,8 @@
 ﻿import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// Footer removed from Home to avoid showing About Us under New Food
 import { BestSellers } from "../components/best-sellers";
-import { productApi } from "../services/api";
+import { productApi, authCartApi } from "../services/api";
+import toast from 'react-hot-toast';
 import "../styles/Home.css";
 
 const Home = () => {
@@ -125,8 +125,68 @@ const Home = () => {
     return popularDishes.slice(startIndex, endIndex);
   };
 
-  const handleAddToCart = (itemId) => {
-    navigate(`/product/${itemId}`);
+  const handleAddToCart = async (itemId) => {
+    // Get table number first
+    const tableNumber = localStorage.getItem('tableNumber');
+    if (!tableNumber) {
+      toast.error('Please enter your table number first', {
+        duration: 4000,
+        icon: '🔢',
+      });
+      navigate('/menu');
+      return;
+    }
+
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    
+    try {
+      if (token && tableNumber) {
+        // Authenticated user with table - use backend API
+        const cartData = {
+          product_id: itemId,
+          quantity: 1,
+          status: 'starting',
+          table_id: parseInt(tableNumber, 10)
+        };
+        // Example fix in your addItem/addToCart function
+        await authCartApi.addItem(cartData);
+        toast.success('Added to cart!');
+        window.dispatchEvent(new Event('cartUpdated'));
+        setTimeout(() => navigate('/cart'), 500);
+      } else {
+        // Guest user - use localStorage
+        const existingCart = localStorage.getItem('cart');
+        const cart = existingCart ? JSON.parse(existingCart) : [];
+        
+        // Find the item in the mock data
+        const allItems = [...discountItems, ...popularDishes];
+        const item = allItems.find(i => i.id === itemId);
+        
+        if (item) {
+          const existingItemIndex = cart.findIndex(c => c.id === itemId);
+          
+          if (existingItemIndex > -1) {
+            cart[existingItemIndex].quantity += 1;
+          } else {
+            cart.push({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              image_path: item.image,
+              quantity: 1
+            });
+          }
+          
+          localStorage.setItem('cart', JSON.stringify(cart));
+          toast.success('Added to cart!');
+          window.dispatchEvent(new Event('cartUpdated'));
+          setTimeout(() => navigate('/cart'), 500);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
+    }
   };
 
   const handleDotClick = (pageIndex) => {
@@ -143,13 +203,16 @@ const Home = () => {
       <section className="landing-hero">
         <div className="landing-container">
           <div className="landing-content">
-            <h1 className="landing-title">Welcome to<br />Tos Kamong Food</h1>
+            <h1 className="landing-title">
+              Welcome to<br />
+              <span>Tos Kamong</span> Food
+            </h1>
             <p className="landing-subtitle">
-              Discover delightful meals at your favorite restaurant.
+              Experience authentic flavors and delightful meals crafted with passion. Order your favorites with just a tap.
             </p>
             <div className="landing-buttons">
               <Link to="/menu" className="btn-outline">View Menu</Link>
-              <button className="btn-solid">Order Now</button>
+              <button className="btn-solid" onClick={() => navigate('/menu')}>Order Now</button>
             </div>
           </div>
           <div className="landing-image">

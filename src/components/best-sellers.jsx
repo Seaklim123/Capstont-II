@@ -1,45 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// Mock data for best sellers
-const mockBestSellers = [
-  {
-    id: 101,
-    name: 'Spicy Ramen Bowl',
-    price: 13.99,
-    originalPrice: 17.49,
-    discount: 20,
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
-    is_best_seller: true
-  },
-  {
-    id: 102,
-    name: 'Margherita Pizza',
-    price: 15.99,
-    originalPrice: 19.99,
-    discount: 20,
-    image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400',
-    is_best_seller: true
-  },
-  {
-    id: 103,
-    name: 'Sushi Platter',
-    price: 22.99,
-    originalPrice: 28.74,
-    discount: 20,
-    image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400',
-    is_best_seller: true
-  },
-  {
-    id: 104,
-    name: 'Steak & Fries',
-    price: 24.99,
-    originalPrice: 31.24,
-    discount: 20,
-    image: 'https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=400',
-    is_best_seller: true
-  }
-];
+import toast from 'react-hot-toast';
+import { authCartApi, productApi, getImageUrl } from '../services/api';
 
 export function BestSellers() {
   const [items, setItems] = useState([]);
@@ -47,28 +9,78 @@ export function BestSellers() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate loading delay
-    const timer = setTimeout(() => {
-      setItems(mockBestSellers);
-      setLoading(false);
-    }, 300);
+    const fetchBestSellers = async () => {
+      try {
+        setLoading(true);
+        // Fetch real products from backend
+        const response = await productApi.getAll();
+        const products = response.data || response || [];
+        
+        // Filter for best sellers only
+        const bestSellerProducts = products.filter(p => p.is_best_seller || p.is_bestseller);
+        
+        // If no best sellers found, show first 3 products
+        if (bestSellerProducts.length === 0) {
+          console.log('No best sellers found, showing first 3 products');
+          setItems(products.slice(0, 3));
+        } else {
+          // Take top 3 best sellers
+          setItems(bestSellerProducts.slice(0, 3));
+        }
+        
+        // Debug: Log first product structure
+        if (products.length > 0) {
+          console.log('First product data:', products[0]);
+          console.log('Image fields:', {
+            image: products[0].image,
+            image_path: products[0].image_path,
+            image_url: products[0].image_url
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching best sellers:', error);
+        // Fallback to empty array if API fails
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchBestSellers();
   }, []);
 
   if (loading) {
     return (
-      <section className="best-sellers container" style={{ padding: '24px 20px' }}>
+      <section className="best-sellers container" style={{ padding: '4rem 0', textAlign: 'center' }}>
         <h2>Best Sellers</h2>
         <p>Loading...</p>
       </section>
     );
   }
 
+  if (items.length === 0) {
+    return (
+      <section className="best-sellers container" style={{ padding: '4rem 0', textAlign: 'center' }}>
+        <h2>Best Sellers</h2>
+        <p>No products available at the moment.</p>
+      </section>
+    );
+  }
+
   return (
-    <section className="best-sellers" style={{ padding: '4rem 0', backgroundColor: '#ffffff' }}>
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
-        <div className="best-sellers-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+    <section className="best-sellers" style={{ 
+      padding: window.innerWidth <= 768 ? '2.5rem 0' : '4rem 0', 
+      backgroundColor: '#ffffff' 
+    }}>
+      <div className="container" style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: window.innerWidth <= 768 ? '0 1.25rem' : '0 1rem'
+      }}>
+        <div className="best-sellers-header" style={{ 
+          textAlign: 'center', 
+          marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem' 
+        }}>
           <span className="best-sellers-badge" style={{
             display: 'inline-block',
             backgroundColor: '#333',
@@ -79,18 +91,26 @@ export function BestSellers() {
             fontWeight: '600',
             marginBottom: '1rem'
           }}>Best Sellers</span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#1a1a1a' }}>Best Sellers</h2>
-          <p style={{ color: '#666', fontSize: '1rem' }}>
+          <h2 style={{ 
+            fontSize: window.innerWidth <= 768 ? '1.65rem' : '2rem', 
+            fontWeight: 'bold', 
+            marginBottom: '0.5rem', 
+            color: '#1a1a1a' 
+          }}>Best Sellers</h2>
+          <p style={{ 
+            color: '#666', 
+            fontSize: window.innerWidth <= 768 ? '0.95rem' : '1rem' 
+          }}>
             Our customers' favorite dishes, loved by many.
           </p>
         </div>
         <div style={{ 
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '2.5rem',
+          gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: window.innerWidth <= 768 ? '1rem' : '1.5rem',
           maxWidth: '1500px',
           margin: '0 auto',
-          padding: '0 2rem'
+          padding: window.innerWidth <= 768 ? '0' : '0 1rem'
         }}>
           {items.slice(0, 3).map(item => (
             <div key={item.id} style={{ 
@@ -128,7 +148,7 @@ export function BestSellers() {
                   letterSpacing: '0.3px'
                 }}>50+ Sold</span>
                 <div style={{ 
-                  height: '200px', 
+                  height: window.innerWidth <= 768 ? '180px' : '200px', 
                   overflow: 'hidden',
                   backgroundColor: '#fafafa',
                   display: 'flex',
@@ -136,7 +156,7 @@ export function BestSellers() {
                   justifyContent: 'center'
                 }}>
                   <img 
-                    src={item.image} 
+                    src={getImageUrl(item.image_path || item.image) || 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=300&fit=crop'} 
                     alt={item.name} 
                     style={{ 
                       width: '100%', 
@@ -144,20 +164,23 @@ export function BestSellers() {
                       objectFit: 'cover',
                       display: 'block'
                     }} 
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                    onError={(e) => { 
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&h=300&fit=crop';
+                    }}
                   />
                 </div>
               </div>
               <div style={{ 
-                padding: '1.25rem',
+                padding: window.innerWidth <= 768 ? '1rem' : '1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem'
+                gap: window.innerWidth <= 768 ? '0.75rem' : '1rem'
               }}>
                 <h4 style={{ 
                   margin: 0,
                   fontWeight: '600',
-                  fontSize: '1.05rem',
+                  fontSize: window.innerWidth <= 768 ? '1rem' : '1.05rem',
                   color: '#1a1a1a',
                   lineHeight: '1.4',
                   fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -171,46 +194,96 @@ export function BestSellers() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{
-                        fontSize: '1.25rem',
+                        fontSize: window.innerWidth <= 768 ? '1.1rem' : '1.25rem',
                         fontWeight: '700',
                         color: '#1a1a1a',
                         fontFamily: 'system-ui, -apple-system, sans-serif'
                       }}>${parseFloat(item.price || 0).toFixed(2)}</span>
-                      <span style={{
-                        fontSize: '0.875rem',
-                        color: '#999',
-                        textDecoration: 'line-through',
-                        fontWeight: '400'
-                      }}>${parseFloat(item.originalPrice || 0).toFixed(2)}</span>
+                      {item.discount > 0 && (
+                        <span style={{
+                          fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
+                          color: '#999',
+                          textDecoration: 'line-through',
+                          fontWeight: '400'
+                        }}>${(parseFloat(item.price || 0) / (1 - item.discount / 100)).toFixed(2)}</span>
+                      )}
                     </div>
-                    <span style={{
-                      display: 'inline-block',
-                      backgroundColor: '#f0f0f0',
-                      padding: '0.25rem 0.65rem',
-                      borderRadius: '12px',
-                      fontSize: '0.7rem',
-                      fontWeight: '600',
-                      color: '#333',
-                      alignSelf: 'flex-start'
-                    }}>${((item.originalPrice - item.price) || 0).toFixed(2)} OFF</span>
+                    {item.discount > 0 && (
+                      <span style={{
+                        display: 'inline-block',
+                        backgroundColor: '#f0f0f0',
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '12px',
+                        fontSize: '0.7rem',
+                        fontWeight: '600',
+                        color: '#333',
+                        width: 'fit-content'
+                      }}>{item.discount}% OFF</span>
+                    )}
                   </div>
                   <button 
-                    onClick={() => {
-                      const existing = localStorage.getItem('cart');
-                      const cart = existing ? JSON.parse(existing) : [];
-                      const idx = cart.findIndex(ci => ci.id === item.id);
-                      if (idx > -1) cart[idx].quantity += 1; 
-                      else cart.push({ id: item.id, name: item.name, price: item.price, image: item.image, quantity: 1 });
-                      localStorage.setItem('cart', JSON.stringify(cart));
-                      window.dispatchEvent(new Event('cartUpdated'));
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      console.log('🛒 Best Seller - Add to Cart clicked for:', item.name);
+                      
+                      const tableNumber = localStorage.getItem('tableNumber');
+                      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                      
+                      console.log('🛒 Table number:', tableNumber);
+                      console.log('🛒 Has token:', !!token);
+                      
+                      try {
+                        if (token && tableNumber) {
+                          // Authenticated user with table - use backend API
+                          console.log('🛒 Using backend API');
+                          await authCartApi.addItem({
+                            product_id: item.id,
+                            quantity: 1,
+                            status: 'starting',
+                            table_id: parseInt(tableNumber, 10)
+                          });
+                          console.log('✅ Added to backend cart');
+                        } else {
+                          // Guest user - use localStorage
+                          console.log('🛒 Using localStorage cart');
+                          const existing = localStorage.getItem('cart');
+                          const cart = existing ? JSON.parse(existing) : [];
+                          console.log('🛒 Current cart:', cart);
+                          
+                          const idx = cart.findIndex(ci => ci.id === item.id);
+                          if (idx > -1) {
+                            cart[idx].quantity += 1;
+                            console.log('🛒 Updated quantity for existing item');
+                          } else {
+                            cart.push({ 
+                              id: item.id, 
+                              name: item.name, 
+                              price: item.price, 
+                              image_path: item.image, 
+                              quantity: 1 
+                            });
+                            console.log('🛒 Added new item to cart');
+                          }
+                          localStorage.setItem('cart', JSON.stringify(cart));
+                          console.log('✅ Cart saved to localStorage:', cart);
+                        }
+                        
+                        toast.success(`${item.name} added to cart!`);
+                        window.dispatchEvent(new Event('cartUpdated'));
+                        console.log('🚀 Navigating to cart...');
+                        setTimeout(() => navigate('/cart'), 500);
+                      } catch (error) {
+                        console.error('❌ Error adding to cart:', error);
+                        toast.error('Failed to add to cart');
+                      }
                     }} 
                     style={{ 
-                      padding: '0.65rem 1.5rem',
+                      padding: window.innerWidth <= 768 ? '0.625rem 1rem' : '0.65rem 1.5rem',
                       borderRadius: '25px',
                       border: '1px solid #e0e0e0',
                       background: '#fff',
                       color: '#333',
-                      fontSize: '0.875rem',
+                      fontSize: window.innerWidth <= 768 ? '0.8rem' : '0.875rem',
                       fontWeight: '500',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',

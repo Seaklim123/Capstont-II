@@ -16,7 +16,7 @@ function Menu() {
   const [error, setError] = useState(null);
   const [showTableModal, setShowTableModal] = useState(false);
   const [pendingItemId, setPendingItemId] = useState(null);
-  const itemsPerPage = 8; // Show 8 items per page
+  const itemsPerPage = 9; // Show 9 items per page (3 rows × 3 columns)
 
   // Fetch categories from API
   useEffect(() => {
@@ -87,11 +87,11 @@ function Menu() {
     
     // If it starts with a slash, use it as-is with the base URL
     if (imagePath.startsWith('/')) {
-      return `http://localhost:8000${imagePath}`;
+      return `${import.meta.env.VITE_STORAGE_URL || ''}${imagePath}`;
     }
     
     // Otherwise, just append to base URL
-    return `http://localhost:8000/${imagePath}`;
+    return `${import.meta.env.VITE_STORAGE_URL || ''}/${imagePath}`;
   };
 
   // Render product image with fallback
@@ -275,7 +275,7 @@ function Menu() {
           product_id: itemId,
           quantity: 1,
           status: 'starting',
-          table_id: tableNumber
+          table_id: parseInt(tableNumber, 10)
         };
         console.log('🛒 Sending cart data:', cartData);
         
@@ -284,6 +284,9 @@ function Menu() {
 
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
+        
+        // Navigate to cart page
+        setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
         console.error('❌ Error adding to cart:', error);
         console.error('❌ Error details:', error.response?.data);
@@ -319,6 +322,9 @@ function Menu() {
         
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
+        
+        // Navigate to cart page
+        setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
         console.error('❌ Error adding to localStorage cart:', error);
         toast.error('Failed to add to cart');
@@ -376,7 +382,7 @@ function Menu() {
             <span className="menu-badge">Menu</span>
             <h1 className="menu-title">Our Menu</h1>
             <p className="menu-subtitle">
-              Lorem ipsum dolor sit amet consectetur.
+              Discover our signature dishes and innovative new creations.
             </p>
           </div>
         </div>
@@ -455,342 +461,10 @@ function Menu() {
         </div>
       </section>
 
-      {/* Popular Dish Section */}
-      <section className="popular-dish-section">
-        <div className="container">
-          <h2 className="section-title">Popular Dish</h2>
-          {productsLoading ? (
-            <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>
-          ) : bestSellerProducts.length === 0 ? (
-            <p style={{textAlign: 'center', padding: '2rem'}}>No popular dishes available</p>
-          ) : (
-            <div className="dish-grid">
-              {bestSellerProducts.slice(0, 4).map((product) => (
-                <div 
-                  key={product.id} 
-                  onClick={() => handleAddToCart(product.id)}
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                    border: '1px solid #f0f0f0',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-                  }}
-                >
-                  <div style={{ position: 'relative' }}>
-                    {product.is_best_seller && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        backgroundColor: '#333',
-                        color: 'white',
-                        padding: '6px 10px',
-                        borderRadius: '4px',
-                        fontSize: '0.65rem',
-                        fontWeight: '600',
-                        zIndex: 2
-                      }}>Best Seller</span>
-                    )}
-                    <span style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      backgroundColor: '#333',
-                      color: 'white',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      fontSize: '0.65rem',
-                      fontWeight: '600',
-                      zIndex: 2
-                    }}>50+ Sold</span>
-                    <div style={{ height: '200px', overflow: 'hidden' }}>
-                      {renderProductImage(product)}
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
-                  }}>
-                    <h3 style={{ 
-                      fontWeight: '600', 
-                      fontSize: '1.05rem', 
-                      color: '#1a1a1a',
-                      lineHeight: '1.4',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      margin: 0
-                    }}>{product.name}</h3>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '1rem'
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ 
-                            fontSize: '1.4rem', 
-                            fontWeight: '700', 
-                            color: '#1a1a1a',
-                            fontFamily: 'system-ui, -apple-system, sans-serif',
-                            lineHeight: 1
-                          }}>
-                            ${parseFloat(product.price).toFixed(2)}
-                          </span>
-                          {product.discount > 0 && (
-                            <span style={{ 
-                              fontSize: '0.9rem', 
-                              color: '#999',
-                              textDecoration: 'line-through',
-                              fontWeight: '400'
-                            }}>
-                              ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        {product.discount > 0 && (
-                          <span style={{ 
-                            fontSize: '0.75rem', 
-                            fontWeight: '600',
-                            backgroundColor: 'white',
-                            color: '#1a1a1a',
-                            padding: '0.3rem 0.6rem', 
-                            borderRadius: '4px',
-                            border: '1.5px solid #333',
-                            whiteSpace: 'nowrap',
-                            width: 'fit-content'
-                          }}>
-                            ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
-                          </span>
-                        )}
-                      </div>
-                      
-                      <button 
-                        onClick={(e) => {
-                          console.log('🔘 [Popular Dishes] Button clicked! Product ID:', product.id);
-                          e.stopPropagation();
-                          handleAddToCart(product.id);
-                        }}
-                        style={{
-                          padding: '0.65rem 1.5rem',
-                          backgroundColor: 'white',
-                          color: '#1a1a1a',
-                          border: '1.5px solid #d0d0d0',
-                          borderRadius: '25px',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          alignSelf: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f5f5f5';
-                          e.target.style.borderColor = '#1a1a1a';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.borderColor = '#d0d0d0';
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Discount Dish Section */}
-      <section className="discount-dish-section">
-        <div className="container">
-          <h2 className="section-title">Discount Dish</h2>
-          {productsLoading ? (
-            <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>
-          ) : discountProducts.length === 0 ? (
-            <p style={{textAlign: 'center', padding: '2rem'}}>No discount dishes available</p>
-          ) : (
-            <div className="dish-grid">
-              {discountProducts.slice(0, 4).map((product) => (
-                <div 
-                  key={product.id} 
-                  onClick={() => handleAddToCart(product.id)}
-                  style={{
-                    backgroundColor: 'white',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                    border: '1px solid #f0f0f0',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-                  }}
-                >
-                  <div style={{ position: 'relative' }}>
-                    {product.is_best_seller && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        backgroundColor: '#333',
-                        color: 'white',
-                        padding: '6px 10px',
-                        borderRadius: '4px',
-                        fontSize: '0.65rem',
-                        fontWeight: '600',
-                        zIndex: 2
-                      }}>Best Seller</span>
-                    )}
-                    <span style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      backgroundColor: '#333',
-                      color: 'white',
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      fontSize: '0.65rem',
-                      fontWeight: '600',
-                      zIndex: 2
-                    }}>50+ Sold</span>
-                    <div style={{ height: '200px', overflow: 'hidden' }}>
-                      {renderProductImage(product)}
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
-                  }}>
-                    <h3 style={{ 
-                      fontWeight: '600', 
-                      fontSize: '1.05rem', 
-                      color: '#1a1a1a',
-                      lineHeight: '1.4',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      margin: 0
-                    }}>{product.name}</h3>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '1rem'
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ 
-                            fontSize: '1.4rem', 
-                            fontWeight: '700', 
-                            color: '#1a1a1a',
-                            fontFamily: 'system-ui, -apple-system, sans-serif',
-                            lineHeight: 1
-                          }}>
-                            ${parseFloat(product.price).toFixed(2)}
-                          </span>
-                          <span style={{ 
-                            fontSize: '0.9rem', 
-                            color: '#999',
-                            textDecoration: 'line-through',
-                            fontWeight: '400'
-                          }}>
-                            ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
-                          </span>
-                        </div>
-                        <span style={{ 
-                          fontSize: '0.75rem', 
-                          fontWeight: '600',
-                          backgroundColor: 'white',
-                          color: '#1a1a1a',
-                          padding: '0.3rem 0.6rem', 
-                          borderRadius: '4px',
-                          border: '1.5px solid #333',
-                          whiteSpace: 'nowrap',
-                          width: 'fit-content'
-                        }}>
-                          ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
-                        </span>
-                      </div>
-                      
-                      <button 
-                        onClick={(e) => {
-                          console.log('🔘 [Discount Dishes] Button clicked! Product ID:', product.id);
-                          e.stopPropagation();
-                          handleAddToCart(product.id);
-                        }}
-                        style={{
-                          padding: '0.65rem 1.5rem',
-                          backgroundColor: 'white',
-                          color: '#1a1a1a',
-                          border: '1.5px solid #d0d0d0',
-                          borderRadius: '25px',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0,
-                          alignSelf: 'center'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = '#f5f5f5';
-                          e.target.style.borderColor = '#1a1a1a';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.borderColor = '#d0d0d0';
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* All Dishes Section */}
       <section className="all-dishes-section">
         <div className="container">
-          <h2 className="section-title">All Dishes</h2>
+          
           
           {productsLoading ? (
             <p style={{textAlign: 'center', padding: '2rem'}}>Loading products...</p>

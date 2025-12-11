@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000';
 
 // Helper function to transform image paths to full URLs
-const getImageUrl = (imagePath) => {
+export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
   if (imagePath.startsWith('/storage/')) return `${STORAGE_BASE_URL}${imagePath}`;
@@ -999,6 +999,102 @@ export const tableApi = {
 };
 
 // ===========================================
+// ADMIN TABLE API (For Table Management)
+// ===========================================
+
+export const adminTableApi = {
+  // GET: Get all tables
+  getAll: async () => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables`;
+      console.debug('adminTableApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching admin tables:', error);
+      throw error;
+    }
+  },
+
+  // GET: Get table by ID
+  getById: async (id) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.getById ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.getById response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // POST: Create new table
+  create: async (tableData) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables`;
+      console.debug('adminTableApi.create ->', url, tableData);
+      const response = await fetchWithAuth(url, createRequestOptions('POST', tableData));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.create response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating admin table:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update table
+  update: async (id, tableData) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.update ->', url, tableData);
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', tableData));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.update response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: Delete table
+  delete: async (id) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.delete ->', url);
+      const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.delete response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error deleting admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // PUT: Update table status
+  updateStatus: async (id, status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}/status`;
+      console.debug('adminTableApi.updateStatus ->', url, { status });
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', { status }));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.updateStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating table ${id} status:`, error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
 // ADMIN API (For Admin Dashboard)
 // ===========================================
 
@@ -1332,5 +1428,8 @@ export default {
   admin: {
     category: adminCategoryApi,
     product: adminProductApi,
+    table: adminTableApi,
+    order: adminOrderApi,
   },
+  table: tableApi,
 };

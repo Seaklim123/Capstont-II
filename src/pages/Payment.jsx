@@ -17,13 +17,20 @@ function Payment() {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       const tableNumber = localStorage.getItem('tableNumber');
       
+      console.log('💰 Payment page - Loading cart...');
+      console.log('💰 Token exists:', !!token);
+      console.log('💰 Table number:', tableNumber);
+      
       try {
         // Only use backend API if user has both token AND table number
         if (token && tableNumber) {
           // Authenticated user with table - fetch from API
+          console.log('💰 Fetching from backend API...');
           const response = await authCartApi.getCart(tableNumber);
           const carts = response.data || response.cart || response;
-          setCartItems(Array.isArray(carts) ? carts : []);
+          const cartArray = Array.isArray(carts) ? carts : [];
+          console.log('💰 Loaded cart from API:', cartArray);
+          setCartItems(cartArray);
         } else {
           // Guest user or no table - load from localStorage
           const savedCart = localStorage.getItem('cart');
@@ -31,15 +38,23 @@ function Payment() {
           if (savedCart) {
             const cart = JSON.parse(savedCart);
             console.log('💰 Parsed cart items:', cart);
+            console.log('💰 Number of items:', cart.length);
             setCartItems(cart);
+          } else {
+            console.log('💰 No cart found in localStorage');
+            setCartItems([]);
           }
         }
       } catch (error) {
-        console.error('Error loading cart:', error);
+        console.error('❌ Error loading cart:', error);
         // Fallback to localStorage
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
-          setCartItems(JSON.parse(savedCart));
+          const cart = JSON.parse(savedCart);
+          console.log('💰 Fallback - loaded from localStorage:', cart);
+          setCartItems(cart);
+        } else {
+          setCartItems([]);
         }
       }
     };
@@ -47,19 +62,37 @@ function Payment() {
     loadCart();
   }, []);
 
+  // Debug effect to track cartItems changes and total calculation
+  useEffect(() => {
+    console.log('💰💰💰 Cart Items Updated:', cartItems);
+    console.log('💰💰💰 Cart Items Count:', cartItems.length);
+    if (cartItems.length > 0) {
+      console.log('💰💰💰 First item:', cartItems[0]);
+      console.log('💰💰💰 Current Subtotal:', calculateSubtotal());
+      console.log('💰💰💰 Current Tax:', calculateTax());
+      console.log('💰💰💰 Current Total:', calculateTotal());
+    } else {
+      console.log('💰💰💰 Cart is empty!');
+    }
+  }, [cartItems]);
+
   const calculateSubtotal = () => {
-    console.log('💰 Calculate subtotal - cartItems:', cartItems);
-    console.log('💰 Cart items length:', cartItems.length);
+    if (cartItems.length === 0) {
+      return '0.00';
+    }
     
     const subtotal = cartItems.reduce((total, item) => {
       // Handle both API format (with product object) and localStorage format
       const price = item.product?.price || item.price || 0;
-      console.log('💰 Item:', item.name || item.product?.name, 'Price:', price, 'Qty:', item.quantity);
-      return total + (parseFloat(price) * item.quantity);
-    }, 0).toFixed(2);
+      const quantity = item.quantity || 0;
+      const itemTotal = parseFloat(price) * quantity;
+      
+      console.log('💰 Item:', item.name || item.product?.name, '| Price:', price, '| Qty:', quantity, '| Total:', itemTotal);
+      
+      return total + itemTotal;
+    }, 0);
     
-    console.log('💰 Calculated subtotal:', subtotal);
-    return subtotal;
+    return subtotal.toFixed(2);
   };
 
   const calculateTax = () => {
@@ -74,9 +107,18 @@ function Payment() {
     console.log('🚀 Place Order clicked!');
     console.log('🚀 Phone Number:', phoneNumber);
     console.log('🚀 Cart Items:', cartItems);
-    
-    if (!phoneNumber.trim()) {
+    console.log('🚀 Total Price:', calculateTotal());
+
+    // Validate phone number
+    if (!phoneNumber || phoneNumber.trim() === '') {
       toast.error('Please enter your phone number');
+      return;
+    }
+
+    // Validate phone number format (basic validation)
+    const phoneRegex = /^[0-9]{8,15}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
+      toast.error('Please enter a valid phone number (8-15 digits)');
       return;
     }
 
@@ -121,12 +163,11 @@ function Payment() {
           discount: discount,
           note: notes || null,
           refund: 0,
-          phone_number: phoneNumber,
+          phone_number: phoneNumber || '',
           status: 'starting', // starting, accepted, cancel
           payment: 'cash', // always cash
           payment_status: 'nondone', // done or nondone
           table_number: tableNumber || null,
-          table_id: tableNumber || null,
           cart_items: cartItems.map(item => ({
             cart_id: item.id,
             product_id: item.product_id || item.id,
@@ -192,15 +233,19 @@ function Payment() {
         console.log('📝 Order Number:', orderNumber);
         console.log('📝 Total Price:', totalPrice);
         
+        // Get table number from localStorage
+        const tableNumber = localStorage.getItem('tableNumber');
+        
         // Prepare order data for backend
         const orderData = {
           numberOrder: orderNumber,
           totalPrice: totalPrice,
           discount: 0,
           note: notes || null,
-          phone_number: phoneNumber,
+          phone_number: phoneNumber || '',
           payment: 'cash',
           status: 'starting',
+          table_id: tableNumber ? parseInt(tableNumber, 10) : 1,
           items: cartItems.map(item => ({
             product_id: item.id,
             quantity: item.quantity,
@@ -263,9 +308,9 @@ function Payment() {
         
         // Navigate to order confirmation with order details
         setTimeout(() => {
-          navigate(`/order-confirmation?order=${createdOrderNumber}`, {
+          navigate(`/order-confirmation?order=${orderNumber}`, {
             state: {
-              orderNumber: createdOrderNumber,
+              orderNumber: orderNumber,
               totalPrice: totalPrice,
               payment: 'cash',
               status: 'starting',
@@ -350,7 +395,7 @@ function Payment() {
           
           <div className="form-group">
             <label className="form-label">
-              Phone Number *
+              Phone Number (Optional)
             </label>
             <input
               type="tel"

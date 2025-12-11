@@ -33,58 +33,39 @@ const Cart = () => {
     
     // If it starts with /storage/, construct the full URL
     if (imagePath.startsWith('/storage/')) {
-      return `http://localhost:8000${imagePath}`;
+      return `${import.meta.env.VITE_STORAGE_URL || ''}${imagePath}`;
     }
     
     // If it starts with storage/, add the base URL
     if (imagePath.startsWith('storage/')) {
-      return `http://localhost:8000/${imagePath}`;
+      return `${import.meta.env.VITE_STORAGE_URL || ''}/${imagePath}`;
     }
     
     // Otherwise, assume it's in storage folder
-    return `http://localhost:8000/storage/${imagePath}`;
+    return `${import.meta.env.VITE_STORAGE_URL || ''}/storage/${imagePath}`;
   };
 
   const fetchCart = async () => {
     try {
       setLoading(true);
       
-      // Check if user is authenticated and has table number
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableNumber = localStorage.getItem('tableNumber');
-      
-      // Only use backend API if user has both token AND table number
-      if (token && tableNumber) {
-        // Authenticated user with table - fetch from backend API
-        const response = await authCartApi.getCart(tableNumber);
-        console.log('Cart response from backend:', response);
-        
-        const carts = response.data || response.cart || response;
-        setCartItems(Array.isArray(carts) ? carts : []);
-      } else {
-        // No table number or guest user - load from localStorage
-        const savedCart = localStorage.getItem('cart');
-        console.log('📦 Raw localStorage cart:', savedCart);
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          console.log('📦 Parsed cart:', cart);
-          console.log('📦 Cart is array:', Array.isArray(cart));
-          console.log('📦 Cart length:', cart.length);
-          setCartItems(cart);
-        } else {
-          console.log('📦 No cart found in localStorage');
-          setCartItems([]);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      // Fallback to localStorage on error
+      // Always load from localStorage for now (guest mode)
       const savedCart = localStorage.getItem('cart');
+      console.log('📦 Raw localStorage cart:', savedCart);
+      
       if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+        const cart = JSON.parse(savedCart);
+        console.log('📦 Parsed cart:', cart);
+        console.log('📦 Cart is array:', Array.isArray(cart));
+        console.log('📦 Cart length:', cart.length);
+        setCartItems(Array.isArray(cart) ? cart : []);
       } else {
+        console.log('📦 No cart found in localStorage');
         setCartItems([]);
       }
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      setCartItems([]);
     } finally {
       setLoading(false);
     }
