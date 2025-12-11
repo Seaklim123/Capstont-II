@@ -402,6 +402,31 @@ function Menu() {
           
           {!loading && !error && (
             <div className="menu-categories-grid">
+              {/* All Categories Option */}
+              <div 
+                className={`menu-category-item ${activeCategory === 'All' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('All')}
+              >
+                <div className="menu-category-circle">
+                  <img 
+                    src="http://127.0.0.1:8000/Image/All.jpg" 
+                    alt="All"
+                    className="category-image"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <span 
+                    className="category-emoji"
+                    style={{ display: 'none' }}
+                  >
+                    🍽️
+                  </span>
+                </div>
+                <span className="menu-category-label">All</span>
+              </div>
+              
               {/* Dynamic Categories from API */}
               {categories.map(category => {
                 // Use image_path from database or fallback to emoji
