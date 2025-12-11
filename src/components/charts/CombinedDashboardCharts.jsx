@@ -431,17 +431,9 @@ const CombinedDashboardCharts = ({ dashboardData }) => {
           </div>
         </div>
 
-        {/* Chart Stats Sidebar */}
+        {/* Chart Information Sidebar */}
         <div className="chart-stats">
-          <h4 className="stats-title">Key Metrics</h4>
-          <div className="stats-list">
-            {getChartStats().map((stat, index) => (
-              <div key={index} className="stat-item">
-                <div className="stat-label">{stat.label}</div>
-                <div className={`stat-value ${stat.color}`}>{stat.value}</div>
-              </div>
-            ))}
-          </div>
+          <h4 className="stats-title">Chart Information</h4>
           
           {/* Current Chart Info */}
           <div className="chart-info">
@@ -455,6 +447,19 @@ const CombinedDashboardCharts = ({ dashboardData }) => {
               {activeChart === 'products' && 'Analyze top performing products by orders and revenue'}
               {activeChart === 'financial' && 'Track key financial metrics and trends'}
             </p>
+          </div>
+
+          {/* Chart Quick Stats */}
+          <div className="chart-quick-stats">
+            <h5 className="quick-stats-title">Quick Stats</h5>
+            <div className="stats-list">
+              {getChartStats().map((stat, index) => (
+                <div key={index} className="stat-item">
+                  <div className="stat-label">{stat.label}</div>
+                  <div className={`stat-value ${stat.color}`}>{stat.value}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
