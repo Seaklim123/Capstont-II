@@ -20,6 +20,98 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+
+  async getProfile() {
+    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
+      method: 'GET',
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateProfile(profileData) {
+    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async changePassword(passwordData) {
+    console.log('changePassword called with data:', passwordData);
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    console.log('Auth token exists:', !!token);
+    
+    // Ensure field names match backend expectations
+    const requestData = {
+      current_password: passwordData.current_password,
+      new_password: passwordData.password, // Backend might expect 'new_password'
+      new_password_confirmation: passwordData.password_confirmation // Backend might expect 'new_password_confirmation'
+    };
+    
+    console.log('Sending request data:', requestData);
+    
+    try {
+      const response = await this.request(`${API_AUTH_PREFIX}/change-password`, {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      // Handle specific authentication errors
+      if (error.message.includes('Unauthenticated') || error.message.includes('401')) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        throw new Error('Session expired. Please log in again.');
+      }
+      
+      // If it's a validation error, try to extract field-specific errors
+      if (error.message.includes('Validation failed') && error.validationErrors) {
+        throw error; // Re-throw with validation details
+      }
+      throw error;
+    }
+  }
+
+  async refreshToken() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('No token to refresh');
+    }
+
+    try {
+      const response = await this.request(`${API_AUTH_PREFIX}/refresh-token`, {
+        method: 'POST'
+      });
+      
+      const data = this.handleResponse(response);
+      
+      // Update stored token
+      if (data.data && data.data.token) {
+        localStorage.setItem('authToken', data.data.token);
+        console.log('Token refreshed successfully');
+        return data.data.token;
+      } else if (data.token) {
+        localStorage.setItem('authToken', data.token);
+        console.log('Token refreshed successfully');
+        return data.token;
+      }
+      
+      throw new Error('Invalid refresh response format');
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // If refresh fails, clear auth data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      throw new Error('Token refresh failed. Please log in again.');
+    }
+  }
   constructor() {
     this.baseURL = API_BASE_URL;
     this.storageURL = API_BASE_URL.replace('/api', '') + '/storage';
@@ -133,6 +225,33 @@ class ApiService {
         let errorMessage = `HTTP ${response.status}`;
         let errorDetails = null;
         
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401) {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            try {
+              console.log('Attempting token refresh due to 401...');
+              await this.refreshToken();
+              
+              // Retry the original request with new token
+              console.log('Retrying original request with refreshed token...');
+              const newToken = localStorage.getItem('authToken');
+              if (newToken) {
+                config.headers['Authorization'] = `Bearer ${newToken}`;
+                const retryResponse = await fetch(url, config);
+                
+                if (retryResponse.ok) {
+                  const retryData = await retryResponse.json();
+                  return retryData;
+                }
+              }
+            } catch (refreshError) {
+              console.error('Token refresh failed:', refreshError);
+              // Fall through to normal error handling
+            }
+          }
+        }
+        
         try {
           const errorData = await response.json();
           errorDetails = errorData;
@@ -171,6 +290,24 @@ class ApiService {
             const firstErrorKey = Object.keys(errorData.errors)[0];
             const firstError = errorData.errors[firstErrorKey];
             errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+            
+            // Attach validation errors for field-specific handling
+            const error = new Error(errorMessage);
+            error.validationErrors = errorData.errors;
+            error.status = response.status;
+            throw error;
+          }
+          // Handle specific auth errors
+          else if (errorData.message) {
+            if (errorData.message.includes('current password is incorrect') || 
+                errorData.message.includes('current_password')) {
+              errorMessage = 'Current password is incorrect';
+            } else if (errorData.message.includes('password confirmation') || 
+                       errorData.message.includes('password_confirmation')) {
+              errorMessage = 'Password confirmation does not match';
+            } else {
+              errorMessage = errorData.message;
+            }
           }
         } catch (parseError) {
           // If we can't parse the error, fall back to the text response

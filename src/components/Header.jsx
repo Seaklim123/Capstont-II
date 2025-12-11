@@ -3,6 +3,7 @@ import { Bell, ChevronDown, Menu, LogOut, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import UserProfileModal from './UserProfileModal';
 
 const Header = ({ 
   sidebarCollapsed, 
@@ -10,8 +11,9 @@ const Header = ({
   toggleMobileMenu, 
   currentPageName 
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -56,6 +58,19 @@ const Header = ({
       'cashier': 'Cashier'
     };
     return roleLabels[user.role] || user.role;
+  };
+
+  const handleProfileClick = () => {
+    setProfileModalOpen(true);
+    setUserDropdownOpen(false); // Close dropdown when opening profile
+  };
+
+  const handleProfileUpdate = (updatedUserData) => {
+    // Update user data in AuthContext
+    if (updateUser) {
+      updateUser(updatedUserData);
+    }
+    toast.success('Profile updated successfully!');
   };
 
   return (
@@ -110,7 +125,7 @@ const Header = ({
                 <div className="dropdown-divider enhanced-divider"></div>
 
                 <div className="dropdown-menu enhanced-dropdown-menu">
-                  <button className="dropdown-item enhanced-dropdown-item">
+                  <button className="dropdown-item enhanced-dropdown-item" onClick={handleProfileClick}>
                     <User size={16} />
                     <span>Profile</span>
                   </button>
@@ -131,6 +146,14 @@ const Header = ({
           </div>
         </div>
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        currentUser={user}
+        onProfileUpdate={handleProfileUpdate}
+      />
     </header>
   );
 };

@@ -297,6 +297,46 @@ export const AuthProvider = ({ children }) => {
     return userPermissions.includes(permission);
   };
 
+  const refreshToken = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No token to refresh');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/v1/auth/refresh-token`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update stored token
+        if (data.data && data.data.token) {
+          localStorage.setItem('authToken', data.data.token);
+          console.log('Token refreshed successfully in AuthContext');
+          return data.data.token;
+        } else if (data.token) {
+          localStorage.setItem('authToken', data.token);
+          console.log('Token refreshed successfully in AuthContext');
+          return data.token;
+        }
+      }
+      
+      throw new Error('Token refresh failed');
+    } catch (error) {
+      console.error('Token refresh error in AuthContext:', error);
+      // If refresh fails, logout user
+      logout();
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -304,6 +344,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUser,
+    refreshToken,
     hasRole,
     hasPermission,
     checkAuthStatus
