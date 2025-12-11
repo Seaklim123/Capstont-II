@@ -1,5 +1,6 @@
 // API service for backend communication
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 const API_ADMIN_PREFIX = '/v1/admin';
 const API_AUTH_PREFIX = '/v1/auth';
 
