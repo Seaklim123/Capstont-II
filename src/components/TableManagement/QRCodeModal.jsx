@@ -118,7 +118,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
               <Printer size={16} />
               Print
             </button>
-            <button className="btn btn-warning" onClick={() => {
+            {/* <button className="btn btn-warning" onClick={() => {
               console.log('Force refresh clicked!');
               setQrCodeURL('');
               const qrContent = generateQRContent();
@@ -128,7 +128,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
               setQrCodeURL(qrURL);
             }}>
               🔄 Refresh QR
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
