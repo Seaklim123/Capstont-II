@@ -33,6 +33,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   };
 
   useEffect(() => {
+    console.log('QRCodeModal useEffect triggered:', { isOpen, table }); // Debug log
     if (isOpen && table) {
       const qrContent = generateQRContent();
       const qrURL = generateQRCodeURL(qrContent);
