@@ -9,9 +9,11 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
     // Point to your customer menu app
     // const customerMenuBaseUrl = 'http://localhost:5174';
     //----need u guys change it klun eng depending on local frontend user customer -------
- const customerMenuBaseUrl = 'https://customer-ordering-git-main-piseytep26-6848s-projects.vercel.app';
+    const customerMenuBaseUrl = 'https://customer-ordering-git-main-piseytep26-6848s-projects.vercel.app';
     // Include table number as query parameter so the menu knows which table ordered
-    return `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
+    const menuUrl = `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
+    console.log('Generated QR URL:', menuUrl); // Debug log
+    return menuUrl;
   };
 
   // Generate QR code URL using QR Server API
