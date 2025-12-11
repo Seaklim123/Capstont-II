@@ -79,7 +79,7 @@ const LoginPage = () => {
         <div className="login-header">
           <div className="login-logo">
             <img 
-              src="/src/assets/TosOrder-logo.png" 
+              src="/TosOrder-logo.png" 
               alt="TosOrder Logo"
               onError={(e) => {
                 e.target.style.display = 'none';
