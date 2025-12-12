@@ -151,7 +151,7 @@ const TableForm = ({
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
+      <div className="modal-content modal-table-form">
         <div className="modal-header">
           <h2 className="modal-title">
             {editingTable ? 'Edit Table' : 'Add New Table'}

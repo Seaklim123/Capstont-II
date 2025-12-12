@@ -360,7 +360,7 @@ body.modal-open {
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
   z-index: 1000000 !important;
   margin: auto;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 
 const UserForm = ({ isOpen, onClose, onSave, editingUser }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -79,12 +79,18 @@ const UserForm = ({ isOpen, onClose, onSave, editingUser }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <h2 className="modal-title" style={{ marginBottom: '1rem', fontWeight: 'bold', fontSize: '1.5rem', textAlign: 'center' }}>
-          {editingUser ? 'Edit Staff Member' : 'Add New Staff Member'}
-        </h2>
-        <form onSubmit={handleSubmit}>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content modal-staff-form">
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {editingUser ? 'Edit Staff Member' : 'Add New Staff Member'}
+          </h2>
+          <button className="btn btn-secondary btn-sm" onClick={onClose} type="button">
+            <X size={16} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username *</label>
             <input
@@ -201,15 +207,16 @@ const UserForm = ({ isOpen, onClose, onSave, editingUser }) => {
               <option value="inactive">Inactive</option>
             </select>
           </div>
-          <div className="modal-actions">
-            <button type="submit" className="btn btn-primary">
-              {editingUser ? 'Update' : 'Add'}
-            </button>
-            <button type="button" className="btn" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                {editingUser ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
