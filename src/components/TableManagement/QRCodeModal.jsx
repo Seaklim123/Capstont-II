@@ -6,8 +6,15 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
 
   // Generate the QR content (URL that customers will scan)
   const generateQRContent = () => {
-    const baseUrl = window.location.origin; // Gets current domain  
-    return `${baseUrl}/order/${table.qr_code}`; // URL customers will visit
+    // Point to your customer menu app
+    // const customerMenuBaseUrl = 'http://localhost:5174';
+    //----need u guys change it klun eng depending on local frontend user customer -------
+    const customerMenuBaseUrl = 'https://customer-ordering-m6ertgsda-piseytep26-6848s-projects.vercel.app';
+    // Include table number as query parameter so the menu knows which table ordered
+    // Changed from /menu to root path since /menu might not exist
+    const menuUrl = `${customerMenuBaseUrl}/?table=${table.number || table.table_number}`;
+    console.log('Generated QR URL:', menuUrl); // Debug log
+    return menuUrl;
   };
 
   // Generate QR code URL using QR Server API
@@ -21,23 +28,31 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
       bgcolor: 'ffffff',    // White background
       color: '000000',      // Black foreground
       qzone: '1',          // Quiet zone
-      format: 'png'        // Image format
+      format: 'png',       // Image format
+      timestamp: Date.now() // Cache busting parameter
     });
     return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
   };
 
   useEffect(() => {
+    console.log('QRCodeModal useEffect triggered:', { isOpen, table }); // Debug log
     if (isOpen && table) {
+      // Clear previous QR code to force regeneration
+      setQrCodeURL('');
       const qrContent = generateQRContent();
       const qrURL = generateQRCodeURL(qrContent);
+      console.log('Generated QR Code URL:', qrURL); // Debug log
       setQrCodeURL(qrURL);
+    } else {
+      // Clear QR code when modal closes
+      setQrCodeURL('');
     }
   }, [isOpen, table]);
 
   const handleDownload = () => {
     if (qrCodeURL) {
       const link = document.createElement('a');
-      link.download = `${table.table_number}-qr-code.png`;
+      link.download = `table-${table.number}-menu-qr-code.png`;
       link.href = qrCodeURL;
       link.target = '_blank';
       link.click();
@@ -57,7 +72,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
         <div className="modal-header">
           <h3 className="modal-title">
             <QrCode size={20} />
-            QR Code - {table.table_name}
+            QR Code - Table {table.number}
           </h3>
           <button className="btn btn-secondary btn-sm" onClick={onClose}>
             <X size={16} />
@@ -86,10 +101,12 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
           </div>
           
           <div className="qr-info">
-            <p><strong>Table:</strong> {table.table_name} (#{table.table_number})</p>
-            <p><strong>QR ID:</strong> <code>{table.qr_code}</code></p>
-            <p><strong>Scan URL:</strong></p>
+            <p><strong>Table:</strong> Table {table.number} (#{table.number})</p>
+            <p><strong>Menu URL:</strong></p>
             <code className="qr-url">{generateQRContent()}</code>
+            <small className="text-gray block mt-2">
+              Customers scan this QR code to access the menu for Table {table.number}
+            </small>
           </div>
 
           <div className="qr-actions">
@@ -101,6 +118,17 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
               <Printer size={16} />
               Print
             </button>
+            {/* <button className="btn btn-warning" onClick={() => {
+              console.log('Force refresh clicked!');
+              setQrCodeURL('');
+              const qrContent = generateQRContent();
+              const qrURL = generateQRCodeURL(qrContent);
+              console.log('Force generated URL:', qrContent);
+              console.log('Force generated QR:', qrURL);
+              setQrCodeURL(qrURL);
+            }}>
+              🔄 Refresh QR
+            </button> */}
           </div>
         </div>
       </div>

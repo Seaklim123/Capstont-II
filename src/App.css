@@ -2101,19 +2101,30 @@ button:disabled:hover {
 
 /* QR Code Modal Styles */
 .modal-small {
-  max-width: 400px;
+  max-width: 450px !important;
+  height: auto !important;
+  max-height: 600px !important;
+}
+
+.modal-small .modal-content {
+  overflow: visible !important;
+  max-height: none !important;
 }
 
 .qr-display {
   display: flex;
   justify-content: center;
   margin-bottom: var(--space-lg);
+  padding: var(--space-md) 0;
 }
 
 .qr-image {
   border: 2px solid var(--border-light);
   border-radius: var(--radius-md);
   background: white;
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
 }
 
 .qr-loading {
@@ -2130,7 +2141,8 @@ button:disabled:hover {
 
 .qr-info {
   text-align: left;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
+  padding: 0 var(--space-sm);
 }
 
 .qr-info p {
@@ -2151,6 +2163,76 @@ button:disabled:hover {
   display: flex;
   gap: var(--space-md);
   justify-content: center;
+  padding: 0 var(--space-sm) var(--space-md);
+}
+
+/* Specific modal body padding for QR modal */
+.modal-small .modal-body {
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+/* Table Form Modal Styles */
+.modal-table-form {
+  max-width: 500px !important;
+  height: auto !important;
+  max-height: 600px !important;
+}
+
+.modal-table-form .modal-body {
+  padding: var(--space-md);
+  flex: 1;
+}
+
+.modal-table-form .form-group {
+  margin-bottom: var(--space-md);
+}
+
+.modal-table-form .qr-preview {
+  padding: var(--space-sm);
+  background: var(--surface-light);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-xs);
+}
+
+.modal-table-form .modal-footer {
+  padding: var(--space-md);
+  margin-top: var(--space-sm);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+}
+
+/* Staff Form Modal Styles */
+.modal-staff-form {
+  max-width: 600px !important;
+  height: auto !important;
+  max-height: 80vh !important;
+}
+
+.modal-staff-form .modal-body {
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-staff-form .form-group {
+  margin-bottom: var(--space-lg);
+}
+
+.modal-staff-form .modal-footer {
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  margin-top: 0;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  background: var(--surface-light);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 /* Delete Confirmation Modal */

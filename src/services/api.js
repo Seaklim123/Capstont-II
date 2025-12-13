@@ -1,5 +1,6 @@
 // API service for backend communication
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 const API_ADMIN_PREFIX = '/v1/admin';
 const API_AUTH_PREFIX = '/v1/auth';
 
@@ -11,6 +12,106 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
     return this.handleResponse(response);
+  }
+
+  async register(userData) {
+    const response = await this.request(`${API_AUTH_PREFIX}/register`, {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getProfile() {
+    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
+      method: 'GET',
+    });
+    return this.handleResponse(response);
+  }
+
+  async updateProfile(profileData) {
+    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+    return this.handleResponse(response);
+  }
+
+  async changePassword(passwordData) {
+    console.log('changePassword called with data:', passwordData);
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    console.log('Auth token exists:', !!token);
+    
+    // Ensure field names match backend expectations
+    const requestData = {
+      current_password: passwordData.current_password,
+      new_password: passwordData.password, // Backend might expect 'new_password'
+      new_password_confirmation: passwordData.password_confirmation // Backend might expect 'new_password_confirmation'
+    };
+    
+    console.log('Sending request data:', requestData);
+    
+    try {
+      const response = await this.request(`${API_AUTH_PREFIX}/change-password`, {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      // Handle specific authentication errors
+      if (error.message.includes('Unauthenticated') || error.message.includes('401')) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        throw new Error('Session expired. Please log in again.');
+      }
+      
+      // If it's a validation error, try to extract field-specific errors
+      if (error.message.includes('Validation failed') && error.validationErrors) {
+        throw error; // Re-throw with validation details
+      }
+      throw error;
+    }
+  }
+
+  async refreshToken() {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('No token to refresh');
+    }
+
+    try {
+      const response = await this.request(`${API_AUTH_PREFIX}/refresh-token`, {
+        method: 'POST'
+      });
+      
+      const data = this.handleResponse(response);
+      
+      // Update stored token
+      if (data.data && data.data.token) {
+        localStorage.setItem('authToken', data.data.token);
+        console.log('Token refreshed successfully');
+        return data.data.token;
+      } else if (data.token) {
+        localStorage.setItem('authToken', data.token);
+        console.log('Token refreshed successfully');
+        return data.token;
+      }
+      
+      throw new Error('Invalid refresh response format');
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // If refresh fails, clear auth data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      throw new Error('Token refresh failed. Please log in again.');
+    }
   }
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -123,11 +224,61 @@ class ApiService {
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}`;
+        let errorDetails = null;
+        
+        // Handle 401 Unauthorized - try to refresh token
+        if (response.status === 401) {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            try {
+              console.log('Attempting token refresh due to 401...');
+              await this.refreshToken();
+              
+              // Retry the original request with new token
+              console.log('Retrying original request with refreshed token...');
+              const newToken = localStorage.getItem('authToken');
+              if (newToken) {
+                config.headers['Authorization'] = `Bearer ${newToken}`;
+                const retryResponse = await fetch(url, config);
+                
+                if (retryResponse.ok) {
+                  const retryData = await retryResponse.json();
+                  return retryData;
+                }
+              }
+            } catch (refreshError) {
+              console.error('Token refresh failed:', refreshError);
+              // Fall through to normal error handling
+            }
+          }
+        }
+        
         try {
           const errorData = await response.json();
+          errorDetails = errorData;
           
+          // Handle specific 500 errors
+          if (response.status === 500) {
+            console.error('500 Server Error Details:', {
+              url,
+              method: config.method || 'GET',
+              errorData,
+              status: response.status
+            });
+            
+            if (errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
+              const tableNumber = this.extractTableNumberFromError(errorData.message);
+              errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
+            } else if (errorData.message && errorData.message.includes('foreign key constraint')) {
+              errorMessage = 'Cannot delete this item because it is being used by other records.';
+            } else if (errorData.message) {
+              errorMessage = errorData.message;
+            } else {
+              errorMessage = 'Internal server error. Please check the server logs for details.';
+            }
+          }
           // Handle duplicate table number error specifically
-          if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
+          else if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
             const tableNumber = this.extractTableNumberFromError(errorData.message);
             errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
           } 
@@ -140,6 +291,24 @@ class ApiService {
             const firstErrorKey = Object.keys(errorData.errors)[0];
             const firstError = errorData.errors[firstErrorKey];
             errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+            
+            // Attach validation errors for field-specific handling
+            const error = new Error(errorMessage);
+            error.validationErrors = errorData.errors;
+            error.status = response.status;
+            throw error;
+          }
+          // Handle specific auth errors
+          else if (errorData.message) {
+            if (errorData.message.includes('current password is incorrect') || 
+                errorData.message.includes('current_password')) {
+              errorMessage = 'Current password is incorrect';
+            } else if (errorData.message.includes('password confirmation') || 
+                       errorData.message.includes('password_confirmation')) {
+              errorMessage = 'Password confirmation does not match';
+            } else {
+              errorMessage = errorData.message;
+            }
           }
         } catch (parseError) {
           // If we can't parse the error, fall back to the text response
@@ -360,6 +529,27 @@ class ApiService {
     return response.data || response;
   }
 
+  async getProductById(id) {
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`);
+      const product = this.handleResponse(response);
+      
+      if (product) {
+        const imageUrl = this.getImageUrl(product.image_path);
+        return {
+          ...product,
+          image_url: imageUrl,
+          originalImagePath: product.image_path
+        };
+      }
+      
+      return product;
+    } catch (error) {
+      console.error(`Error fetching product ${id}:`, error);
+      throw error;
+    }
+  }
+
   // Update product with file upload
   async updateProductWithFile(id, productData, imageFile) {
     const formData = new FormData();
@@ -390,9 +580,37 @@ class ApiService {
   }
 
   async deleteProduct(id) {
-      return this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
+        method: 'DELETE',
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error(`Error deleting product ${id}:`, error);
+      
+      // Provide more specific error messages
+      if (error.message.includes('Foreign key constraint')) {
+        throw new Error('Cannot delete this product because it is being used in orders or other records. Please remove those references first.');
+      } else if (error.message.includes('Not found') || error.message.includes('404')) {
+        throw new Error('Product not found. It may have already been deleted.');
+      } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
+        throw new Error('You do not have permission to delete this product.');
+      } else {
+        throw new Error(`Failed to delete product: ${error.message}`);
+      }
+    }
+  }
+
+  // Check if product can be deleted (optional method to check dependencies)
+  async checkProductDependencies(id) {
+    try {
+      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}/dependencies`);
+      return this.handleResponse(response);
+    } catch (error) {
+      // If endpoint doesn't exist, assume no dependencies
+      console.log('Dependencies check not available, proceeding with delete');
+      return { canDelete: true, dependencies: [] };
+    }
   }
 
   async toggleProductStatus(id, status) {
@@ -676,6 +894,46 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+  async getOrder() {
+      const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
+    return this.handleResponse(response);
+  }
+  async cheackOrder(id) {
+      const response = await this.request(`${API_ADMIN_PREFIX}/orders/findByNumber/${id}`);
+    return this.handleResponse(response);
+  }
+
+  async acceptOrder(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'accepted' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+  async cencalOrder(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancel' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+  async cencalOrderList(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/orders/cancelOrder/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancel' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
+
 }
 
 // Export singleton instance

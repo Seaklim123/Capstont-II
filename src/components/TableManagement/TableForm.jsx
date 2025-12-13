@@ -86,22 +86,28 @@ const TableForm = ({
     const trimmedNumber = String(numberValue).trim();
     
     if (!trimmedNumber) {
-      newErrors.number = 'Table number is required';
-    } else if (trimmedNumber.length > 10) {
-      newErrors.number = 'Table number must be less than 10 characters';
-    } else if (!/^[a-zA-Z0-9]+$/.test(trimmedNumber)) {
-      newErrors.number = 'Table number can only contain letters and numbers';
+      newErrors.number = '⚠️ Table number is required';
+    } else if (!/^\d+$/.test(trimmedNumber)) {
+      newErrors.number = '❌ Table number must be a valid number (digits only)';
     } else {
-      // Check for duplicate table number (case-insensitive)
-      const isDuplicate = existingTables.some(table => {
-        const existingNumber = String(table.number || table.table_number || '').toLowerCase().trim();
-        const newNumber = trimmedNumber.toLowerCase();
-        return existingNumber === newNumber && 
-               (!editingTable || table.id !== editingTable.id);
-      });
-      
-      if (isDuplicate) {
-        newErrors.number = `Table number "${trimmedNumber}" already exists. Please choose a different number.`;
+      // Check if the number is within range
+      const numericValue = parseInt(trimmedNumber);
+      if (numericValue < 1) {
+        newErrors.number = ' Table number must be at least 1';
+      } else if (numericValue > 100) {
+        newErrors.number = ' Table number must be 100 or less (You entered: ' + numericValue + ')';
+      } else {
+        // Check for duplicate table number
+        const isDuplicate = existingTables.some(table => {
+          const existingNumber = String(table.number || table.table_number || '').trim();
+          const newNumber = trimmedNumber;
+          return existingNumber === newNumber && 
+                 (!editingTable || table.id !== editingTable.id);
+        });
+        
+        if (isDuplicate) {
+          newErrors.number = ` Table number "${trimmedNumber}" already exists. Please choose a different number.`;
+        }
       }
     }
 
@@ -145,7 +151,7 @@ const TableForm = ({
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
+      <div className="modal-content modal-table-form">
         <div className="modal-header">
           <h2 className="modal-title">
             {editingTable ? 'Edit Table' : 'Add New Table'}
@@ -168,17 +174,18 @@ const TableForm = ({
                   Table Number *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   id="number"
                   name="number"
                   value={formData.number}
                   onChange={handleInputChange}
-                  placeholder="e.g., 1, 2, A1, B2 (letters and numbers only)"
+                  placeholder="Enter table number (1-100 only)"
                   className={`form-input ${errors.number ? 'border-error' : ''}`}
-                  maxLength={10}
+                  min="1"
+                  max="100"
                 />
                 {errors.number && (
-                  <span className="text-error text-sm">{errors.number}</span>
+                  <span className="error-message">{errors.number}</span>
                 )}
               </div>
 

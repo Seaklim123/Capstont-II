@@ -223,6 +223,7 @@ const TableManagement = () => {
           onEditTable={handleEditTable}
           onDeleteTable={handleDeleteTable}
           onStatusChange={handleStatusChange}
+          onAddTable={handleAddTable}
         />
       </div>
 

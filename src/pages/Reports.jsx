@@ -74,24 +74,75 @@ const Reports = () => {
         ApiService.getRevenueComparison()
       ]);
 
+      // Debug logs to understand API response structure
+      console.log('API Responses Debug:', {
+        monthlyChart: monthlyChartResponse.status === 'fulfilled' ? monthlyChartResponse.value : 'failed',
+        dailyEarnings: dailyEarningsResponse.status === 'fulfilled' ? dailyEarningsResponse.value : 'failed',
+        categoryRevenue: categoryRevenueResponse.status === 'fulfilled' ? categoryRevenueResponse.value : 'failed'
+      });
+
       setData({
-        summary: summaryResponse.status === 'fulfilled' ? summaryResponse.value : null,
-        salesSummary: salesSummaryResponse.status === 'fulfilled' ? salesSummaryResponse.value : null,
-        monthlyChart: monthlyChartResponse.status === 'fulfilled' ? monthlyChartResponse.value : [],
-        dailyEarnings: dailyEarningsResponse.status === 'fulfilled' ? dailyEarningsResponse.value : [],
-        topProducts: topProductsResponse.status === 'fulfilled' ? topProductsResponse.value : [],
-        categoryRevenue: categoryRevenueResponse.status === 'fulfilled' ? categoryRevenueResponse.value : [
-          { name: 'Main Dishes', revenue: 45600 },
-          { name: 'Beverages', revenue: 23400 },
-          { name: 'Desserts', revenue: 20500 },
-          { name: 'Appetizers', revenue: 15800 },
-          { name: 'Salads', revenue: 8700 }
-        ],
-        cashierPerformance: cashierPerformanceResponse.status === 'fulfilled' ? cashierPerformanceResponse.value : [],
-        orderStatus: orderStatusResponse.status === 'fulfilled' ? orderStatusResponse.value : null,
-        paymentMethods: paymentMethodsResponse.status === 'fulfilled' ? paymentMethodsResponse.value : [],
-        topCustomers: topCustomersResponse.status === 'fulfilled' ? topCustomersResponse.value : [],
-        revenueComparison: revenueComparisonResponse.status === 'fulfilled' ? revenueComparisonResponse.value : null
+        summary: summaryResponse.status === 'fulfilled' ? summaryResponse.value?.data : null,
+        salesSummary: salesSummaryResponse.status === 'fulfilled' ? salesSummaryResponse.value?.data : null,
+        monthlyChart: monthlyChartResponse.status === 'fulfilled' && monthlyChartResponse.value?.data?.monthly_earnings_chart
+          ? monthlyChartResponse.value.data.monthly_earnings_chart
+          : monthlyChartResponse.status === 'fulfilled' && Array.isArray(monthlyChartResponse.value?.data)
+          ? monthlyChartResponse.value.data
+          : monthlyChartResponse.status === 'fulfilled' && Array.isArray(monthlyChartResponse.value)
+          ? monthlyChartResponse.value 
+          : [],
+        dailyEarnings: dailyEarningsResponse.status === 'fulfilled' && dailyEarningsResponse.value?.data?.daily_earnings_current_month
+          ? dailyEarningsResponse.value.data.daily_earnings_current_month
+          : dailyEarningsResponse.status === 'fulfilled' && Array.isArray(dailyEarningsResponse.value?.data)
+          ? dailyEarningsResponse.value.data
+          : dailyEarningsResponse.status === 'fulfilled' && Array.isArray(dailyEarningsResponse.value)
+          ? dailyEarningsResponse.value 
+          : [],
+        topProducts: topProductsResponse.status === 'fulfilled' && topProductsResponse.value?.data?.top_products_by_earnings
+          ? topProductsResponse.value.data.top_products_by_earnings
+          : topProductsResponse.status === 'fulfilled' && topProductsResponse.value?.data?.top_products
+          ? topProductsResponse.value.data.top_products
+          : topProductsResponse.status === 'fulfilled' && Array.isArray(topProductsResponse.value?.data)
+          ? topProductsResponse.value.data
+          : topProductsResponse.status === 'fulfilled' && Array.isArray(topProductsResponse.value)
+          ? topProductsResponse.value 
+          : [],
+        categoryRevenue: categoryRevenueResponse.status === 'fulfilled' && categoryRevenueResponse.value?.data?.category_breakdown
+          ? categoryRevenueResponse.value.data.category_breakdown
+          : categoryRevenueResponse.status === 'fulfilled' && Array.isArray(categoryRevenueResponse.value?.data)
+          ? categoryRevenueResponse.value.data
+          : categoryRevenueResponse.status === 'fulfilled' && Array.isArray(categoryRevenueResponse.value)
+          ? categoryRevenueResponse.value 
+          : [
+            { name: 'Main Dishes', revenue: 45600 },
+            { name: 'Beverages', revenue: 23400 },
+            { name: 'Desserts', revenue: 20500 },
+            { name: 'Appetizers', revenue: 15800 },
+            { name: 'Salads', revenue: 8700 }
+          ],
+        cashierPerformance: cashierPerformanceResponse.status === 'fulfilled' && cashierPerformanceResponse.value?.data?.cashier_performance
+          ? cashierPerformanceResponse.value.data.cashier_performance
+          : cashierPerformanceResponse.status === 'fulfilled' && Array.isArray(cashierPerformanceResponse.value?.data)
+          ? cashierPerformanceResponse.value.data
+          : cashierPerformanceResponse.status === 'fulfilled' && Array.isArray(cashierPerformanceResponse.value)
+          ? cashierPerformanceResponse.value 
+          : [],
+        orderStatus: orderStatusResponse.status === 'fulfilled' ? orderStatusResponse.value?.data : null,
+        paymentMethods: paymentMethodsResponse.status === 'fulfilled' && paymentMethodsResponse.value?.data?.payment_methods
+          ? paymentMethodsResponse.value.data.payment_methods
+          : paymentMethodsResponse.status === 'fulfilled' && Array.isArray(paymentMethodsResponse.value?.data)
+          ? paymentMethodsResponse.value.data
+          : paymentMethodsResponse.status === 'fulfilled' && Array.isArray(paymentMethodsResponse.value)
+          ? paymentMethodsResponse.value 
+          : [],
+        topCustomers: topCustomersResponse.status === 'fulfilled' && topCustomersResponse.value?.data?.top_customers
+          ? topCustomersResponse.value.data.top_customers
+          : topCustomersResponse.status === 'fulfilled' && Array.isArray(topCustomersResponse.value?.data)
+          ? topCustomersResponse.value.data
+          : topCustomersResponse.status === 'fulfilled' && Array.isArray(topCustomersResponse.value)
+          ? topCustomersResponse.value 
+          : [],
+        revenueComparison: revenueComparisonResponse.status === 'fulfilled' ? revenueComparisonResponse.value?.data : null
       });
       
       toast.success('Reports loaded successfully!', { id: loadingToast });
@@ -144,10 +195,10 @@ const Reports = () => {
       - Total Customers: ${data.summary?.total_customers || 340}
       
       Top Products:
-      ${data.topProducts.map(p => `- ${p.name}: $${p.revenue}`).join('\n      ')}
+      ${Array.isArray(data.topProducts) ? data.topProducts.map(p => `- ${p.name || 'Unknown'}: $${parseFloat(p.gross_revenue || p.revenue || 0).toFixed(2)}`).join('\n      ') : 'No data'}
       
       Category Revenue:
-      ${data.categoryRevenue.map(c => `- ${c.name}: $${c.revenue}`).join('\n      ')}
+      ${Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(c => `- ${c.name || c.category_name || 'Unknown'}: $${parseFloat(c.revenue || c.total_revenue || 0).toFixed(2)}`).join('\n      ') : 'No data'}
       
       Generated: ${new Date().toLocaleDateString()}
       Note: This is demo data for development purposes.
@@ -178,11 +229,11 @@ const Reports = () => {
       [''],
       ['Top Products'],
       ['Product Name', 'Revenue'],
-      ...data.topProducts.map(p => [p.name, `$${p.revenue}`]),
+      ...(Array.isArray(data.topProducts) ? data.topProducts.map(p => [p.name || 'Unknown', `$${parseFloat(p.gross_revenue || p.revenue || 0).toFixed(2)}`]) : []),
       [''],
       ['Category Revenue'],
       ['Category', 'Revenue'],
-      ...data.categoryRevenue.map(c => [c.name, `$${c.revenue}`]),
+      ...(Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(c => [c.name || c.category_name || 'Unknown', `$${parseFloat(c.revenue || c.total_revenue || 0).toFixed(2)}`]) : []),
       [''],
       ['Generated', new Date().toLocaleDateString()],
       ['Note', 'This is demo data for development purposes']
@@ -199,13 +250,13 @@ const Reports = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Chart data preparation
+  // Chart data preparation - with safety checks
   const monthlyChartData = {
-    labels: data.monthlyChart.map(item => item.month_name),
+    labels: Array.isArray(data.monthlyChart) ? data.monthlyChart.map(item => item.month_name || item.month || `Month ${item.month}`) : [],
     datasets: [
       {
         label: 'Monthly Revenue',
-        data: data.monthlyChart.map(item => item.earnings),
+        data: Array.isArray(data.monthlyChart) ? data.monthlyChart.map(item => parseFloat(item.earnings || item.revenue || 0)) : [],
         backgroundColor: '#3b82f6',
         borderColor: '#2563eb',
         borderWidth: 1
@@ -214,10 +265,10 @@ const Reports = () => {
   };
 
   const categoryPieData = {
-    labels: data.categoryRevenue.map(cat => cat.name),
+    labels: Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(cat => cat.name || cat.category_name) : [],
     datasets: [
       {
-        data: data.categoryRevenue.map(cat => cat.revenue),
+        data: Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(cat => parseFloat(cat.revenue || cat.total_revenue || 0)) : [],
         backgroundColor: [
           '#3b82f6',
           '#10b981',
@@ -415,15 +466,23 @@ const Reports = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.topCustomers.map((customer, index) => (
-                        <tr key={index}>
-                          <td>{customer.phone_number}</td>
-                          <td>{customer.total_orders}</td>
-                          <td>${customer.total_spent?.toFixed(2)}</td>
-                          <td>${customer.average_order_value?.toFixed(2)}</td>
-                          <td>{new Date(customer.last_order_date).toLocaleDateString()}</td>
+                      {Array.isArray(data.topCustomers) && data.topCustomers.length > 0 ? (
+                        data.topCustomers.map((customer, index) => (
+                          <tr key={index}>
+                            <td>{customer.phone_number || 'N/A'}</td>
+                            <td>{customer.total_orders || 0}</td>
+                            <td>${parseFloat(customer.total_spent || 0).toFixed(2)}</td>
+                            <td>${parseFloat(customer.average_order_value || 0).toFixed(2)}</td>
+                            <td>{customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString() : 'N/A'}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                            No customer data available
+                          </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -456,16 +515,24 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.topProducts.map((product, index) => (
-                      <tr key={index}>
-                        <td>{product.name}</td>
-                        <td>{product.category_name}</td>
-                        <td>{product.total_orders}</td>
-                        <td>{product.total_quantity_sold}</td>
-                        <td>${product.gross_revenue?.toFixed(2)}</td>
-                        <td>${product.net_revenue?.toFixed(2)}</td>
+                    {Array.isArray(data.topProducts) && data.topProducts.length > 0 ? (
+                      data.topProducts.map((product, index) => (
+                        <tr key={index}>
+                          <td>{product.name || 'Unknown'}</td>
+                          <td>{product.category_name || 'N/A'}</td>
+                          <td>{product.total_orders || 0}</td>
+                          <td>{product.total_quantity_sold || 0}</td>
+                          <td>${parseFloat(product.gross_revenue || 0).toFixed(2)}</td>
+                          <td>${parseFloat(product.net_revenue || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                          No product data available
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -497,22 +564,30 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.cashierPerformance.map((cashier, index) => (
-                      <tr key={index}>
-                        <td>{cashier.username}</td>
-                        <td>{cashier.email}</td>
-                        <td>
-                          <span className={`badge ${
-                            cashier.status === 'active' ? 'badge-success' : 'badge-warning'
-                          }`}>
-                            {cashier.status}
-                          </span>
+                    {Array.isArray(data.cashierPerformance) && data.cashierPerformance.length > 0 ? (
+                      data.cashierPerformance.map((cashier, index) => (
+                        <tr key={index}>
+                          <td>{cashier.username || 'Unknown'}</td>
+                          <td>{cashier.email || 'N/A'}</td>
+                          <td>
+                            <span className={`badge ${
+                              cashier.status === 'active' ? 'badge-success' : 'badge-warning'
+                            }`}>
+                              {cashier.status || 'unknown'}
+                            </span>
+                          </td>
+                          <td>{cashier.total_orders || 0}</td>
+                          <td>${parseFloat(cashier.total_sales || 0).toFixed(2)}</td>
+                          <td>${parseFloat(cashier.average_sale || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                          No cashier performance data available
                         </td>
-                        <td>{cashier.total_orders}</td>
-                        <td>${cashier.total_sales?.toFixed(2)}</td>
-                        <td>${cashier.average_sale?.toFixed(2)}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
