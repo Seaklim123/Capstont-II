@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -11,7 +13,8 @@ import {
   RefreshCw,
   BarChart3,
   PieChart,
-  TrendingDown
+  TrendingDown,
+  FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ApiService from '../services/api';
@@ -35,19 +38,25 @@ const Reports = () => {
     revenueComparison: null
   });
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  // Date range state for filtering
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadReportsData();
-  }, [selectedYear]);
+    // eslint-disable-next-line
+  }, [selectedYear, startDate, endDate]);
 
   const loadReportsData = async () => {
+    // You can use startDate and endDate to filter API calls or local data here
     const loadingToast = toast.loading('Loading reports data...');
     
     try {
       setLoading(true);
       
       // Load all report data in parallel
+      // You can pass startDate and endDate to your API if supported
       const [
         summaryResponse,
         salesSummaryResponse,
@@ -65,7 +74,7 @@ const Reports = () => {
         ApiService.getSalesSummary(),
         ApiService.getMonthlyEarningsChart(selectedYear),
         ApiService.getDailyEarnings(),
-        ApiService.getProductsMostEarnings(10),
+        ApiService.getProductsMostEarnings(10, startDate ? startDate.toISOString().split('T')[0] : null, endDate ? endDate.toISOString().split('T')[0] : null),
         ApiService.getCategoryRevenue(),
         ApiService.getCashierPerformance(),
         ApiService.getOrderStatus(),
@@ -156,98 +165,331 @@ const Reports = () => {
 
   const handleExport = async (format) => {
     const exportToast = toast.loading(`Exporting ${format.toUpperCase()}...`);
-    
     try {
-      // Try backend export first
-      if (format === 'pdf') {
-        await ApiService.exportReportsPDF(data);
-      } else {
-        await ApiService.exportReportsExcel(data);
-      }
-      toast.success(`${format.toUpperCase()} export completed!`, { id: exportToast });
+      const start_date = startDate ? startDate.toISOString().split('T')[0] : null;
+      const end_date = endDate ? endDate.toISOString().split('T')[0] : null;
+      const body = JSON.stringify({
+        start_date,
+        end_date,
+        report_type: 'sales', // or any other type if needed
+      });
+      const url = `/v1/admin/reports/export/${format}`;
+      const response = await fetch(import.meta.env.VITE_API_BASE_URL + url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body,
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const fileName = `reports_${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      const urlBlob = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(urlBlob);
+      toast.success(`${format.toUpperCase()} exported successfully!`, { id: exportToast });
     } catch (error) {
-      console.info('📄 Backend export unavailable (expected in demo mode), using client-side fallback');
-      
-      // Fallback to client-side export
-      try {
-        if (format === 'pdf') {
-          await exportToPDFClient();
-        } else {
-          await exportToExcelClient();
-        }
-        toast.success(`${format.toUpperCase()} export completed! (Demo data)`, { id: exportToast });
-      } catch (fallbackError) {
-        console.error('Client-side export failed:', fallbackError);
-        toast.error(`Export functionality requires backend setup`, { id: exportToast });
-      }
+      console.error('Export failed:', error);
+      toast.error(`Failed to export ${format.toUpperCase()}`, { id: exportToast });
     }
   };
 
   const exportToPDFClient = async () => {
-    // Simple client-side PDF export fallback
-    const printContent = `
-      Reports & Analytics - Demo Data
-      ================================
-      
-      Summary:
-      - Total Earnings: $${data.summary?.total_earnings || 89500}
-      - Total Orders: ${data.summary?.total_orders || 1250}
-      - Total Customers: ${data.summary?.total_customers || 340}
-      
-      Top Products:
-      ${Array.isArray(data.topProducts) ? data.topProducts.map(p => `- ${p.name || 'Unknown'}: $${parseFloat(p.gross_revenue || p.revenue || 0).toFixed(2)}`).join('\n      ') : 'No data'}
-      
-      Category Revenue:
-      ${Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(c => `- ${c.name || c.category_name || 'Unknown'}: $${parseFloat(c.revenue || c.total_revenue || 0).toFixed(2)}`).join('\n      ') : 'No data'}
-      
-      Generated: ${new Date().toLocaleDateString()}
-      Note: This is demo data for development purposes.
-    `;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
     
-    // Create a blob and download
-    const blob = new Blob([printContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reports_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 44, 52);
+    doc.text('Reports & Analytics', margin, 30);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, 40);
+    doc.text(`Year: ${selectedYear}`, margin, 50);
+    
+    let yPosition = 70;
+    
+    // Summary Section
+    doc.setFontSize(16);
+    doc.setTextColor(40, 44, 52);
+    doc.text('Summary', margin, yPosition);
+    yPosition += 15;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(60, 60, 60);
+    const summaryData = [
+      ['Total Revenue (All Time)', data.salesSummary?.all_time?.earnings ? `$${data.salesSummary.all_time.earnings.toLocaleString()}` : '$0'],
+      ['Revenue (This Month)', data.salesSummary?.this_month?.earnings ? `$${data.salesSummary.this_month.earnings.toLocaleString()}` : '$0'],
+      ['Total Orders (All Time)', data.salesSummary?.all_time?.orders ? `${data.salesSummary.all_time.orders.toLocaleString()}` : '0'],
+      ['Orders (This Month)', data.salesSummary?.this_month?.orders ? `${data.salesSummary.this_month.orders.toLocaleString()}` : '0'],
+      ['Completion Rate', data.orderStatus?.completion_rate ? `${data.orderStatus.completion_rate}%` : '0%'],
+      ['Pending Orders', `${data.orderStatus?.pending || 0}`],
+      ['Completed Orders', `${data.orderStatus?.completed || 0}`],
+      ['Cancelled Orders', `${data.orderStatus?.cancelled || 0}`]
+    ];
+    
+    autoTable(doc, {
+      startY: yPosition,
+      head: [['Metric', 'Value']],
+      body: summaryData,
+      margin: { left: margin, right: margin },
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [59, 130, 246] }
+    });
+    
+    yPosition = doc.lastAutoTable.finalY + 20;
+    
+    // Top Products Section
+    if (Array.isArray(data.topProducts) && data.topProducts.length > 0) {
+      doc.setFontSize(16);
+      doc.setTextColor(40, 44, 52);
+      doc.text('Top Products', margin, yPosition);
+      yPosition += 10;
+      
+      const productsData = data.topProducts.slice(0, 10).map(product => [
+        product.name || 'Unknown',
+        product.category_name || 'N/A',
+        `${product.total_orders || 0}`,
+        `${product.total_quantity_sold || 0}`,
+        `$${parseFloat(product.gross_revenue || product.revenue || 0).toFixed(2)}`
+      ]);
+      
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Product', 'Category', 'Orders', 'Qty Sold', 'Revenue']],
+        body: productsData,
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+      
+      yPosition = doc.lastAutoTable.finalY + 20;
+    }
+    
+    // Category Revenue Section
+    if (Array.isArray(data.categoryRevenue) && data.categoryRevenue.length > 0) {
+      // Add new page if needed
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 30;
+      }
+      
+      doc.setFontSize(16);
+      doc.setTextColor(40, 44, 52);
+      doc.text('Revenue by Category', margin, yPosition);
+      yPosition += 10;
+      
+      const categoryData = data.categoryRevenue.map(category => [
+        category.name || category.category_name || 'Unknown',
+        `$${parseFloat(category.revenue || category.total_revenue || 0).toFixed(2)}`
+      ]);
+      
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Category', 'Revenue']],
+        body: categoryData,
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [245, 158, 11] }
+      });
+      
+      yPosition = doc.lastAutoTable.finalY + 20;
+    }
+    
+    // Staff Performance Section
+    if (Array.isArray(data.cashierPerformance) && data.cashierPerformance.length > 0) {
+      // Add new page if needed
+      if (yPosition > 220) {
+        doc.addPage();
+        yPosition = 30;
+      }
+      
+      doc.setFontSize(16);
+      doc.setTextColor(40, 44, 52);
+      doc.text('Staff Performance', margin, yPosition);
+      yPosition += 10;
+      
+      const staffData = data.cashierPerformance.slice(0, 10).map(staff => [
+        staff.username || 'Unknown',
+        staff.email || 'N/A',
+        `${staff.total_orders || 0}`,
+        `$${parseFloat(staff.total_sales || 0).toFixed(2)}`,
+        `$${parseFloat(staff.average_sale || 0).toFixed(2)}`
+      ]);
+      
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Name', 'Email', 'Orders', 'Total Sales', 'Avg Sale']],
+        body: staffData,
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [139, 92, 246] }
+      });
+    }
+    
+    // Save the PDF
+    doc.save(`restaurant_reports_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const exportToExcelClient = async () => {
-    // Simple CSV export as Excel fallback
-    const csvContent = [
-      ['Reports & Analytics - Demo Data'],
-      [''],
-      ['Summary Data'],
-      ['Metric', 'Value'],
-      ['Total Earnings', `$${data.summary?.total_earnings || 89500}`],
-      ['Total Orders', data.summary?.total_orders || 1250],
-      ['Total Customers', data.summary?.total_customers || 340],
-      [''],
-      ['Top Products'],
-      ['Product Name', 'Revenue'],
-      ...(Array.isArray(data.topProducts) ? data.topProducts.map(p => [p.name || 'Unknown', `$${parseFloat(p.gross_revenue || p.revenue || 0).toFixed(2)}`]) : []),
-      [''],
-      ['Category Revenue'],
-      ['Category', 'Revenue'],
-      ...(Array.isArray(data.categoryRevenue) ? data.categoryRevenue.map(c => [c.name || c.category_name || 'Unknown', `$${parseFloat(c.revenue || c.total_revenue || 0).toFixed(2)}`]) : []),
-      [''],
-      ['Generated', new Date().toLocaleDateString()],
-      ['Note', 'This is demo data for development purposes']
-    ].map(row => row.join(',')).join('\n');
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
     
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reports_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    // Summary Sheet
+    const summaryData = [
+      ['Restaurant Reports & Analytics'],
+      ['Generated on:', new Date().toLocaleDateString()],
+      ['Year:', selectedYear],
+      [''],
+      ['Summary Metrics'],
+      ['Metric', 'Value'],
+      ['Total Revenue (All Time)', data.salesSummary?.all_time?.earnings || 0],
+      ['Revenue (This Month)', data.salesSummary?.this_month?.earnings || 0],
+      ['Total Orders (All Time)', data.salesSummary?.all_time?.orders || 0],
+      ['Orders (This Month)', data.salesSummary?.this_month?.orders || 0],
+      ['Completion Rate', data.orderStatus?.completion_rate ? `${data.orderStatus.completion_rate}%` : '0%'],
+      ['Pending Orders', data.orderStatus?.pending || 0],
+      ['Completed Orders', data.orderStatus?.completed || 0],
+      ['Cancelled Orders', data.orderStatus?.cancelled || 0]
+    ];
+    
+    const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
+    
+    // Top Products Sheet - Check if data exists and has length
+    if (Array.isArray(data.topProducts) && data.topProducts.length > 0) {
+      const productsData = [
+        ['Top Products by Revenue'],
+        [''],
+        ['Product Name', 'Category', 'Total Orders', 'Quantity Sold', 'Gross Revenue', 'Net Revenue']
+      ];
+      
+      data.topProducts.forEach(product => {
+        productsData.push([
+          product.name || 'Unknown',
+          product.category_name || 'N/A',
+          product.total_orders || 0,
+          product.total_quantity_sold || 0,
+          parseFloat(product.gross_revenue || product.revenue || 0),
+          parseFloat(product.net_revenue || product.gross_revenue || product.revenue || 0)
+        ]);
+      });
+      
+      const productsWS = XLSX.utils.aoa_to_sheet(productsData);
+      XLSX.utils.book_append_sheet(wb, productsWS, 'Top Products');
+    } else {
+      // Add a sheet with message if no data
+      const noDataWS = XLSX.utils.aoa_to_sheet([
+        ['Top Products'],
+        [''],
+        ['No product data available']
+      ]);
+      XLSX.utils.book_append_sheet(wb, noDataWS, 'Top Products');
+    }
+    
+    // Category Revenue Sheet
+    if (Array.isArray(data.categoryRevenue) && data.categoryRevenue.length > 0) {
+      const categoryData = [
+        ['Revenue by Category'],
+        [''],
+        ['Category Name', 'Revenue']
+      ];
+      
+      data.categoryRevenue.forEach(category => {
+        categoryData.push([
+          category.name || category.category_name || 'Unknown',
+          parseFloat(category.revenue || category.total_revenue || 0)
+        ]);
+      });
+      
+      const categoryWS = XLSX.utils.aoa_to_sheet(categoryData);
+      XLSX.utils.book_append_sheet(wb, categoryWS, 'Category Revenue');
+    } else {
+      // Add a sheet with message if no data
+      const noDataWS = XLSX.utils.aoa_to_sheet([
+        ['Category Revenue'],
+        [''],
+        ['No category data available']
+      ]);
+      XLSX.utils.book_append_sheet(wb, noDataWS, 'Category Revenue');
+    }
+    
+    // Monthly Revenue Sheet
+    if (Array.isArray(data.monthlyChart) && data.monthlyChart.length > 0) {
+      const monthlyData = [
+        ['Monthly Revenue Chart'],
+        ['Year:', selectedYear],
+        [''],
+        ['Month', 'Revenue']
+      ];
+      
+      data.monthlyChart.forEach(item => {
+        monthlyData.push([
+          item.month_name || item.month || `Month ${item.month}`,
+          parseFloat(item.earnings || item.revenue || 0)
+        ]);
+      });
+      
+      const monthlyWS = XLSX.utils.aoa_to_sheet(monthlyData);
+      XLSX.utils.book_append_sheet(wb, monthlyWS, 'Monthly Revenue');
+    }
+    
+    // Staff Performance Sheet
+    if (Array.isArray(data.cashierPerformance) && data.cashierPerformance.length > 0) {
+      const staffData = [
+        ['Staff Performance'],
+        [''],
+        ['Name', 'Email', 'Status', 'Total Orders', 'Total Sales', 'Average Sale']
+      ];
+      
+      data.cashierPerformance.forEach(staff => {
+        staffData.push([
+          staff.username || 'Unknown',
+          staff.email || 'N/A',
+          staff.status || 'unknown',
+          staff.total_orders || 0,
+          parseFloat(staff.total_sales || 0),
+          parseFloat(staff.average_sale || 0)
+        ]);
+      });
+      
+      const staffWS = XLSX.utils.aoa_to_sheet(staffData);
+      XLSX.utils.book_append_sheet(wb, staffWS, 'Staff Performance');
+    }
+    
+    // Top Customers Sheet
+    if (Array.isArray(data.topCustomers) && data.topCustomers.length > 0) {
+      const customersData = [
+        ['Top Customers'],
+        [''],
+        ['Phone Number', 'Total Orders', 'Total Spent', 'Average Order Value', 'Last Order Date']
+      ];
+      
+      data.topCustomers.forEach(customer => {
+        customersData.push([
+          customer.phone_number || 'N/A',
+          customer.total_orders || 0,
+          parseFloat(customer.total_spent || 0),
+          parseFloat(customer.average_order_value || 0),
+          customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString() : 'N/A'
+        ]);
+      });
+      
+      const customersWS = XLSX.utils.aoa_to_sheet(customersData);
+      XLSX.utils.book_append_sheet(wb, customersWS, 'Top Customers');
+    }
+    
+    // Save the Excel file
+    XLSX.writeFile(wb, `restaurant_reports_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Chart data preparation - with safety checks
@@ -303,7 +545,7 @@ const Reports = () => {
             Comprehensive business insights and performance metrics
           </p>
         </div>
-        <div className="flex gap-md">
+        <div className="flex gap-md items-center">
           <button 
             className="btn btn-secondary"
             onClick={loadReportsData}
@@ -317,16 +559,45 @@ const Reports = () => {
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
             className="input input-bordered"
           >
-            {[2024, 2025, 2026].map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
+            {(() => {
+              const currentYear = new Date().getFullYear();
+              const firstYear = 2024; // Change this to your earliest data year if needed
+              const years = [];
+              for (let y = firstYear; y <= currentYear; y++) {
+                years.push(y);
+              }
+              return years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ));
+            })()}
           </select>
+          {/* Date Range Picker */}
+          <div style={{ minWidth: 260 }}>
+            <DatePicker
+              selectsRange
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update) => setDateRange(update)}
+              isClearable={true}
+              placeholderText="Select date range"
+              className="input input-bordered"
+              maxDate={new Date()}
+              dateFormat="yyyy-MM-dd"
+            />
+          </div>
           <button 
             className="btn btn-primary"
             onClick={() => handleExport('pdf')}
           >
             <Download size={16} />
             Export PDF
+          </button>
+          <button 
+            className="btn btn-success"
+            onClick={() => handleExport('excel')}
+          >
+            <FileText size={16} />
+            Export Excel
           </button>
         </div>
       </div>

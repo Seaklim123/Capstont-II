@@ -611,7 +611,16 @@
 }
 
 .card-content {
-  padding: var(--space-xl);
+  padding: var(--space-lg);
+  min-height: 300px;
+}
+
+/* Top Products specific card content */
+.dashboard-content-section .card-content {
+  padding: 1.5rem;
+  min-height: 350px;
+  max-height: 600px;
+  overflow: visible;
 }
 
 /* Orders List */
