@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import InputPage from "./pages/InputPage";
@@ -19,6 +20,7 @@ import "./styles/App.css";
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" reverseOrder={false} />
       <div className="app">
         <Header />
         <main className="main-content">

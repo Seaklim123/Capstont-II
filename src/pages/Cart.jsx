@@ -11,16 +11,50 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tableNumber, setTableNumber] = useState(null);
+  const [tableDisplayNumber, setTableDisplayNumber] = useState(null);
   const [showTableModal, setShowTableModal] = useState(false);
 
   useEffect(() => {
     // Get table number from localStorage
     const storedTableNumber = localStorage.getItem('tableNumber');
+    const storedTableId = localStorage.getItem('tableId');
     setTableNumber(storedTableNumber);
-    
+    // Always prefer to fetch display number if tableId is present
+    if (storedTableId) {
+      fetchTableDisplayNumber(storedTableId);
+    } else {
+      const storedTableDisplayNumber = localStorage.getItem('tableDisplayNumber');
+      if (storedTableNumber && (!storedTableDisplayNumber || storedTableDisplayNumber === storedTableNumber)) {
+        fetchTableDisplayNumber(storedTableNumber);
+      } else if (storedTableDisplayNumber) {
+        setTableDisplayNumber(storedTableDisplayNumber);
+      } else {
+        setTableDisplayNumber(null);
+      }
+    }
     // Fetch cart from backend API (table number checked on checkout, not on view)
     fetchCart();
   }, []);
+
+  // Fetch table display number from backend using table id
+  async function fetchTableDisplayNumber(tableId) {
+    // Only fetch from admin API if user is admin/cashier
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('user'));
+    } catch (e) {}
+    if (user && (user.role === 'admin' || user.role === 'cashier')) {
+      try {
+        const table = await adminTableApi.getById(tableId);
+        setTableDisplayNumber(table?.data?.number || tableId);
+      } catch (error) {
+        setTableDisplayNumber(tableId);
+      }
+    } else {
+      // For normal users, use table number/id from localStorage, do NOT call admin API
+      setTableDisplayNumber(tableId);
+    }
+  }
 
   // Helper to get image URL
   const getImageUrl = (imagePath) => {
@@ -254,7 +288,7 @@ const Cart = () => {
             </button>
             <h1 className="cart-title">Shopping Cart </h1>
             {/* Show table number if present */}
-            {(tableNumber || (cartItems.length > 0 && (cartItems[0].table_number || cartItems[0].table_id))) && (
+            {(tableDisplayNumber || tableNumber || (cartItems.length > 0 && (cartItems[0].table_number || cartItems[0].table_id))) && (
               <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.95rem', color: '#555', marginRight: '0.5rem' }}>Table</span>
                 <div style={{ 
@@ -265,7 +299,7 @@ const Cart = () => {
                   fontWeight: 600,
                   boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
                 }}>
-                  {tableNumber || cartItems[0]?.table_number?.table_number || cartItems[0]?.table_number || cartItems[0]?.table_id}
+                  {tableDisplayNumber || tableNumber || cartItems[0]?.table_number?.table_number || cartItems[0]?.table_number || cartItems[0]?.table_id}
                 </div>
               </div>
             )}

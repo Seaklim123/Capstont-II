@@ -117,60 +117,51 @@ function Payment() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableNumber = localStorage.getItem('tableNumber');
+      const tableId = localStorage.getItem('tableId');
 
-      // Only use backend API if user has both token AND table number
-      if (token && tableNumber) {
+      // Only use backend API if user has both token AND tableId
+      if (token && tableId) {
         // AUTHENTICATED USER WITH TABLE - Full backend flow
         console.log('=== AUTHENTICATED ORDER FLOW (WITH TABLE) ===');
-        
-        // Step 1: Update all cart items status from "starting" to "ordering"
-        console.log('Step 1: Updating cart status to ordering...');
-        for (const item of cartItems) {
-          try {
-            await authCartApi.updateItem(item.id, { status: 'ordering' });
-            console.log(`Updated cart item ${item.id} to ordering`);
-          } catch (error) {
-            console.error('Error updating cart status:', error);
+
+        // Step 1: Create order payload (match backend requirements)
+        // Group items by product_id and sum quantities
+        const groupedItems = {};
+        cartItems.forEach(item => {
+          const productId = item.product?.id || item.id;
+          const price = Number(item.product?.price || item.price);
+          if (!groupedItems[productId]) {
+            groupedItems[productId] = {
+              product_id: productId,
+              quantity: 0,
+              price: price
+            };
           }
-        }
-
-        // Step 2: Generate order number
-        const orderNumber = Date.now();
-        
-        // Step 3: Calculate totals
-        const subtotal = parseFloat(calculateSubtotal());
-        const discount = 0;
-        const totalPrice = parseFloat(calculateTotal());
-
-        // Step 4: Create order payload (match backend requirements)
+          groupedItems[productId].quantity += item.quantity;
+        });
         const orderPayload = {
-          table_id: tableNumber ? parseInt(tableNumber, 10) : 1,
+          table_id: parseInt(tableId, 10),
           payment: 'cash',
-          phone_number: phoneNumber || '',
-          // total_price: totalPrice, // add total_price if required by backend
-          // items: cartItems.map(item => ({
-          //   product_id: item.product_id || item.id,
-          //   qty: item.quantity // use qty instead of quantity
-          // }))
+          phone_number: phoneNumber ? String(phoneNumber) : '', // Always a string
+          items: Object.values(groupedItems)
         };
 
-        console.log('Step 2: Creating order information...', orderPayload);
+        console.log('Step 1: Creating order information...', orderPayload);
 
         try {
           const response = await authOrdersApi.create(orderPayload);
           console.log('Order created successfully:', response);
-          const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || response.data?.id || orderNumber;
+          const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || response.data?.id;
           toast.success(`Order #${createdOrderNumber} placed successfully!`);
-          // Step 6: Clear cart after successful order
-          console.log('Step 3: Clearing cart...');
-          for (const item of cartItems) {
-            try {
+          // Step 2: Clear cart after successful order
+          console.log('Step 2: Clearing cart...');
+          try {
+            for (const item of cartItems) {
               await authCartApi.removeItem(item.id);
               console.log(`Removed cart item ${item.id}`);
-            } catch (err) {
-              console.error('Error clearing cart item:', err);
             }
+          } catch (err) {
+            console.error('Error clearing cart item:', err);
           }
           // Clear local state
           setCartItems([]);
@@ -178,11 +169,21 @@ function Payment() {
           // Navigate to orders page immediately after toast
           navigate('/orders');
         } catch (apiError) {
+          // Try to extract backend error message
+          let backendMsg = apiError?.message;
+          if (apiError?.response) {
+            try {
+              const data = await apiError.response.json();
+              backendMsg = data?.message || backendMsg;
+              console.error('Backend error response:', data);
+            } catch (parseErr) {
+              console.error('Error parsing backend error response:', parseErr);
+            }
+          }
           console.error('API Error:', apiError);
-          toast.error(`Failed to create order: ${apiError.message}`);
-          throw apiError;
+          toast.error(`Failed to create order: ${backendMsg}`);
         }
-        
+
       } else {
         // GUEST USER OR NO TABLE - Send to backend AND save to localStorage
         console.log('=== GUEST ORDER FLOW ===');

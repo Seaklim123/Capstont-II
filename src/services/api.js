@@ -670,7 +670,7 @@ export const authCartApi = {
   // GET: list all carts for the authenticated user
   list: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.cart);
+      // Removed USE_MOCKS reference (was causing ReferenceError)
       const url = `${AUTH_BASE}/carts`;
       console.debug('authCartApi.list ->', url);
       const response = await fetchWithAuth(url);
@@ -701,10 +701,16 @@ export const authCartApi = {
   addItem: async (itemData) => {
     try {
       const url = `${AUTH_BASE}/carts`;
-      console.debug('authCartApi.addItem ->', url, itemData);
+      // Always use tableId from localStorage for backend
+      const tableId = localStorage.getItem('tableId');
+      const payload = {
+        ...itemData,
+        table_id: tableId ? parseInt(tableId, 10) : undefined
+      };
+      console.debug('authCartApi.addItem ->', url, payload);
       const response = await fetchWithAuth(
         url,
-        createRequestOptions('POST', itemData)
+        createRequestOptions('POST', payload)
       );
       const data = await handleResponse(response);
       console.debug('authCartApi.addItem response ->', data);

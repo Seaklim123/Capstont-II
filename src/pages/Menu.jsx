@@ -181,11 +181,10 @@ function Menu() {
   // Handle add to cart - try backend API first, fallback to localStorage
   const handleAddToCart = async (itemId) => {
     console.log('🛒 handleAddToCart called with itemId:', itemId);
-    
     // Check for table number first
-    const tableId = localStorage.getItem('tableId');
-    if (!tableId) {
-      toast.error('Please enter your table ID first', {
+    const tableNumber = localStorage.getItem('tableNumber');
+    if (!tableNumber) {
+      toast.error('Please enter your table number first', {
         duration: 4000,
         icon: '🔢',
       });
@@ -194,16 +193,14 @@ function Menu() {
       setShowTableModal(true);
       return;
     }
-    
     // Continue with adding to cart
     await addItemToCart(itemId);
   };
 
-  const handleTableIdSubmit = async (userTableId) => {
+  const handleTableIdSubmit = async (userTableNumber) => {
     setShowTableModal(false);
-    
-    if (!userTableId || !userTableId.trim()) {
-      toast.error('Table ID is required to order. Redirecting to home...', {
+    if (!userTableNumber || !userTableNumber.trim()) {
+      toast.error('Table number is required to order. Redirecting to home...', {
         duration: 3000,
       });
       setTimeout(() => {
@@ -211,15 +208,15 @@ function Menu() {
       }, 2000);
       return;
     }
-    // Save table ID and proceed (skip verification if API not available)
+    // Save table number and proceed (skip verification if API not available)
     try {
-      toast.loading('Verifying table ID...', { id: 'verify-table' });
+      toast.loading('Verifying table number...', { id: 'verify-table' });
       // Try to verify, but don't fail if API not available
       try {
-        const response = await tableApi.verify(userTableId);
+        const response = await tableApi.verify(userTableNumber);
         if (response.exists || response.data?.exists || response.valid) {
-          localStorage.setItem('tableId', userTableId);
-          toast.success(`Table ${userTableId} confirmed!`, { id: 'verify-table' });
+          localStorage.setItem('tableNumber', userTableNumber);
+          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
           window.dispatchEvent(new Event('cartUpdated'));
           // Add the pending item to cart
           if (pendingItemId) {
@@ -227,13 +224,13 @@ function Menu() {
             setPendingItemId(null);
           }
         } else {
-          toast.error(`Table ${userTableId} not found. Please check your table ID.`, { id: 'verify-table', duration: 3000 });
+          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
         }
       } catch (apiError) {
         // If API fails, allow anyway (backend might not be ready)
-        console.log('Table verification API not available, allowing table ID:', apiError);
-        localStorage.setItem('tableId', userTableId);
-        toast.success(`Table ${userTableId} set!`, { id: 'verify-table' });
+        console.log('Table verification API not available, allowing table number:', apiError);
+        localStorage.setItem('tableNumber', userTableNumber);
+        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
         window.dispatchEvent(new Event('cartUpdated'));
         // Add the pending item to cart
         if (pendingItemId) {
@@ -242,10 +239,10 @@ function Menu() {
         }
       }
     } catch (error) {
-      console.error('Error in table ID submission:', error);
+      console.error('Error in table number submission:', error);
       // Allow proceeding anyway
-      localStorage.setItem('tableId', userTableId);
-      toast.success(`Table ${userTableId} set!`);
+      localStorage.setItem('tableNumber', userTableNumber);
+      toast.success(`Table ${userTableNumber} set!`);
       window.dispatchEvent(new Event('cartUpdated'));
       // Add the pending item to cart
       if (pendingItemId) {
@@ -263,14 +260,14 @@ function Menu() {
     }
 
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableId = localStorage.getItem('tableId');
-    if (token && tableId) {
+    const tableNumber = localStorage.getItem('tableNumber');
+    if (token && tableNumber) {
       // Only send required structure to backend
       try {
         const response = await authCartApi.addItem({
           product_id: product.id,
           quantity: 1,
-          table_id: Number(tableId),
+          table_id: Number(tableNumber),
           status: 'starting'
         });
         toast.success(`${product.name} added to cart!`);

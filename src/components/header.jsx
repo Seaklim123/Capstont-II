@@ -9,9 +9,31 @@ export function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tableNumber, setTableNumber] = useState(null);
+  const [tableDisplayNumber, setTableDisplayNumber] = useState(null);
+
+
+  // Fetch table display number from backend using table id
+  async function fetchTableDisplayNumber(tableId) {
+    // Only fetch from admin API if user is admin
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('user'));
+    } catch (e) {}
+      if (user && (user.role === 'admin' || user.role === 'cashier')) {
+        try {
+          const table = await adminTableApi.getById(tableId);
+          setTableDisplayNumber(table?.data?.number || tableId);
+        } catch (error) {
+          setTableDisplayNumber(tableId);
+        }
+      } else {
+        // For normal users, use table number/id from localStorage, do NOT call admin API
+        setTableDisplayNumber(tableId);
+    }
+  }
 
   useEffect(() => {
-    // Update cart count when component mounts and when storage changes
+    // Update cart count and table info
     const updateCartCount = () => {
       const cart = localStorage.getItem('cart');
       if (cart) {
@@ -21,25 +43,35 @@ export function Header() {
       } else {
         setCartCount(0);
       }
-      
-      // Update table number
+      // Update table number (id)
       const storedTableNumber = localStorage.getItem('tableNumber');
+      const storedTableId = localStorage.getItem('tableId');
       setTableNumber(storedTableNumber);
+      // Always prefer to fetch display number if tableId is present
+      if (storedTableId) {
+        fetchTableDisplayNumber(storedTableId);
+      } else {
+        const storedTableDisplayNumber = localStorage.getItem('tableDisplayNumber');
+        if (storedTableNumber && (!storedTableDisplayNumber || storedTableDisplayNumber === storedTableNumber)) {
+          fetchTableDisplayNumber(storedTableNumber);
+        } else if (storedTableDisplayNumber) {
+          setTableDisplayNumber(storedTableDisplayNumber);
+        } else {
+          setTableDisplayNumber(null);
+        }
+      }
     };
 
     updateCartCount();
 
-    // Listen for storage changes (when cart is updated)
     window.addEventListener('storage', updateCartCount);
-    
-    // Custom event for same-window updates
     window.addEventListener('cartUpdated', updateCartCount);
 
     return () => {
       window.removeEventListener('storage', updateCartCount);
       window.removeEventListener('cartUpdated', updateCartCount);
     };
-  }, [location]); // Re-check when location changes
+  }, [location]);
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -72,8 +104,6 @@ export function Header() {
               )}
             </svg>
           </button>
-
-          {/* Logo */}
           <Link to="/" className="logo">
             <span className="logo-text">Tos Kamong</span>
           </Link>
@@ -116,7 +146,7 @@ export function Header() {
         {/* Search and Icons */}
         <div className="header-actions">
           {/* Table Number Display */}
-          {tableNumber && (
+          {tableDisplayNumber && tableNumber && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -131,11 +161,11 @@ export function Header() {
               boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
             }}>
               <span>🪑</span>
-              <span>Table {tableNumber}</span>
+              <span>Table {tableDisplayNumber}</span>
             </div>
           )}
           
-          <div className="search-container">
+          {/* <div className="search-container">
             <input
               type="text"
               placeholder="Search"
@@ -147,7 +177,7 @@ export function Header() {
                 <path d="m21 21-4.35-4.35"></path>
               </svg>
             </button>
-          </div>
+          </div> */}
 
           <button className="icon-button cart" onClick={() => {
             console.log('Cart button clicked, navigating to /cart');
