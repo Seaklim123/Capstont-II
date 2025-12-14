@@ -12,7 +12,13 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
     // const customerMenuBaseUrl = 'https://customer-ordering-m6ertgsda-piseytep26-6848s-projects.vercel.app';
     // Include table number as query parameter so the menu knows which table ordered
     // Changed from /menu to root path since /menu might not exist
-    const menuUrl = `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
+    // const menuUrl = `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
+    // const menuUrl = `${customerMenuBaseUrl}/?table=${table_id || table.table_number}`;
+    if (!table || !table.id) {
+      console.warn('No table or table.id provided for QR code URL');
+      return '';
+    }
+    const menuUrl = `${customerMenuBaseUrl}/menu?table_id=${table.id}`;
     console.log('Generated QR URL:', menuUrl); // Debug log
     return menuUrl;
   };
@@ -37,6 +43,9 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   useEffect(() => {
     console.log('QRCodeModal useEffect triggered:', { isOpen, table }); // Debug log
     if (isOpen && table) {
+      // Store table number and id in localStorage
+      localStorage.setItem('qr_table_number', table.number);
+      localStorage.setItem('qr_table_id', table.id);
       // Clear previous QR code to force regeneration
       setQrCodeURL('');
       const qrContent = generateQRContent();
@@ -44,6 +53,9 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
       console.log('Generated QR Code URL:', qrURL); // Debug log
       setQrCodeURL(qrURL);
     } else {
+      // Remove table info from localStorage when modal closes
+      localStorage.removeItem('qr_table_number');
+      localStorage.removeItem('qr_table_id');
       // Clear QR code when modal closes
       setQrCodeURL('');
     }
@@ -52,7 +64,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   const handleDownload = () => {
     if (qrCodeURL) {
       const link = document.createElement('a');
-      link.download = `table-${table.number}-menu-qr-code.png`;
+      link.download = `table-${table.id}-menu-qr-code.png`;
       link.href = qrCodeURL;
       link.target = '_blank';
       link.click();
@@ -72,7 +84,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
         <div className="modal-header">
           <h3 className="modal-title">
             <QrCode size={20} />
-            QR Code - Table {table.number}
+            QR Code - Table ID {table.id}
           </h3>
           <button className="btn btn-secondary btn-sm" onClick={onClose}>
             <X size={16} />
@@ -84,7 +96,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
             {qrCodeURL ? (
               <img 
                 src={qrCodeURL} 
-                alt={`QR Code for ${table.table_name}`}
+                alt={`QR Code for ${table.table_id}`}
                 className="qr-image"
                 onError={(e) => {
                   console.error('Failed to load QR code');
@@ -101,11 +113,11 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
           </div>
           
           <div className="qr-info">
-            <p><strong>Table:</strong> Table {table.number} (#{table.number})</p>
+            <p><strong>Table:</strong> Table ID {table.id} (Number: {table.number})</p>
             <p><strong>Menu URL:</strong></p>
             <code className="qr-url">{generateQRContent()}</code>
             <small className="text-gray block mt-2">
-              Customers scan this QR code to access the menu for Table {table.number}
+              Customers scan this QR code to access the menu for Table ID {table.id}
             </small>
           </div>
 
@@ -118,17 +130,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
               <Printer size={16} />
               Print
             </button>
-            {/* <button className="btn btn-warning" onClick={() => {
-              console.log('Force refresh clicked!');
-              setQrCodeURL('');
-              const qrContent = generateQRContent();
-              const qrURL = generateQRCodeURL(qrContent);
-              console.log('Force generated URL:', qrContent);
-              console.log('Force generated QR:', qrURL);
-              setQrCodeURL(qrURL);
-            }}>
-              🔄 Refresh QR
-            </button> */}
+          
           </div>
         </div>
       </div>

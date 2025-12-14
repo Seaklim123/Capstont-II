@@ -35,8 +35,14 @@ const TablesTable = ({ tables, filteredTables, searchTerm, onEditTable, onDelete
   };
 
   const handleViewQR = (table) => {
-    setSelectedTable(table);
-    setShowQRModal(true);
+    if (table && table.id) {
+      setSelectedTable(table);
+      setShowQRModal(true);
+    } else {
+      setSelectedTable(null);
+      setShowQRModal(false);
+      console.warn('Attempted to open QR modal with invalid table:', table);
+    }
   };
 
   if (filteredTables.length === 0) {

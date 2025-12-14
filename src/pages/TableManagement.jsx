@@ -59,7 +59,7 @@ const TableManagement = () => {
   };
 
   const filteredTables = tables.filter(table =>
-    (table.table_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // (table.table_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (table.table_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (table.number || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     (table.status || '').toLowerCase().includes(searchTerm.toLowerCase())

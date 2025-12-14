@@ -131,7 +131,8 @@ const OrdersManagement = () => {
                   <th>Discount</th>
                   <th>Status</th>
                   <th>Payment</th>
-                  <th>Refund</th>
+                  {/* <th>Refund</th> */}
+                  
                   <th>Price/Order</th>
                   <th>Phone Number</th>
                   <th>Items</th>
@@ -176,7 +177,7 @@ const OrdersManagement = () => {
                     )}
                   </td>
                     <td data-label="Payment">{item.payment}</td>
-                    <td data-label="Refund">{item.refund}</td>
+                    {/* <td data-label="Refund">{item.refund}</td> */}
                     <td data-label="Price/Order">{item.priceperorder}</td>
                     <td data-label="Phone">{item.phonenumber}</td>
                     <td data-label="Items">
@@ -288,6 +289,9 @@ const OrdersManagement = () => {
                           </span>
                           <span className="detail-badge table-num">
                             <Table size={16} /> Table {orderItem.cart?.table_number?.number || 'N/A'}
+                          </span>
+                          <span className="detail-badge table-id">
+                            ID: {orderItem.cart?.table_id || 'N/A'}
                           </span>
                         </div>
                         
