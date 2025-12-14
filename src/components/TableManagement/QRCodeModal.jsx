@@ -6,18 +6,13 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
 
   // Generate the QR content (URL that customers will scan)
   const generateQRContent = () => {
-    // Point to your customer menu app
-    const customerMenuBaseUrl = 'http://localhost:5174';
-    //----need u guys change it klun eng depending on local frontend user customer -------
-    // const customerMenuBaseUrl = 'https://customer-ordering-m6ertgsda-piseytep26-6848s-projects.vercel.app';
-    // Include table number as query parameter so the menu knows which table ordered
-    // Changed from /menu to root path since /menu might not exist
-    // const menuUrl = `${customerMenuBaseUrl}/menu?table=${table.number || table.table_number}`;
-    // const menuUrl = `${customerMenuBaseUrl}/?table=${table_id || table.table_number}`;
+    // Use local customer menu app URL for development
+    const customerMenuBaseUrl = 'http://localhost:5173';
     if (!table || !table.id) {
       console.warn('No table or table.id provided for QR code URL');
       return '';
     }
+    // Use table.id for QR order
     const menuUrl = `${customerMenuBaseUrl}/menu?table_id=${table.id}`;
     console.log('Generated QR URL:', menuUrl); // Debug log
     return menuUrl;
@@ -96,7 +91,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
             {qrCodeURL ? (
               <img 
                 src={qrCodeURL} 
-                alt={`QR Code for ${table.table_id}`}
+                alt={`QR Code for table ID ${table.id}`}
                 className="qr-image"
                 onError={(e) => {
                   console.error('Failed to load QR code');
