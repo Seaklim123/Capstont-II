@@ -6,6 +6,11 @@ import toast from 'react-hot-toast';
 import TableNumberModal from '../components/TableNumberModal';
 
 function Menu() {
+  // Clear cart on page load to prevent pre-populated items
+  useEffect(() => {
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+  }, []);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,12 +64,29 @@ function Menu() {
     const fetchProducts = async () => {
       try {
         setProductsLoading(true);
+        setProducts([]); // Clear old data before fetching new
         console.log('Fetching products from API');
         const response = await productApi.getAll();
-        console.log('Products response:', response);
-        console.log('First product:', response.data?.[0]);
-        console.log('Product with image_path:', response.data?.find(p => p.image_path));
-        setProducts(response.data || []);
+        // Always use response.data if it's an array, otherwise use response as array
+        let productsArr = [];
+        if (response && Array.isArray(response.data)) {
+          productsArr = response.data;
+        } else if (Array.isArray(response)) {
+          productsArr = response;
+        } else {
+          // Try to handle edge cases (e.g., Laravel resource returns {data: [...], meta: {...}})
+          if (response && typeof response === 'object') {
+            // Find first array property
+            for (const key in response) {
+              if (Array.isArray(response[key])) {
+                productsArr = response[key];
+                break;
+              }
+            }
+          }
+        }
+        console.log('Products array:', productsArr);
+        setProducts(productsArr);
       } catch (err) {
         console.error('Error fetching products:', err);
         setProducts([]);
@@ -96,16 +118,21 @@ function Menu() {
 
   // Render product image with fallback
   const renderProductImage = (product) => {
-    // Try all possible image fields
-    const imagePath = product.image_path || product.image || product.image_url || product.imageUrl || product.img;
-    
+    // Try all possible product image fields
+    let imagePath = product.image_path || product.image || product.image_url || product.imageUrl || product.img;
+
+    // Fallback to category image if product image is missing
+    if (!imagePath && product.category) {
+      imagePath = product.category.image_url || product.category.image || product.category.image_path;
+    }
+
     if (!imagePath) {
       return (
-        <div style={{ 
-          width: '100%', 
-          height: '100%', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#f0f0f0',
           color: '#999',
@@ -115,19 +142,18 @@ function Menu() {
         </div>
       );
     }
-    
+
     const imageUrl = getImageUrl(imagePath);
     console.log('Product:', product.name, 'Using:', imageUrl);
-    
+
     return (
-      <img 
-        src={imageUrl} 
+      <img
+        src={imageUrl}
         alt={product.name}
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        onError={(e) => { 
-          console.error('Failed:', imageUrl);
+        onError={(e) => {
           e.target.style.display = 'none';
-          e.target.parentElement.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0; color: #999; font-size: 0.9rem;">${product.name}</div>`;
+          e.target.parentElement.innerHTML = `<div style=\"width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f0f0f0; color: #999; font-size: 0.9rem;\">${product.name}</div>`;
         }}
       />
     );
@@ -171,13 +197,12 @@ function Menu() {
     console.log('🛒 handleAddToCart called with itemId:', itemId);
     
     // Check for table number first
-    const tableNumber = localStorage.getItem('tableNumber');
-    if (!tableNumber) {
-      toast.error('Please enter your table number first', {
+    const tableId = localStorage.getItem('tableId');
+    if (!tableId) {
+      toast.error('Please enter your table ID first', {
         duration: 4000,
         icon: '🔢',
       });
-      
       // Show modal instead of prompt
       setPendingItemId(itemId);
       setShowTableModal(true);
@@ -188,11 +213,11 @@ function Menu() {
     await addItemToCart(itemId);
   };
 
-  const handleTableNumberSubmit = async (userTableNumber) => {
+  const handleTableIdSubmit = async (userTableId) => {
     setShowTableModal(false);
     
-    if (!userTableNumber || !userTableNumber.trim()) {
-      toast.error('Table number is required to order. Redirecting to home...', {
+    if (!userTableId || !userTableId.trim()) {
+      toast.error('Table ID is required to order. Redirecting to home...', {
         duration: 3000,
       });
       setTimeout(() => {
@@ -200,35 +225,30 @@ function Menu() {
       }, 2000);
       return;
     }
-    
-    // Save table number and proceed (skip verification if API not available)
+    // Save table ID and proceed (skip verification if API not available)
     try {
-      toast.loading('Verifying table number...', { id: 'verify-table' });
-      
+      toast.loading('Verifying table ID...', { id: 'verify-table' });
       // Try to verify, but don't fail if API not available
       try {
-        const response = await tableApi.verify(userTableNumber);
-        
+        const response = await tableApi.verify(userTableId);
         if (response.exists || response.data?.exists || response.valid) {
-          localStorage.setItem('tableNumber', userTableNumber);
-          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
+          localStorage.setItem('tableId', userTableId);
+          toast.success(`Table ${userTableId} confirmed!`, { id: 'verify-table' });
           window.dispatchEvent(new Event('cartUpdated'));
-          
           // Add the pending item to cart
           if (pendingItemId) {
             await addItemToCart(pendingItemId);
             setPendingItemId(null);
           }
         } else {
-          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
+          toast.error(`Table ${userTableId} not found. Please check your table ID.`, { id: 'verify-table', duration: 3000 });
         }
       } catch (apiError) {
         // If API fails, allow anyway (backend might not be ready)
-        console.log('Table verification API not available, allowing table number:', apiError);
-        localStorage.setItem('tableNumber', userTableNumber);
-        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
+        console.log('Table verification API not available, allowing table ID:', apiError);
+        localStorage.setItem('tableId', userTableId);
+        toast.success(`Table ${userTableId} set!`, { id: 'verify-table' });
         window.dispatchEvent(new Event('cartUpdated'));
-        
         // Add the pending item to cart
         if (pendingItemId) {
           await addItemToCart(pendingItemId);
@@ -236,12 +256,11 @@ function Menu() {
         }
       }
     } catch (error) {
-      console.error('Error in table number submission:', error);
+      console.error('Error in table ID submission:', error);
       // Allow proceeding anyway
-      localStorage.setItem('tableNumber', userTableNumber);
-      toast.success(`Table ${userTableNumber} set!`);
+      localStorage.setItem('tableId', userTableId);
+      toast.success(`Table ${userTableId} set!`);
       window.dispatchEvent(new Event('cartUpdated'));
-      
       // Add the pending item to cart
       if (pendingItemId) {
         await addItemToCart(pendingItemId);
@@ -262,12 +281,11 @@ function Menu() {
 
     // Check if user is authenticated
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableNumber = localStorage.getItem('tableNumber');
+    const tableId = localStorage.getItem('tableId');
     console.log('🛒 Token exists:', !!token);
-    console.log('🛒 Table number:', tableNumber);
-    
-    // Only use backend API if user has a valid table number
-    if (token && tableNumber) {
+    console.log('🛒 Table ID:', tableId);
+    // Only use backend API if user has a valid table ID
+    if (token && tableId) {
       // Authenticated user with table - use backend API
       console.log('🛒 Using authenticated cart (backend API)');
       try {
@@ -275,18 +293,15 @@ function Menu() {
           product_id: itemId,
           quantity: 1,
           status: 'starting',
-          table_id: parseInt(tableNumber, 10)
+          table_id: parseInt(tableId, 10)
         };
         console.log('🛒 Sending cart data:', cartData);
-        
         const response = await authCartApi.addItem(cartData);
         console.log('✅ Cart API response:', response);
-
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Navigate to cart page
-        setTimeout(() => navigate('/cart'), 500);
+        // Only navigate to cart if you want to redirect after adding
+        // setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
         console.error('❌ Error adding to cart:', error);
         console.error('❌ Error details:', error.response?.data);
@@ -309,9 +324,15 @@ function Menu() {
           const newItem = {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: parseFloat(product.price),
             image_path: product.image_path || product.image,
-            quantity: 1
+            quantity: 1,
+            product: {
+              id: product.id,
+              name: product.name,
+              price: parseFloat(product.price),
+              image_path: product.image_path || product.image
+            }
           };
           cart.push(newItem);
           console.log('🛒 Added new item:', newItem);
@@ -333,16 +354,13 @@ function Menu() {
   };
 
   // Filter products by category
+  // Show all products regardless of category selection (for debug)
   const getFilteredProducts = () => {
-    if (activeCategory === "All") {
-      return products;
-    }
-    
-    // Find category ID by name
-    const category = categories.find(cat => cat.name === activeCategory);
-    if (!category) return [];
-    
-    return products.filter(product => product.category_id === category.id);
+    // If you want to filter by category, uncomment below:
+    // if (activeCategory !== 'All') {
+    //   return products.filter(p => p.category && p.category.name === activeCategory);
+    // }
+    return products;
   };
 
   // Get products for different sections
@@ -350,10 +368,11 @@ function Menu() {
   const bestSellerProducts = products.filter(p => p.is_best_seller === 1 || p.is_best_seller === true);
   const discountProducts = products.filter(p => p.discount && parseFloat(p.discount) > 0);
   
-  console.log('Total products:', products.length);
+  // Debug: print product counts
+  console.log('Total products:', products.length, products);
   console.log('Best seller products:', bestSellerProducts.length, bestSellerProducts);
   console.log('Discount products:', discountProducts.length, discountProducts);
-  console.log('All products (filtered):', allProducts.length);
+  console.log('All products (filtered):', allProducts.length, allProducts);
 
   // Pagination logic
   const filteredMenuItems = getFilteredProducts();
@@ -435,8 +454,9 @@ function Menu() {
               
               {/* Dynamic Categories from API */}
               {categories.map(category => {
-                // Use image_path from database or fallback to emoji
-                const imageUrl = category.image_path || category.image || category.image_url;
+                // Use transformed image_url first (from API), then fallback to other fields
+                const imageUrl = category.image_url || category.image || category.image_path;
+                console.log('Category:', category.name, 'Image URL:', imageUrl);
                 
                 return (
                   <div 
@@ -691,7 +711,7 @@ function Menu() {
           setShowTableModal(false);
           setPendingItemId(null);
         }}
-        onSubmit={handleTableNumberSubmit}
+        onSubmit={handleTableIdSubmit}
       />
     </div>
   );

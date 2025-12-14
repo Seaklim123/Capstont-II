@@ -21,38 +21,30 @@ function Payment() {
       console.log('💰 Token exists:', !!token);
       console.log('💰 Table number:', tableNumber);
       
-      try {
-        // Only use backend API if user has both token AND table number
+      // Always try localStorage first for guest users
+      const savedCart = localStorage.getItem('cart');
+      console.log('💰 Loading cart from localStorage:', savedCart);
+      
+      if (savedCart) {
+        const cart = JSON.parse(savedCart);
+        console.log('💰 Parsed cart items:', cart);
+        console.log('💰 Number of items:', cart.length);
+        setCartItems(cart);
+      } else {
+        console.log('💰 No cart found in localStorage');
+        // If no localStorage cart and user is authenticated, try API
         if (token && tableNumber) {
-          // Authenticated user with table - fetch from API
-          console.log('💰 Fetching from backend API...');
-          const response = await authCartApi.getCart(tableNumber);
-          const carts = response.data || response.cart || response;
-          const cartArray = Array.isArray(carts) ? carts : [];
-          console.log('💰 Loaded cart from API:', cartArray);
-          setCartItems(cartArray);
-        } else {
-          // Guest user or no table - load from localStorage
-          const savedCart = localStorage.getItem('cart');
-          console.log('💰 Loading cart from localStorage:', savedCart);
-          if (savedCart) {
-            const cart = JSON.parse(savedCart);
-            console.log('💰 Parsed cart items:', cart);
-            console.log('💰 Number of items:', cart.length);
-            setCartItems(cart);
-          } else {
-            console.log('💰 No cart found in localStorage');
+          try {
+            console.log('💰 Fetching from backend API as fallback...');
+            const response = await authCartApi.getCart(tableNumber);
+            const carts = response.data || response.cart || response;
+            const cartArray = Array.isArray(carts) ? carts : [];
+            console.log('💰 Loaded cart from API:', cartArray);
+            setCartItems(cartArray);
+          } catch (error) {
+            console.error('❌ Error loading cart from API:', error);
             setCartItems([]);
           }
-        }
-      } catch (error) {
-        console.error('❌ Error loading cart:', error);
-        // Fallback to localStorage
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          console.log('💰 Fallback - loaded from localStorage:', cart);
-          setCartItems(cart);
         } else {
           setCartItems([]);
         }
@@ -107,24 +99,24 @@ function Payment() {
     console.log('🚀 Place Order clicked!');
     console.log('🚀 Phone Number:', phoneNumber);
     console.log('🚀 Cart Items:', cartItems);
+    console.log('🚀 Cart Items Length:', cartItems.length);
     console.log('🚀 Total Price:', calculateTotal());
-
-    // Validate phone number
-    if (!phoneNumber || phoneNumber.trim() === '') {
-      toast.error('Please enter your phone number');
-      return;
-    }
-
-    // Validate phone number format (basic validation)
-    const phoneRegex = /^[0-9]{8,15}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
-      toast.error('Please enter a valid phone number (8-15 digits)');
-      return;
-    }
+    console.log('🚀 Subtotal:', calculateSubtotal());
 
     if (cartItems.length === 0) {
-      toast.error('Your cart is empty');
+      console.error('❌ Cart is empty!');
+      toast.error('Your cart is empty. Please add items first.');
+      navigate('/menu');
       return;
+    }
+
+    // Validate phone number (only if provided)
+    if (phoneNumber && phoneNumber.trim() !== '') {
+      const phoneRegex = /^[0-9]{8,15}$/;
+      if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
+        toast.error('Please enter a valid phone number (8-15 digits)');
+        return;
+      }
     }
 
     try {
@@ -202,19 +194,9 @@ function Payment() {
           setCartItems([]);
           window.dispatchEvent(new Event('cartUpdated'));
           
-          // Navigate to order confirmation with order details
+          // Navigate to orders page
           setTimeout(() => {
-            navigate(`/order-confirmation?order=${createdOrderNumber}`, {
-              state: {
-                orderNumber: createdOrderNumber,
-                totalPrice: totalPrice,
-                payment: paymentMethod,
-                
-                status: 'starting',
-                phone_number: phoneNumber,
-                special_notes: notes
-              }
-            });
+            navigate('/orders');
           }, 1500);
         } catch (apiError) {
           console.error('API Error:', apiError);
@@ -266,34 +248,56 @@ function Payment() {
         
         // Also store in localStorage for guest (backup/fallback)
         const guestOrder = {
+          id: orderNumber,
           orderNumber: orderNumber,
-          phoneNumber: phoneNumber,
+          numberOrder: orderNumber,
+          phoneNumber: phoneNumber || 'N/A',
+          phone_number: phoneNumber || 'N/A',
           paymentMethod: 'cash',
-          notes: notes,
+          payment: 'cash',
+          notes: notes || '',
+          note: notes || '',
           items: cartItems,
-          totalPrice: totalPrice,
+          totalPrice: parseFloat(totalPrice) || 0,
+          priceperorder: parseFloat(totalPrice) || 0,
           status: 'pending',
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          table_number: tableNumber || 'N/A'
         };
         
         console.log('📝 Saving to localStorage as backup:', guestOrder);
+        console.log('📝 Order details check:');
+        console.log('   - Order Number:', guestOrder.orderNumber);
+        console.log('   - Phone:', guestOrder.phoneNumber);
+        console.log('   - Total:', guestOrder.totalPrice);
+        console.log('   - Items:', guestOrder.items.length);
         
         // Save to localStorage
-        const existingOrders = localStorage.getItem('guestOrders');
-        console.log('📝 Existing orders in localStorage:', existingOrders);
-        
-        const guestOrders = JSON.parse(existingOrders || '[]');
-        console.log('📝 Parsed existing orders:', guestOrders);
-        
-        guestOrders.push(guestOrder);
-        console.log('📝 Orders after adding new order:', guestOrders);
-        
-        localStorage.setItem('guestOrders', JSON.stringify(guestOrders));
-        
-        // Verify it was saved
-        const verifyOrders = localStorage.getItem('guestOrders');
-        console.log('✅ Order saved to localStorage - Verification:', verifyOrders);
-        console.log('✅ Total orders now:', JSON.parse(verifyOrders).length);
+        try {
+          const existingOrders = localStorage.getItem('guestOrders');
+          console.log('📝 Existing orders in localStorage:', existingOrders);
+          
+          const guestOrders = existingOrders ? JSON.parse(existingOrders) : [];
+          console.log('📝 Parsed existing orders:', guestOrders);
+          console.log('📝 Number of existing orders:', guestOrders.length);
+          
+          guestOrders.push(guestOrder);
+          console.log('📝 Orders after adding new order:', guestOrders);
+          console.log('📝 Total orders now:', guestOrders.length);
+          
+          const ordersString = JSON.stringify(guestOrders);
+          localStorage.setItem('guestOrders', ordersString);
+          console.log('✅ Saved to localStorage');
+          
+          // Verify it was saved
+          const verifyOrders = localStorage.getItem('guestOrders');
+          const parsedVerify = JSON.parse(verifyOrders);
+          console.log('✅ Order saved to localStorage - Verification:', parsedVerify);
+          console.log('✅ Total orders now:', parsedVerify.length);
+          console.log('✅ Last order:', parsedVerify[parsedVerify.length - 1]);
+        } catch (storageError) {
+          console.error('❌ Error saving to localStorage:', storageError);
+        }
         
         // Clear cart
         localStorage.removeItem('cart');
@@ -304,20 +308,11 @@ function Payment() {
         
         toast.success(`Order #${orderNumber} placed successfully!`);
         
-        console.log('🚀 Navigating to order confirmation...');
+        console.log('🚀 Navigating to orders page...');
         
-        // Navigate to order confirmation with order details
+        // Navigate to orders page
         setTimeout(() => {
-          navigate(`/order-confirmation?order=${orderNumber}`, {
-            state: {
-              orderNumber: orderNumber,
-              totalPrice: totalPrice,
-              payment: 'cash',
-              status: 'starting',
-              phone_number: phoneNumber,
-              special_notes: notes
-            }
-          });
+          navigate('/orders');
         }, 1500);
       }
       

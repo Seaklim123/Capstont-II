@@ -15,9 +15,9 @@ createRoot(document.getElementById('root')).render(
 // Read QR/table param from URL (e.g. ?table=5) and store for Cart/ordering
 try {
   const params = new URLSearchParams(window.location.search);
-  const table = params.get('table') || params.get('table_number') || params.get('tableNumber');
-  if (table) {
-    localStorage.setItem('tableNumber', String(table));
+  const tableId = params.get('table') || params.get('table_id') || params.get('tableId');
+  if (tableId) {
+    localStorage.setItem('tableId', String(tableId));
   }
 } catch (e) {
   // ignore

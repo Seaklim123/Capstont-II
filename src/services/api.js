@@ -68,20 +68,20 @@ const fetchWithAuth = async (url, options = {}) => {
 
 // -------------------------
 // Mock mode (in-memory) support
-// Disabled - always use real backend API
-const USE_MOCKS = false;
+// Enabled - using in-memory data for testing
+const USE_MOCKS = true;
 
 // Simple in-memory mock data (used when USE_MOCKS === true)
 const _mock = {
   products: [
-    { id: 1, name: 'Grilled Chicken', price: '12.99', discount: 20, description: 'Delicious grilled chicken', image: 'https://via.placeholder.com/600x400?text=Grilled+Chicken', category_id: 1, sold_count: 120, is_bestseller: true, is_best_seller: true },
-    { id: 2, name: 'Beef Burger', price: '10.99', discount: 15, description: 'Juicy beef burger', image: 'https://via.placeholder.com/600x400?text=Beef+Burger', category_id: 2, sold_count: 80, is_bestseller: true, is_best_seller: true },
-    { id: 3, name: 'Caesar Salad', price: '8.99', discount: 25, description: 'Fresh salad', image: 'https://via.placeholder.com/600x400?text=Caesar+Salad', category_id: 3, sold_count: 30, is_bestseller: false, is_best_seller: false },
+    { id: 1, name: 'Grilled Chicken', price: '12.99', discount: 20, description: 'Delicious grilled chicken', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836', category_id: 1, sold_count: 120, is_bestseller: true, is_best_seller: true },
+    { id: 2, name: 'Beef Burger', price: '10.99', discount: 15, description: 'Juicy beef burger', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349', category_id: 2, sold_count: 80, is_bestseller: true, is_best_seller: true },
+    { id: 3, name: 'Caesar Salad', price: '8.99', discount: 25, description: 'Fresh salad', image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c', category_id: 3, sold_count: 30, is_bestseller: false, is_best_seller: false },
   ],
   categories: [
-    { id: 1, name: 'Chicken', image: 'https://via.placeholder.com/120x120?text=Chicken' },
-    { id: 2, name: 'Burgers', image: 'https://via.placeholder.com/120x120?text=Burgers' },
-    { id: 3, name: 'Salads', image: 'https://via.placeholder.com/120x120?text=Salads' },
+    { id: 1, name: 'Chicken', image: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc' },
+    { id: 2, name: 'Burgers', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349' },
+    { id: 3, name: 'Salads', image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c' },
   ],
   cart: [],
   orders: [
@@ -103,7 +103,14 @@ export const categoryApi = {
       if (USE_MOCKS) return await mockDelay(_mock.categories);
       const response = await fetch(`${API_BASE_URL}/v1/auth/categories`);
       const result = await handleResponse(response);
-      // Keep all original fields from backend including image_path
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
       return result;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -115,7 +122,7 @@ export const categoryApi = {
   getById: async (id) => {
     try {
       if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/categories/${id}`);
       const result = await handleResponse(response);
       // Transform image path to full URL
       if (result.data) {
@@ -148,7 +155,7 @@ export const categoryApi = {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/categories`,
+        `${API_BASE_URL}/v1/auth/categories`,
         createRequestOptions('POST', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -179,7 +186,7 @@ export const categoryApi = {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/categories/${id}`,
+        `${API_BASE_URL}/v1/auth/categories/${id}`,
         createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -197,7 +204,7 @@ export const categoryApi = {
         return await mockDelay({ success: true });
       }
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/categories/${id}`,
+        `${API_BASE_URL}/v1/auth/categories/${id}`,
         createRequestOptions('DELETE')
       );
       return await handleResponse(response);
@@ -253,36 +260,6 @@ export const productApi = {
     }
   },
 
-  // GET: Fetch best sellers products
-  getBestSellers: async () => {
-    try {
-      if (USE_MOCKS) {
-        const sellers = _mock.products.filter(p => p.is_bestseller);
-        return await mockDelay(sellers);
-      }
-      const response = await fetch(`${API_BASE_URL}/products/best-sellers/list`);
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching best sellers:', error);
-      throw error;
-    }
-  },
-
-  // GET: Fetch discount products
-  getDiscounts: async () => {
-    try {
-      if (USE_MOCKS) {
-        const discounts = _mock.products.filter(p => p.discount && Number(p.discount) > 0);
-        return await mockDelay(discounts);
-      }
-      const response = await fetch(`${API_BASE_URL}/products/discounts/list`);
-      return await handleResponse(response);
-    } catch (error) {
-      console.error('Error fetching discounts:', error);
-      throw error;
-    }
-  },
-
   // POST: Create new product
   create: async (productData) => {
     try {
@@ -311,7 +288,7 @@ export const productApi = {
         return await mockDelay(newProduct);
       }
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/products`,
+        `${API_BASE_URL}/v1/auth/products`,
         createRequestOptions('POST', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -354,7 +331,7 @@ export const productApi = {
         return await mockDelay(_mock.products[idx]);
       }
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/products/${id}`,
+        `${API_BASE_URL}/v1/auth/products/${id}`,
         createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
       );
       return await handleResponse(response);
@@ -372,7 +349,7 @@ export const productApi = {
         return await mockDelay({ success: true });
       }
       const response = await fetch(
-        `${API_BASE_URL}/v1/admin/products/${id}`,
+        `${API_BASE_URL}/v1/auth/products/${id}`,
         createRequestOptions('DELETE')
       );
       return await handleResponse(response);

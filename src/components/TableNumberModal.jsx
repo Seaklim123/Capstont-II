@@ -2,28 +2,29 @@ import { useState, useEffect } from 'react';
 import '../styles/TableNumberModal.css';
 
 function TableNumberModal({ isOpen, onClose, onSubmit }) {
-  const [tableNumber, setTableNumber] = useState('');
+  const [tableId, setTableId] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      // Auto-generate a random table number between 1-20
-      const autoTableNumber = Math.floor(Math.random() * 20) + 1;
-      setTableNumber(autoTableNumber.toString());
+      // Auto-generate a random table id between 1-20
+      const autoTableId = Math.floor(Math.random() * 20) + 1;
+      setTableId(autoTableId.toString());
     }
   }, [isOpen]);
+
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (tableNumber.trim()) {
-      onSubmit(tableNumber.trim());
-      setTableNumber('');
+    if (tableId.trim()) {
+      onSubmit(tableId.trim());
+      setTableId('');
     }
   };
 
   const handleCancel = () => {
-    setTableNumber('');
+    setTableId('');
     onClose();
   };
 
@@ -35,11 +36,11 @@ function TableNumberModal({ isOpen, onClose, onSubmit }) {
         </div>
         
         <div className="modal-body">
-          <p>Your table number is: <strong>{tableNumber}</strong></p>
+          <p>Your table ID is: <strong>{tableId}</strong></p>
           <form onSubmit={handleSubmit}>
             <input
               type="hidden"
-              value={tableNumber}
+              value={tableId}
             />
             <div className="modal-actions">
               <button type="button" onClick={handleCancel} className="btn-cancel">
