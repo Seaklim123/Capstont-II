@@ -7,7 +7,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
   // Generate the QR content (URL that customers will scan)
   const generateQRContent = () => {
     // Point to your customer menu app
-    const customerMenuBaseUrl = 'http://localhost:5173';
+    const customerMenuBaseUrl = 'http://localhost:5174';
     //----need u guys change it klun eng depending on local frontend user customer -------
     // const customerMenuBaseUrl = 'https://customer-ordering-m6ertgsda-piseytep26-6848s-projects.vercel.app';
     // Include table number as query parameter so the menu knows which table ordered

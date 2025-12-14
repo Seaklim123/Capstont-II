@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -15,6 +16,7 @@ const AdminLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, hasRole, hasPermission } = useAuth ? useAuth() : { user: null };
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -28,63 +30,70 @@ const AdminLayout = () => {
     return location.pathname === path;
   };
 
+  // Only show Users/Staff for founder_restaurant, Reports for view_reports permission
   const navigationItems = [
     {
       path: '/dashboard',
       name: 'Dashboard',
-      icon: <LayoutDashboard size={20} />,
-      description: 'Overview & Analytics'
+      icon: <LayoutDashboard size={20} />, 
+      description: 'Overview & Analytics',
+      show: true
     },
     {
       path: '/orders',
       name: 'Orders Management',
-      icon: <ClipboardList size={20} />,
-      description: 'Manage current orders'
+      icon: <ClipboardList size={20} />, 
+      description: 'Manage current orders',
+      show: true
     },
     {
       path: '/menu',
       name: 'Menu Management',
-      icon: <UtensilsCrossed size={20} />,
-      description: 'Add/Edit food items'
+      icon: <UtensilsCrossed size={20} />, 
+      description: 'Add/Edit food items',
+      show: true
     },
     {
       path: '/tables',
       name: 'Table Management',
-      icon: <Table size={20} />,
-      description: 'Manage tables & QR codes'
+      icon: <Table size={20} />, 
+      description: 'Manage tables & QR codes',
+      show: true
     },
     {
       path: '/users',
       name: 'Users/Staff',
-      icon: <Users size={20} />,
-      description: 'Staff & permissions'
+      icon: <Users size={20} />, 
+      description: 'Staff & permissions',
+      show: user && (user.role === 'founder_restaurant' || (hasRole && hasRole('founder_restaurant')))
     },
     {
       path: '/reports',
       name: 'Reports',
-      icon: <BarChart3 size={20} />,
-      description: 'Sales & analytics'
+      icon: <BarChart3 size={20} />, 
+      description: 'Sales & analytics',
+      show: user && ((user.permissions && user.permissions.includes('view_reports')) || (hasPermission && hasPermission('view_reports')))
     }
   ];
 
   return (
     <>
-      {/* Mobile Overlay */}
-      <div 
-        className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
-        onClick={toggleMobileMenu}
-      ></div>
-
-      {/* Sidebar */}
+      {/* Sidebar (now acts as overlay on mobile) */}
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">QR</div>
-          {!sidebarCollapsed && <h2 className="sidebar-title">Admin Screen</h2>}
+          <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60px' }}>
+            <img src="/public/TosOrder-logo.png" alt="TOS KAMONG Logo" style={{ width: '50px', height: '60px', objectFit: 'contain' }} />
+          </div>
+          {!sidebarCollapsed && (
+            <h2 className="sidebar-title" style={{ textAlign: 'center', width: '100%', margin: 0 }}>
+              TOS KAMONG
+            </h2>
+          )}
         </div>
 
         <nav className="sidebar-nav">
           <ul>
-            {navigationItems.map((item) => (
+            {navigationItems.filter(item => item.show).map((item) => (
               <li key={item.path} className="nav-item">
                 <Link 
                   to={item.path}
@@ -103,8 +112,6 @@ const AdminLayout = () => {
             ))}
           </ul>
         </nav>
-
-    
       </aside>
 
       {/* Main Content */}

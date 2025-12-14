@@ -76,12 +76,12 @@ const Header = ({
   return (
     <header className={`admin-header ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="header-left">
-        <button className="sidebar-toggle" onClick={toggleSidebar}>
+        {/* <button className="sidebar-toggle" onClick={toggleSidebar}>
           <Menu size={20} />
         </button>
         <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
           <Menu size={20} />
-        </button>
+        </button> */}
         <div className="breadcrumb">
           <span>Admin</span>
           <span className="breadcrumb-separator">/</span>
@@ -91,10 +91,10 @@ const Header = ({
 
       <div className="header-right">
         <div className="header-actions">
-          <button className="notification-btn">
+          {/* <button className="notification-btn">
             <Bell size={18} />
             <span className="notification-badge">3</span>
-          </button>
+          </button> */}
           
           <div className="user-menu" ref={dropdownRef}>
             <button 
