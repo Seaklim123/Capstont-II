@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import "../styles/Discount.css";
-import { categoryApi, productApi, authCartApi } from '../services/api';
+import { categoryApi, productApi, authCartApi, getImageUrl as getImageUrlHelper } from '../services/api';
 import toast from 'react-hot-toast';
 
 function Discount() {
@@ -34,17 +34,11 @@ function Discount() {
     fetchProducts();
   }, []);
 
-  // Filter to show only products with discount
+  // Filter to show only products with discount (dollar value)
   const discountProducts = products.filter(p => p.discount && parseFloat(p.discount) > 0);
 
-  // Get image URL for products
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/150";
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/storage/')) return `http://127.0.0.1:8000${imagePath}`;
-    if (imagePath.startsWith('storage/')) return `http://127.0.0.1:8000/${imagePath}`;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
-  };
+  // Use shared helper for consistent image URLs
+  const getImageUrl = (imagePath) => getImageUrlHelper(imagePath) || "https://via.placeholder.com/150";
 
   if (loading) {
     return (
@@ -118,7 +112,7 @@ function Discount() {
 
                   <div style={{ height: '240px', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
                     <img
-                      src={getImageUrl(product.image || product.image_path)}
+                      src={getImageUrl(product.image_path || product.image)}
                       alt={product.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => { e.target.src = "https://via.placeholder.com/600x400?text=No+Image"; }}
@@ -133,12 +127,12 @@ function Discount() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.35rem', fontWeight: '700', color: '#1f2937' }}>${parseFloat(product.price).toFixed(2)}</span>
-                        {product.discount > 0 && (
-                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.95rem' }}>${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}</span>
+                        {parseFloat(product.discount) > 0 && (
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: '0.95rem' }}>${(parseFloat(product.price) + parseFloat(product.discount)).toFixed(2)}</span>
                         )}
                       </div>
-                      {product.discount > 0 && (
-                        <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: '600', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '4px', display: 'inline-block', width: 'fit-content' }}>{product.discount}% OFF</span>
+                      {parseFloat(product.discount) > 0 && (
+                        <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: '600', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '4px', display: 'inline-block', width: 'fit-content' }}>${parseFloat(product.discount).toFixed(2)} OFF</span>
                       )}
                     </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
-import { categoryApi, productApi, authCartApi, tableApi } from "../services/api.js";
+import { categoryApi, productApi, authCartApi, tableApi, getImageUrl as getImageUrlHelper } from "../services/api.js";
 import toast from 'react-hot-toast';
 import TableNumberModal from '../components/TableNumberModal';
 
@@ -99,22 +99,7 @@ function Menu() {
   }, []);
 
   // Get image URL for products
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    
-    // If it's already a full URL, use it directly
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-    
-    // If it starts with a slash, use it as-is with the base URL
-    if (imagePath.startsWith('/')) {
-      return `${import.meta.env.VITE_STORAGE_URL || ''}${imagePath}`;
-    }
-    
-    // Otherwise, just append to base URL
-    return `${import.meta.env.VITE_STORAGE_URL || ''}/${imagePath}`;
-  };
+  const getImageUrl = (imagePath) => getImageUrlHelper(imagePath);
 
   // Render product image with fallback
   const renderProductImage = (product) => {
@@ -143,6 +128,7 @@ function Menu() {
       );
     }
 
+    // Always use the getImageUrl helper for consistency
     const imageUrl = getImageUrl(imagePath);
     console.log('Product:', product.name, 'Using:', imageUrl);
 
@@ -271,83 +257,49 @@ function Menu() {
 
   const addItemToCart = async (itemId) => {
     const product = products.find(p => p.id === itemId);
-    console.log('🛒 Product found:', product);
-    
     if (!product) {
-      console.error('❌ Product not found for id:', itemId);
       toast.error('Product not found');
       return;
     }
 
-    // Check if user is authenticated
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     const tableId = localStorage.getItem('tableId');
-    console.log('🛒 Token exists:', !!token);
-    console.log('🛒 Table ID:', tableId);
-    // Only use backend API if user has a valid table ID
     if (token && tableId) {
-      // Authenticated user with table - use backend API
-      console.log('🛒 Using authenticated cart (backend API)');
+      // Only send required structure to backend
       try {
-        const cartData = {
-          product_id: itemId,
+        const response = await authCartApi.addItem({
+          product_id: product.id,
           quantity: 1,
-          status: 'starting',
-          table_id: parseInt(tableId, 10)
-        };
-        console.log('🛒 Sending cart data:', cartData);
-        const response = await authCartApi.addItem(cartData);
-        console.log('✅ Cart API response:', response);
+          table_id: Number(tableId),
+          status: 'starting'
+        });
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
-        // Only navigate to cart if you want to redirect after adding
-        // setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
-        console.error('❌ Error adding to cart:', error);
-        console.error('❌ Error details:', error.response?.data);
         toast.error('Failed to add to cart. Please try again.');
       }
     } else {
       // Guest user - use localStorage
-      console.log('🛒 Using guest cart (localStorage)');
       try {
         const existingCart = localStorage.getItem('cart');
         const cart = existingCart ? JSON.parse(existingCart) : [];
-        console.log('🛒 Current cart:', cart);
-
-        const existingItemIndex = cart.findIndex(item => item.id === itemId);
-
+        const existingItemIndex = cart.findIndex(item => item.id === product.id);
         if (existingItemIndex > -1) {
           cart[existingItemIndex].quantity += 1;
-          console.log('🛒 Updated existing item quantity');
         } else {
-          const newItem = {
+          cart.push({
             id: product.id,
             name: product.name,
             price: parseFloat(product.price),
             image_path: product.image_path || product.image,
-            quantity: 1,
-            product: {
-              id: product.id,
-              name: product.name,
-              price: parseFloat(product.price),
-              image_path: product.image_path || product.image
-            }
-          };
-          cart.push(newItem);
-          console.log('🛒 Added new item:', newItem);
+            quantity: 1
+          });
         }
-
         localStorage.setItem('cart', JSON.stringify(cart));
-        console.log('✅ Cart saved to localStorage:', cart);
-        
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
-        
-        // Navigate to cart page
         setTimeout(() => navigate('/cart'), 500);
       } catch (error) {
-        console.error('❌ Error adding to localStorage cart:', error);
         toast.error('Failed to add to cart');
       }
     }
@@ -621,18 +573,18 @@ function Menu() {
                             }}>
                               ${parseFloat(product.price).toFixed(2)}
                             </span>
-                            {product.discount > 0 && (
+                            {parseFloat(product.discount) > 0 && (
                               <span style={{ 
                                 fontSize: '0.9rem', 
                                 color: '#999',
                                 textDecoration: 'line-through',
                                 fontWeight: '400'
                               }}>
-                                ${(parseFloat(product.price) / (1 - product.discount / 100)).toFixed(2)}
+                                ${(parseFloat(product.price) + parseFloat(product.discount)).toFixed(2)}
                               </span>
                             )}
                           </div>
-                          {product.discount > 0 && (
+                          {parseFloat(product.discount) > 0 && (
                             <span style={{ 
                               fontSize: '0.75rem', 
                               fontWeight: '600',
@@ -644,7 +596,7 @@ function Menu() {
                               whiteSpace: 'nowrap',
                               width: 'fit-content'
                             }}>
-                              ${((parseFloat(product.price) / (1 - product.discount / 100)) - parseFloat(product.price)).toFixed(2)} OFF
+                              ${parseFloat(product.discount).toFixed(2)} OFF
                             </span>
                           )}
                         </div>

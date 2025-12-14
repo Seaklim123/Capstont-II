@@ -66,11 +66,11 @@ const Cart = () => {
           items = [response.data];
         }
         setCartItems(items || []);
-        console.log('📦 Backend cart items:', items);
+        console.log(' Backend cart items:', items);
       } else {
         // Guest user: load from localStorage
         const savedCart = localStorage.getItem('cart');
-        console.log('📦 Raw localStorage cart:', savedCart);
+        console.log('Raw localStorage cart:', savedCart);
         if (savedCart) {
           const cart = JSON.parse(savedCart);
           setCartItems(Array.isArray(cart) ? cart : []);
@@ -155,11 +155,11 @@ const Cart = () => {
   };
 
   const calculateSubtotal = () => {
-    console.log('🧮 Calculating subtotal for items:', cartItems);
+    console.log(' Calculating subtotal for items:', cartItems);
     return cartItems.reduce((total, item) => {
       // Access price from product if available
       const price = item.product?.price || item.price || 0;
-      console.log('🧮 Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
+      console.log(' Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
       return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
   };

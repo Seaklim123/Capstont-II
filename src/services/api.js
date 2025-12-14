@@ -66,30 +66,6 @@ const fetchWithAuth = async (url, options = {}) => {
   return fetch(url, options);
 };
 
-// -------------------------
-// Mock mode (in-memory) support
-// Disabled - use real backend data
-const USE_MOCKS = false;
-
-// Simple in-memory mock data (used when USE_MOCKS === true)
-const _mock = {
-  products: [
-    { id: 1, name: 'Grilled Chicken', price: '12.99', discount: 20, description: 'Delicious grilled chicken', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836', category_id: 1, sold_count: 120, is_bestseller: true, is_best_seller: true },
-    { id: 2, name: 'Beef Burger', price: '10.99', discount: 15, description: 'Juicy beef burger', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349', category_id: 2, sold_count: 80, is_bestseller: true, is_best_seller: true },
-    { id: 3, name: 'Caesar Salad', price: '8.99', discount: 25, description: 'Fresh salad', image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c', category_id: 3, sold_count: 30, is_bestseller: false, is_best_seller: false },
-  ],
-  categories: [
-    { id: 1, name: 'Chicken', image: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc' },
-    { id: 2, name: 'Burgers', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349' },
-    { id: 3, name: 'Salads', image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c' },
-  ],
-  cart: [],
-  orders: [
-    { id: 1, number: 'ORD-1001', items: [{ product_id: 1, qty: 2 }], total: '25.98', status: 'pending' }
-  ],
-};
-
-const mockDelay = (result) => new Promise((res) => setTimeout(() => res({ data: result }), 150));
 
 
 // ===========================================
@@ -100,7 +76,6 @@ export const categoryApi = {
   // GET: Fetch all categories
   getAll: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.categories);
       const response = await fetch(`${API_BASE_URL}/v1/auth/categories`);
       const result = await handleResponse(response);
       // Transform image paths to full URLs
@@ -121,7 +96,6 @@ export const categoryApi = {
   // GET: Fetch category by ID
   getById: async (id) => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
       const response = await fetch(`${API_BASE_URL}/v1/auth/categories/${id}`);
       const result = await handleResponse(response);
       // Transform image path to full URL
@@ -199,10 +173,6 @@ export const categoryApi = {
   // DELETE: Delete category by ID
   delete: async (id) => {
     try {
-      if (USE_MOCKS) {
-        _mock.categories = _mock.categories.filter(c => c.id !== Number(id));
-        return await mockDelay({ success: true });
-      }
       const response = await fetch(
         `${API_BASE_URL}/v1/auth/categories/${id}`,
         createRequestOptions('DELETE')
@@ -222,7 +192,6 @@ export const productApi = {
   // GET: Fetch all products
   getAll: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.products);
       const response = await fetch(`${API_BASE_URL}/v1/auth/products`);
       const result = await handleResponse(response);
       // Keep all original fields from backend including image_path
@@ -244,7 +213,6 @@ export const productApi = {
   // GET: Fetch single product by ID
   getById: async (id) => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.products.find(p => p.id === Number(id)) || null);
       const response = await fetch(`${API_BASE_URL}/v1/auth/products/${id}`);
       const result = await handleResponse(response);
       // Keep all original fields from backend
@@ -279,13 +247,6 @@ export const productApi = {
         }
       } else {
         requestData = productData;
-      }
-
-      if (USE_MOCKS) {
-        const newId = _mock.products.length ? Math.max(..._mock.products.map(p => p.id)) + 1 : 1;
-        const newProduct = { id: newId, ...(!isFormData ? requestData : {}), ...(isFormData ? { name: productData.name, price: productData.price } : {}) };
-        _mock.products.push(newProduct);
-        return await mockDelay(newProduct);
       }
       const response = await fetch(
         `${API_BASE_URL}/v1/auth/products`,
@@ -323,13 +284,6 @@ export const productApi = {
         if (productData.status) requestData.status = productData.status;
         if (productData.category_id) requestData.category_id = productData.category_id;
       }
-
-      if (USE_MOCKS) {
-        const idx = _mock.products.findIndex(p => p.id === Number(id));
-        if (idx === -1) throw new Error('Product not found');
-        _mock.products[idx] = { ..._mock.products[idx], ...requestData };
-        return await mockDelay(_mock.products[idx]);
-      }
       const response = await fetch(
         `${API_BASE_URL}/v1/auth/products/${id}`,
         createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
@@ -344,10 +298,6 @@ export const productApi = {
   // DELETE: Delete product by ID
   delete: async (id) => {
     try {
-      if (USE_MOCKS) {
-        _mock.products = _mock.products.filter(p => p.id !== Number(id));
-        return await mockDelay({ success: true });
-      }
       const response = await fetch(
         `${API_BASE_URL}/v1/auth/products/${id}`,
         createRequestOptions('DELETE')
@@ -735,7 +685,6 @@ export const authCartApi = {
   // GET: get current cart
   getCart: async (id) => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.cart);
       const url = `${AUTH_BASE}/carts/${id}`;
       console.debug('authCartApi.getCart ->', url);
       const response = await fetchWithAuth(url);
@@ -751,12 +700,6 @@ export const authCartApi = {
   // POST: add item to cart
   addItem: async (itemData) => {
     try {
-      if (USE_MOCKS) {
-        const newId = _mock.cart.length ? Math.max(..._mock.cart.map(i => i.id)) + 1 : 1;
-        const item = { id: newId, ...itemData };
-        _mock.cart.push(item);
-        return await mockDelay(item);
-      }
       const url = `${AUTH_BASE}/carts`;
       console.debug('authCartApi.addItem ->', url, itemData);
       const response = await fetchWithAuth(
@@ -775,12 +718,6 @@ export const authCartApi = {
   // PUT: update cart item by id
   updateItem: async (id, data) => {
     try {
-      if (USE_MOCKS) {
-        const idx = _mock.cart.findIndex(i => i.id === Number(id));
-        if (idx === -1) throw new Error('Cart item not found');
-        _mock.cart[idx] = { ..._mock.cart[idx], ...data };
-        return await mockDelay(_mock.cart[idx]);
-      }
       const url = `${AUTH_BASE}/carts/${id}`;
       console.debug(`authCartApi.updateItem -> ${url}`, data);
       const response = await fetchWithAuth(
@@ -799,10 +736,6 @@ export const authCartApi = {
   // DELETE: remove cart item
   removeItem: async (id) => {
     try {
-      if (USE_MOCKS) {
-        _mock.cart = _mock.cart.filter(i => i.id !== Number(id));
-        return await mockDelay({ success: true });
-      }
       const url = `${AUTH_BASE}/carts/${id}`;
       console.debug(`authCartApi.removeItem -> ${url}`);
       const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
@@ -820,13 +753,6 @@ export const authOrdersApi = {
   // POST: create new order
   create: async (orderData) => {
     try {
-      if (USE_MOCKS) {
-        const newId = _mock.orders.length ? Math.max(..._mock.orders.map(o => o.id)) + 1 : 1;
-        const number = `ORD-${1000 + newId}`;
-        const order = { id: newId, number, status: 'pending', total: orderData.total || '0.00', items: orderData.items || [] };
-        _mock.orders.push(order);
-        return await mockDelay(order);
-      }
       const url = `${AUTH_BASE}/orders`;
       console.debug('authOrdersApi.create ->', url, orderData);
       const response = await fetchWithAuth(url, createRequestOptions('POST', orderData));
@@ -842,7 +768,6 @@ export const authOrdersApi = {
   // GET: check order (generic endpoint)
   checkOrder: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay({ ok: true });
       const url = `${AUTH_BASE}/orders/checkOrder`;
       console.debug('authOrdersApi.checkOrder ->', url);
       const response = await fetchWithAuth(url);
@@ -858,7 +783,6 @@ export const authOrdersApi = {
   // GET: find order by number
   findByNumber: async (number) => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.orders.find(o => o.number === String(number)) || null);
       const url = `${AUTH_BASE}/orders/findByNumber/${number}`;
       console.debug(`authOrdersApi.findByNumber -> ${url}`);
       const response = await fetchWithAuth(url);
@@ -874,7 +798,6 @@ export const authOrdersApi = {
   // GET: order status list
   getStatus: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(['pending', 'paid', 'cancelled', 'shipped']);
       const url = `${AUTH_BASE}/orders/status`;
       console.debug('authOrdersApi.getStatus ->', url);
       const response = await fetchWithAuth(url);
@@ -890,7 +813,6 @@ export const authOrdersApi = {
   // GET: get all orders for authenticated user
   getAll: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.orders);
       const url = `${AUTH_BASE}/orders`;
       console.debug('authOrdersApi.getAll ->', url);
       const response = await fetchWithAuth(url);
@@ -908,7 +830,6 @@ export const authPaymentApi = {
   // GET: payment cancel
   cancel: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay({ cancelled: true });
       const url = `${AUTH_BASE}/payment/cancel`;
       console.debug('authPaymentApi.cancel ->', url);
       const response = await fetchWithAuth(url);
@@ -924,7 +845,6 @@ export const authPaymentApi = {
   // POST: payment create
   create: async (paymentData) => {
     try {
-      if (USE_MOCKS) return await mockDelay({ id: 'pay_mock_1', status: 'created', ...paymentData });
       const url = `${AUTH_BASE}/payment/create`;
       console.debug('authPaymentApi.create ->', url, paymentData);
       const response = await fetchWithAuth(url, createRequestOptions('POST', paymentData));
@@ -940,7 +860,6 @@ export const authPaymentApi = {
   // GET: payment success
   success: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay({ success: true });
       const url = `${AUTH_BASE}/payment/success`;
       console.debug('authPaymentApi.success ->', url);
       const response = await fetchWithAuth(url);
@@ -1140,7 +1059,6 @@ export const adminOrderApi = {
 export const adminCategoryApi = {
   getAll: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.categories);
       const url = `${API_BASE_URL}/v1/admin/categories`;
       console.debug('adminCategoryApi.getAll ->', url);
       const response = await fetch(url, {
@@ -1166,7 +1084,6 @@ export const adminCategoryApi = {
 
   getById: async (id) => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
       const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
         headers: {
           'Accept': 'application/json',
@@ -1268,10 +1185,6 @@ export const adminCategoryApi = {
 
   delete: async (id) => {
     try {
-      if (USE_MOCKS) {
-        _mock.categories = _mock.categories.filter(c => c.id !== Number(id));
-        return await mockDelay({ success: true });
-      }
       const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
         method: 'DELETE',
         headers: {
@@ -1290,7 +1203,6 @@ export const adminCategoryApi = {
 export const adminProductApi = {
   getAll: async () => {
     try {
-      if (USE_MOCKS) return await mockDelay(_mock.products);
       const response = await fetch(`${API_BASE_URL}/v1/admin/products`, {
         headers: {
           'Accept': 'application/json',
@@ -1316,10 +1228,6 @@ export const adminProductApi = {
 
   getById: async (id) => {
     try {
-      if (USE_MOCKS) {
-        const product = _mock.products.data.find(p => p.id === id);
-        return await mockDelay({ data: product });
-      }
       const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
         headers: {
           'Accept': 'application/json',
@@ -1335,8 +1243,6 @@ export const adminProductApi = {
 
   create: async (productData) => {
     try {
-      if (USE_MOCKS) return await mockDelay({ data: { id: Date.now(), ...productData } });
-      
       const formData = new FormData();
       Object.keys(productData).forEach(key => {
         if (productData[key] !== null && productData[key] !== undefined) {
@@ -1360,8 +1266,6 @@ export const adminProductApi = {
 
   update: async (id, productData) => {
     try {
-      if (USE_MOCKS) return await mockDelay({ data: { id, ...productData } });
-      
       const formData = new FormData();
       formData.append('_method', 'PUT');
       Object.keys(productData).forEach(key => {
@@ -1386,7 +1290,6 @@ export const adminProductApi = {
 
   delete: async (id) => {
     try {
-      if (USE_MOCKS) return await mockDelay({ success: true });
       const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
         method: 'DELETE',
         headers: {
