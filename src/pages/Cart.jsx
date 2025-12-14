@@ -48,20 +48,35 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      
-      // Always load from localStorage for now (guest mode)
-      const savedCart = localStorage.getItem('cart');
-      console.log('📦 Raw localStorage cart:', savedCart);
-      
-      if (savedCart) {
-        const cart = JSON.parse(savedCart);
-        console.log('📦 Parsed cart:', cart);
-        console.log('📦 Cart is array:', Array.isArray(cart));
-        console.log('📦 Cart length:', cart.length);
-        setCartItems(Array.isArray(cart) ? cart : []);
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const tableNumber = localStorage.getItem('tableNumber');
+      if (token && tableNumber) {
+        // Authenticated user: fetch cart from backend
+        const response = await authCartApi.list();
+        // Assume response.data is an array of cart items or a single cart object with items
+        let items = [];
+        if (Array.isArray(response.data)) {
+          // If backend returns an array of cart items
+          items = response.data;
+        } else if (response.data && response.data.items) {
+          // If backend returns a cart object with items array
+          items = response.data.items;
+        } else if (response.data) {
+          // If backend returns a single cart item
+          items = [response.data];
+        }
+        setCartItems(items || []);
+        console.log('📦 Backend cart items:', items);
       } else {
-        console.log('📦 No cart found in localStorage');
-        setCartItems([]);
+        // Guest user: load from localStorage
+        const savedCart = localStorage.getItem('cart');
+        console.log('📦 Raw localStorage cart:', savedCart);
+        if (savedCart) {
+          const cart = JSON.parse(savedCart);
+          setCartItems(Array.isArray(cart) ? cart : []);
+        } else {
+          setCartItems([]);
+        }
       }
     } catch (error) {
       console.error('Error loading cart:', error);
@@ -150,9 +165,8 @@ const Cart = () => {
   };
 
   const calculateTotal = () => {
-    const subtotal = parseFloat(calculateSubtotal());
-    const tax = subtotal * 0.1; // 10% tax
-    return (subtotal + tax).toFixed(2);
+    // No tax, total is just subtotal
+    return calculateSubtotal();
   };
 
   const handleCheckout = async () => {
@@ -384,10 +398,7 @@ const Cart = () => {
                   <span>${calculateSubtotal()}</span>
                 </div>
                 
-                <div className="summary-row">
-                  <span>Tax (10%)</span>
-                  <span>${(parseFloat(calculateSubtotal()) * 0.1).toFixed(2)}</span>
-                </div>
+
                 
                 <div className="summary-row summary-total">
                   <span>Total</span>

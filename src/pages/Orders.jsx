@@ -31,36 +31,26 @@ function Orders() {
       setLoading(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
 
-      console.log('🔄 Loading orders... Token exists:', !!token);
-
       if (token) {
         // Authenticated user - fetch from API
         try {
           const response = await authOrdersApi.getAll();
-          console.log('📦 Orders API response:', response);
-          const ordersData = response.data || response || [];
-          console.log('📦 Parsed orders from API:', ordersData);
+          // Normalize: backend may return { data: [...] } or just [...]
+          let ordersData = Array.isArray(response) ? response : (Array.isArray(response.data) ? response.data : response);
           setOrders(ordersData);
         } catch (apiError) {
-          console.error('❌ API error, falling back to localStorage:', apiError);
           // Fallback to localStorage if API fails
           const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-          console.log('📦 Fallback to localStorage orders:', guestOrders);
           setOrders(guestOrders);
         }
       } else {
         // Guest user - load from localStorage
         const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-        console.log('📦 Loading guest orders from localStorage:', guestOrders);
-        console.log('📦 Number of orders:', guestOrders.length);
         setOrders(guestOrders);
       }
     } catch (error) {
-      console.error('❌ Error loading orders:', error);
-      
       // Fallback to localStorage
       const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-      console.log('📦 Final fallback orders:', guestOrders);
       setOrders(guestOrders);
     } finally {
       setLoading(false);
@@ -230,7 +220,11 @@ function Orders() {
                     <td data-label="Items" className="items-cell">
                       {order.items && order.items.length > 0 ? (
                         <div className="items-summary">
-                          {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                          {order.items.map((item, idx) => (
+                            <div key={idx} style={{ fontSize: '0.85em', marginBottom: 2 }}>
+                              {item.product_name || item.name || item.title || `Product ${item.product_id || ''}`} x{item.qty || item.quantity || 1}
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         'No items'

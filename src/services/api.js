@@ -68,8 +68,8 @@ const fetchWithAuth = async (url, options = {}) => {
 
 // -------------------------
 // Mock mode (in-memory) support
-// Enabled - using in-memory data for testing
-const USE_MOCKS = true;
+// Disabled - use real backend data
+const USE_MOCKS = false;
 
 // Simple in-memory mock data (used when USE_MOCKS === true)
 const _mock = {
@@ -717,6 +717,21 @@ export const authCategoryApi = {
 };
 
 export const authCartApi = {
+  // GET: list all carts for the authenticated user
+  list: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.cart);
+      const url = `${AUTH_BASE}/carts`;
+      console.debug('authCartApi.list ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authCartApi.list response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error listing auth carts:', error);
+      throw error;
+    }
+  },
   // GET: get current cart
   getCart: async (id) => {
     try {

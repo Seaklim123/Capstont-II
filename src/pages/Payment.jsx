@@ -16,35 +16,34 @@ function Payment() {
     const loadCart = async () => {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       const tableNumber = localStorage.getItem('tableNumber');
-      
-      console.log('💰 Payment page - Loading cart...');
-      console.log('💰 Token exists:', !!token);
-      console.log('💰 Table number:', tableNumber);
-      
-      // Always try localStorage first for guest users
-      const savedCart = localStorage.getItem('cart');
-      console.log('💰 Loading cart from localStorage:', savedCart);
-      
-      if (savedCart) {
-        const cart = JSON.parse(savedCart);
-        console.log('💰 Parsed cart items:', cart);
-        console.log('💰 Number of items:', cart.length);
-        setCartItems(cart);
-      } else {
-        console.log('💰 No cart found in localStorage');
-        // If no localStorage cart and user is authenticated, try API
-        if (token && tableNumber) {
-          try {
-            console.log('💰 Fetching from backend API as fallback...');
-            const response = await authCartApi.getCart(tableNumber);
-            const carts = response.data || response.cart || response;
-            const cartArray = Array.isArray(carts) ? carts : [];
-            console.log('💰 Loaded cart from API:', cartArray);
-            setCartItems(cartArray);
-          } catch (error) {
-            console.error('❌ Error loading cart from API:', error);
-            setCartItems([]);
+      console.log(' Payment page - Loading cart...');
+      console.log(' Token exists:', !!token);
+      console.log(' Table number:', tableNumber);
+      if (token && tableNumber) {
+        // Authenticated user: fetch cart from backend
+        try {
+          const response = await authCartApi.list();
+          let items = [];
+          if (Array.isArray(response.data)) {
+            items = response.data;
+          } else if (response.data && response.data.items) {
+            items = response.data.items;
+          } else if (response.data) {
+            items = [response.data];
           }
+          setCartItems(items || []);
+          console.log(' Loaded cart from backend:', items);
+        } catch (error) {
+          console.error(' Error loading cart from backend:', error);
+          setCartItems([]);
+        }
+      } else {
+        // Guest user: load from localStorage
+        const savedCart = localStorage.getItem('cart');
+        console.log(' Loading cart from localStorage:', savedCart);
+        if (savedCart) {
+          const cart = JSON.parse(savedCart);
+          setCartItems(Array.isArray(cart) ? cart : []);
         } else {
           setCartItems([]);
         }
@@ -56,15 +55,14 @@ function Payment() {
 
   // Debug effect to track cartItems changes and total calculation
   useEffect(() => {
-    console.log('💰💰💰 Cart Items Updated:', cartItems);
-    console.log('💰💰💰 Cart Items Count:', cartItems.length);
+    console.log(' Cart Items Updated:', cartItems);
+    console.log(' Cart Items Count:', cartItems.length);
     if (cartItems.length > 0) {
-      console.log('💰💰💰 First item:', cartItems[0]);
-      console.log('💰💰💰 Current Subtotal:', calculateSubtotal());
-      console.log('💰💰💰 Current Tax:', calculateTax());
-      console.log('💰💰💰 Current Total:', calculateTotal());
+      console.log(' First item:', cartItems[0]);
+      console.log(' Current Subtotal:', calculateSubtotal());
+      console.log(' Current Total:', calculateTotal());
     } else {
-      console.log('💰💰💰 Cart is empty!');
+      console.log(' Cart is empty!');
     }
   }, [cartItems]);
 
@@ -79,7 +77,7 @@ function Payment() {
       const quantity = item.quantity || 0;
       const itemTotal = parseFloat(price) * quantity;
       
-      console.log('💰 Item:', item.name || item.product?.name, '| Price:', price, '| Qty:', quantity, '| Total:', itemTotal);
+      console.log(' Item:', item.name || item.product?.name, '| Price:', price, '| Qty:', quantity, '| Total:', itemTotal);
       
       return total + itemTotal;
     }, 0);
@@ -87,12 +85,9 @@ function Payment() {
     return subtotal.toFixed(2);
   };
 
-  const calculateTax = () => {
-    return (parseFloat(calculateSubtotal()) * 0.1).toFixed(2);
-  };
-
+  // No tax
   const calculateTotal = () => {
-    return (parseFloat(calculateSubtotal()) + parseFloat(calculateTax())).toFixed(2);
+    return calculateSubtotal();
   };
 
   const handlePlaceOrder = async () => {
@@ -148,37 +143,25 @@ function Payment() {
         const discount = 0;
         const totalPrice = parseFloat(calculateTotal());
 
-        // Step 4: Create order_information entry
-        const orderInformationData = {
-          numberOrder: orderNumber,
-          totalPrice: totalPrice,
-          discount: discount,
-          note: notes || null,
-          refund: 0,
+        // Step 4: Create order payload (match backend requirements)
+        const orderPayload = {
+          table_id: tableNumber ? parseInt(tableNumber, 10) : 1,
+          payment: 'cash',
           phone_number: phoneNumber || '',
-          status: 'starting', // starting, accepted, cancel
-          payment: 'cash', // always cash
-          payment_status: 'nondone', // done or nondone
-          table_number: tableNumber || null,
-          cart_items: cartItems.map(item => ({
-            cart_id: item.id,
-            product_id: item.product_id || item.id,
-            quantity: item.quantity,
-            price: item.product?.price || item.price || 0
-          }))
+          // total_price: totalPrice, // add total_price if required by backend
+          // items: cartItems.map(item => ({
+          //   product_id: item.product_id || item.id,
+          //   qty: item.quantity // use qty instead of quantity
+          // }))
         };
 
-        console.log('Step 2: Creating order information...', orderInformationData);
-        
+        console.log('Step 2: Creating order information...', orderPayload);
+
         try {
-          // Step 5: Create order via API
-          const response = await authOrdersApi.create(orderInformationData);
+          const response = await authOrdersApi.create(orderPayload);
           console.log('Order created successfully:', response);
-          
-          const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || orderNumber;
-          
+          const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || response.data?.id || orderNumber;
           toast.success(`Order #${createdOrderNumber} placed successfully!`);
-          // navigate(`/order-confirmation?order=${createdOrderNumber || order.numberOrder}`)
           // Step 6: Clear cart after successful order
           console.log('Step 3: Clearing cart...');
           for (const item of cartItems) {
@@ -189,15 +172,11 @@ function Payment() {
               console.error('Error clearing cart item:', err);
             }
           }
-          
           // Clear local state
           setCartItems([]);
           window.dispatchEvent(new Event('cartUpdated'));
-          
-          // Navigate to orders page
-          setTimeout(() => {
-            navigate('/orders');
-          }, 1500);
+          // Navigate to orders page immediately after toast
+          navigate('/orders');
         } catch (apiError) {
           console.error('API Error:', apiError);
           toast.error(`Failed to create order: ${apiError.message}`);
@@ -207,7 +186,7 @@ function Payment() {
       } else {
         // GUEST USER OR NO TABLE - Send to backend AND save to localStorage
         console.log('=== GUEST ORDER FLOW ===');
-        console.log('📝 Generating order number...');
+        console.log(' Generating order number...');
         
         const orderNumber = Date.now();
         const totalPrice = parseFloat(calculateTotal());
@@ -235,14 +214,14 @@ function Payment() {
           }))
         };
         
-        console.log('📤 Sending order to backend:', orderData);
+        console.log(' Sending order to backend:', orderData);
         
         // Try to send to backend API
         try {
           const response = await authOrdersApi.create(orderData);
-          console.log('✅ Order sent to backend successfully:', response);
+          console.log(' Order sent to backend successfully:', response);
         } catch (apiError) {
-          console.error('⚠️ Backend API failed (order will be saved locally only):', apiError);
+          console.error(' Backend API failed (order will be saved locally only):', apiError);
           // Continue anyway - save to localStorage as fallback
         }
         
@@ -265,8 +244,8 @@ function Payment() {
           table_number: tableNumber || 'N/A'
         };
         
-        console.log('📝 Saving to localStorage as backup:', guestOrder);
-        console.log('📝 Order details check:');
+        console.log(' Saving to localStorage as backup:', guestOrder);
+        console.log(' Order details check:');
         console.log('   - Order Number:', guestOrder.orderNumber);
         console.log('   - Phone:', guestOrder.phoneNumber);
         console.log('   - Total:', guestOrder.totalPrice);
@@ -275,28 +254,28 @@ function Payment() {
         // Save to localStorage
         try {
           const existingOrders = localStorage.getItem('guestOrders');
-          console.log('📝 Existing orders in localStorage:', existingOrders);
+          console.log(' Existing orders in localStorage:', existingOrders);
           
           const guestOrders = existingOrders ? JSON.parse(existingOrders) : [];
-          console.log('📝 Parsed existing orders:', guestOrders);
-          console.log('📝 Number of existing orders:', guestOrders.length);
+          console.log(' Parsed existing orders:', guestOrders);
+          console.log(' Number of existing orders:', guestOrders.length);
           
           guestOrders.push(guestOrder);
-          console.log('📝 Orders after adding new order:', guestOrders);
-          console.log('📝 Total orders now:', guestOrders.length);
+          console.log(' Orders after adding new order:', guestOrders);
+          console.log(' Total orders now:', guestOrders.length);
           
           const ordersString = JSON.stringify(guestOrders);
           localStorage.setItem('guestOrders', ordersString);
-          console.log('✅ Saved to localStorage');
+          console.log(' Saved to localStorage');
           
           // Verify it was saved
           const verifyOrders = localStorage.getItem('guestOrders');
           const parsedVerify = JSON.parse(verifyOrders);
-          console.log('✅ Order saved to localStorage - Verification:', parsedVerify);
-          console.log('✅ Total orders now:', parsedVerify.length);
-          console.log('✅ Last order:', parsedVerify[parsedVerify.length - 1]);
+          console.log(' Order saved to localStorage - Verification:', parsedVerify);
+          console.log(' Total orders now:', parsedVerify.length);
+          console.log(' Last order:', parsedVerify[parsedVerify.length - 1]);
         } catch (storageError) {
-          console.error('❌ Error saving to localStorage:', storageError);
+          console.error(' Error saving to localStorage:', storageError);
         }
         
         // Clear cart
@@ -304,11 +283,11 @@ function Payment() {
         setCartItems([]);
         window.dispatchEvent(new Event('cartUpdated'));
         
-        console.log('✅ Cart cleared');
+        console.log(' Cart cleared');
         
         toast.success(`Order #${orderNumber} placed successfully!`);
         
-        console.log('🚀 Navigating to orders page...');
+        console.log(' Navigating to orders page...');
         
         // Navigate to orders page
         setTimeout(() => {
@@ -370,10 +349,7 @@ function Payment() {
                 <span>Subtotal</span>
                 <span>${calculateSubtotal()}</span>
               </div>
-              <div className="summary-row">
-                <span>Tax (10%)</span>
-                <span>${calculateTax()}</span>
-              </div>
+
               <div className="summary-total">
                 <span>Total</span>
                 <span>${calculateTotal()}</span>
