@@ -188,13 +188,13 @@ function Orders() {
                   <tr key={index}>
                     <td data-label="ID">{index + 1}</td>
                     <td data-label="Order Number" className="order-number-cell">
-                      #{order.orderNumber || order.numberOrder || 'N/A'}
+                      #{order.numberOrder || order.orderNumber || 'N/A'}
                     </td>
                     <td data-label="Total Price" className="price-cell">
                       ${Number(order.totalPrice ?? 0).toFixed(2)}
                     </td>
                     <td data-label="Price After Accept" className="discount-cell">
-                      ${order.priceperorder || '0.00'}
+                      ${Number(order.priceperorder ?? 0).toFixed(2)}
                     </td>
                     <td data-label="Status">
                       <span 
@@ -216,26 +216,20 @@ function Orders() {
                       </span>
                     </td>
                     <td data-label="Payment" className="payment-cell">
-                      {order.paymentMethod || order.payment || 'Cash'}
+                      {order.payment || order.paymentMethod || 'Cash'}
                     </td>
                     <td data-label="Phone Number" className="phone-cell">
-                      {order.phoneNumber || order.numberOrder || 'N/A'}
+                      {order.phonenumber || order.phoneNumber || 'N/A'}
                     </td>
                     <td data-label="Items" className="items-cell">
-                      {(order.order_lists && order.order_lists.length > 0
-                        ? order.order_lists
-                        : order.items && order.items.length > 0
-                          ? order.items
-                          : []
-                      ).length > 0 ? (
+                      {order.order_lists && order.order_lists.length > 0 ? (
                         <div className="items-summary">
-                          {(order.order_lists && order.order_lists.length > 0
-                            ? order.order_lists
-                            : order.items
-                          ).map((item, idx) => (
-                            <div key={idx} style={{ fontSize: '0.85em', marginBottom: 2 }}>
-                              {item.product_name || item.name || item.title || `Product ${item.product_id || ''}`} x{item.qty || item.quantity || 1}
-                            </div>
+                          {order.order_lists.map((item, idx) => (
+                            item.cart && item.cart.product ? (
+                              <div key={idx} style={{ fontSize: '0.85em', marginBottom: 2 }}>
+                                {item.cart.product.name} x{item.cart.quantity}
+                              </div>
+                            ) : null
                           ))}
                         </div>
                       ) : (

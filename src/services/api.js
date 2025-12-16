@@ -1,6 +1,6 @@
 // API Base Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL ;
 
 // Helper function to transform image paths to full URLs
 export const getImageUrl = (imagePath) => {
@@ -820,7 +820,6 @@ export const authOrdersApi = {
   getAll: async () => {
     try {
       const url = `${AUTH_BASE}/orders`;
-      console.debug('authOrdersApi.getAll ->', url);
       const response = await fetchWithAuth(url);
       const data = await handleResponse(response);
       console.debug('authOrdersApi.getAll response ->', data);
