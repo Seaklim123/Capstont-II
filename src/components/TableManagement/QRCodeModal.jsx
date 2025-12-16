@@ -4,68 +4,72 @@ import { QrCode, X, Download, Printer } from 'lucide-react';
 const QRCodeModal = ({ isOpen, onClose, table }) => {
   const [qrCodeURL, setQrCodeURL] = useState('');
 
-  // Generate the QR content (URL that customers will scan)
+  // Generate the menu URL for the QR code
   const generateQRContent = () => {
-    // Use local customer menu app URL for development
     const customerMenuBaseUrl = 'http://localhost:5173';
     if (!table || !table.id) {
-      console.warn('No table or table.id provided for QR code URL');
       return '';
     }
-    // Use table.id for QR order
-    const menuUrl = `${customerMenuBaseUrl}/menu?table_id=${table.id}`;
-    console.log('Generated QR URL:', menuUrl); // Debug log
-    return menuUrl;
+    return `${customerMenuBaseUrl}/menu?table_id=${table.id}`;
   };
 
-  // Generate QR code URL using QR Server API
-  const generateQRCodeURL = (content) => {
-    const size = '200x200';
-    const encodedContent = encodeURIComponent(content);
-    // Customize QR code appearance
-    const params = new URLSearchParams({
-      size: size,
-      data: encodedContent,
-      bgcolor: 'ffffff',    // White background
-      color: '000000',      // Black foreground
-      qzone: '1',          // Quiet zone
-      format: 'png',       // Image format
-      timestamp: Date.now() // Cache busting parameter
-    });
-    return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
-  };
-
+  // Generate the QR code image URL using api.qrserver.com
   useEffect(() => {
-    console.log('QRCodeModal useEffect triggered:', { isOpen, table }); // Debug log
-    if (isOpen && table) {
-      // Store table number and id in localStorage
-      localStorage.setItem('qr_table_number', table.number);
-      localStorage.setItem('qr_table_id', table.id);
-      // Clear previous QR code to force regeneration
-      setQrCodeURL('');
-      const qrContent = generateQRContent();
-      const qrURL = generateQRCodeURL(qrContent);
-      console.log('Generated QR Code URL:', qrURL); // Debug log
-      setQrCodeURL(qrURL);
+    if (isOpen && table && table.id) {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(generateQRContent())}&size=200x200`;
+      setQrCodeURL(qrApiUrl);
     } else {
-      // Remove table info from localStorage when modal closes
-      localStorage.removeItem('qr_table_number');
-      localStorage.removeItem('qr_table_id');
-      // Clear QR code when modal closes
       setQrCodeURL('');
     }
   }, [isOpen, table]);
 
-  const handleDownload = () => {
-    if (qrCodeURL) {
-      const link = document.createElement('a');
-      link.download = `table-${table.id}-menu-qr-code.png`;
-      link.href = qrCodeURL;
-      link.target = '_blank';
-      link.click();
+  const handleDownload = async () => {
+    if (!qrCodeURL) return;
+    try {
+      const img = new window.Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = qrCodeURL;
+      img.onload = () => {
+        const qrSize = 200;
+        const padding = 24;
+        const textHeight = 32;
+        const width = qrSize + padding * 2;
+        const height = qrSize + padding * 2 + textHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // White background
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, width, height);
+        // Draw frame
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(padding / 2, padding / 2, width - padding, height - padding - textHeight / 2);
+        // Draw QR code
+        ctx.drawImage(img, padding, padding, qrSize, qrSize);
+        // Draw table info text
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#222';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Table ID: ${table.id}  |  No: ${table.number}`, width / 2, qrSize + padding + textHeight / 1.5);
+        // Download
+        canvas.toBlob((blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `table-${table.id}-menu-qr-code.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      img.onerror = () => alert('Failed to load QR code image for download.');
+    } catch (error) {
+      alert('Failed to download QR code image.');
     }
   };
-
   const handlePrint = () => {
     // Logic to print QR code
     window.print();
