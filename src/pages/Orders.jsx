@@ -15,7 +15,7 @@ function Orders() {
     
     // Listen for cart updates (which might indicate a new order was placed)
     const handleCartUpdate = () => {
-      console.log('🔄 Cart updated, reloading orders...');
+      console.log(' Cart updated, reloading orders...');
       loadOrders();
     };
     
@@ -41,12 +41,16 @@ function Orders() {
         } catch (apiError) {
           // Fallback to localStorage if API fails
           const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-          setOrders(guestOrders);
+          const tableId = localStorage.getItem('tableId');
+          const filteredOrders = tableId ? guestOrders.filter(order => String(order.table_id || order.table_number) === String(tableId)) : guestOrders;
+          setOrders(filteredOrders);
         }
       } else {
-        // Guest user - load from localStorage
+        // Guest user - load from localStorage and filter by tableId
         const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-        setOrders(guestOrders);
+        const tableId = localStorage.getItem('tableId');
+        const filteredOrders = tableId ? guestOrders.filter(order => String(order.table_id || order.table_number) === String(tableId)) : guestOrders;
+        setOrders(filteredOrders);
       }
     } catch (error) {
       // Fallback to localStorage
@@ -114,7 +118,7 @@ function Orders() {
           >
             ← Back
           </button>
-          <h1>My Orders</h1>
+          <h1>All Orders</h1>
           <p className="orders-subtitle">Track your order status</p>
         </div>
 
@@ -218,9 +222,17 @@ function Orders() {
                       {order.phoneNumber || order.numberOrder || 'N/A'}
                     </td>
                     <td data-label="Items" className="items-cell">
-                      {order.items && order.items.length > 0 ? (
+                      {(order.order_lists && order.order_lists.length > 0
+                        ? order.order_lists
+                        : order.items && order.items.length > 0
+                          ? order.items
+                          : []
+                      ).length > 0 ? (
                         <div className="items-summary">
-                          {order.items.map((item, idx) => (
+                          {(order.order_lists && order.order_lists.length > 0
+                            ? order.order_lists
+                            : order.items
+                          ).map((item, idx) => (
                             <div key={idx} style={{ fontSize: '0.85em', marginBottom: 2 }}>
                               {item.product_name || item.name || item.title || `Product ${item.product_id || ''}`} x{item.qty || item.quantity || 1}
                             </div>

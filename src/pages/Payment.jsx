@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { authOrdersApi, authCartApi } from '../services/api';
 import toast from 'react-hot-toast';
 import '../styles/Payment.css';
@@ -8,6 +9,7 @@ function Payment() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneError, setPhoneError] = useState(false);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,11 +17,11 @@ function Payment() {
   useEffect(() => {
     const loadCart = async () => {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableNumber = localStorage.getItem('tableNumber');
+      const tableId = localStorage.getItem('tableId');
       console.log(' Payment page - Loading cart...');
       console.log(' Token exists:', !!token);
-      console.log(' Table number:', tableNumber);
-      if (token && tableNumber) {
+      console.log(' Table ID:', tableId);
+      if (token && tableId) {
         // Authenticated user: fetch cart from backend
         try {
           const response = await authCartApi.list();
@@ -49,7 +51,6 @@ function Payment() {
         }
       }
     };
-    
     loadCart();
   }, []);
 
@@ -105,13 +106,20 @@ function Payment() {
       return;
     }
 
-    // Validate phone number (only if provided)
-    if (phoneNumber && phoneNumber.trim() !== '') {
+    // Phone number is required
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      setPhoneError(true);
+      toast.error('Phone number is required');
+      return;
+    } else {
+      setPhoneError(false);
       const phoneRegex = /^[0-9]{8,15}$/;
       if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
+        setPhoneError(true);
         toast.error('Please enter a valid phone number (8-15 digits)');
         return;
       }
+      setPhoneError(false);
     }
 
     try {
@@ -125,25 +133,11 @@ function Payment() {
         console.log('=== AUTHENTICATED ORDER FLOW (WITH TABLE) ===');
 
         // Step 1: Create order payload (match backend requirements)
-        // Group items by product_id and sum quantities
-        const groupedItems = {};
-        cartItems.forEach(item => {
-          const productId = item.product?.id || item.id;
-          const price = Number(item.product?.price || item.price);
-          if (!groupedItems[productId]) {
-            groupedItems[productId] = {
-              product_id: productId,
-              quantity: 0,
-              price: price
-            };
-          }
-          groupedItems[productId].quantity += item.quantity;
-        });
+        // Use cart item IDs for backend
         const orderPayload = {
           table_id: parseInt(tableId, 10),
           payment: 'cash',
-          phone_number: phoneNumber ? String(phoneNumber) : '', // Always a string
-          items: Object.values(groupedItems)
+          phone_number: phoneNumber ? String(phoneNumber) : '',
         };
 
         console.log('Step 1: Creating order information...', orderPayload);
@@ -173,8 +167,14 @@ function Payment() {
           let backendMsg = apiError?.message;
           if (apiError?.response) {
             try {
-              const data = await apiError.response.json();
-              backendMsg = data?.message || backendMsg;
+              const text = await apiError.response.text();
+              let data;
+              try {
+                data = JSON.parse(text);
+              } catch (jsonErr) {
+                data = text;
+              }
+              backendMsg = (data && data.message) ? data.message : backendMsg;
               console.error('Backend error response:', data);
             } catch (parseErr) {
               console.error('Error parsing backend error response:', parseErr);
@@ -315,67 +315,46 @@ function Payment() {
           >
             ← Back to Cart
           </button>
-          <h1 className="payment-title">
-            Checkout
-          </h1>
         </div>
-
-        {/* Order Summary */}
-        <div className="payment-section">
-          <div className="order-summary">
-            <h2 className="section-title">
-              🛒 Order Summary
-            </h2>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              {cartItems.map(item => {
-                const productName = item.product?.name || item.name || 'Unknown Product';
-                const productPrice = item.product?.price || item.price || 0;
-                
-                return (
-                  <div key={item.id} className="order-item">
-                    <span className="order-item-name">
-                      {productName} <span className="order-item-quantity">×{item.quantity}</span>
-                    </span>
-                    <span className="order-item-price">
-                      ${(parseFloat(productPrice) * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="order-summary-divider">
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>${calculateSubtotal()}</span>
-              </div>
-
-              <div className="summary-total">
-                <span>Total</span>
-                <span>${calculateTotal()}</span>
-              </div>
-            </div>
+        <div className="order-summary-divider">
+          <div className="summary-row">
+            <span>Subtotal</span>
+            <span>${calculateSubtotal()}</span>
+          </div>
+          <div className="summary-total">
+            <span>Total</span>
+            <span>${calculateTotal()}</span>
           </div>
         </div>
 
         {/* Customer Information */}
         <div className="payment-section">
-          <h2 className="section-title">
-            👤 Customer Information
+          <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <User size={20} style={{ verticalAlign: 'middle' }} /> Customer Information
           </h2>
           
           <div className="form-group">
             <label className="form-label">
-              Phone Number (Optional)
+              Phone Number (requirements)
             </label>
             <input
               type="tel"
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              onChange={(e) => {
+                // Only allow numbers
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setPhoneNumber(value);
+              }}
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="0252522"
               className="form-input"
             />
+            {phoneError && (
+              <div style={{ color: 'red', fontSize: '0.9rem', marginTop: '0.25rem' }}>
+                Phone number is required
+              </div>
+            )}
           </div>
 
           <div className="form-group">

@@ -242,13 +242,13 @@ export function BestSellers() {
                             status: 'starting',
                             table_id: parseInt(tableNumber, 10)
                           });
-                          console.log('✅ Added to backend cart');
+                          console.log(' Added to backend cart');
                         } else {
                           // Guest user - use localStorage
-                          console.log('🛒 Using localStorage cart');
+                          console.log(' Using localStorage cart');
                           const existing = localStorage.getItem('cart');
                           const cart = existing ? JSON.parse(existing) : [];
-                          console.log('🛒 Current cart:', cart);
+                          console.log(' Current cart:', cart);
                           
                           const idx = cart.findIndex(ci => ci.id === item.id);
                           if (idx > -1) {
@@ -265,7 +265,7 @@ export function BestSellers() {
                             console.log('🛒 Added new item to cart');
                           }
                           localStorage.setItem('cart', JSON.stringify(cart));
-                          console.log('✅ Cart saved to localStorage:', cart);
+                          console.log('Cart saved to localStorage:', cart);
                         }
                         
                         toast.success(`${item.name} added to cart!`);

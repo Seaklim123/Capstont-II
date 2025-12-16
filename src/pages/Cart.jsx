@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authCartApi, tableApi } from '../services/api';
 import toast from 'react-hot-toast';
-import TableNumberModal from '../components/TableNumberModal';
 // Footer removed from Cart to prevent About Us content appearing in cart
 import '../styles/Cart.css';
 
@@ -10,51 +9,17 @@ const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tableNumber, setTableNumber] = useState(null);
-  const [tableDisplayNumber, setTableDisplayNumber] = useState(null);
-  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableId, setTableId] = useState(null);
 
   useEffect(() => {
-    // Get table number from localStorage
-    const storedTableNumber = localStorage.getItem('tableNumber');
+    // Get tableId from localStorage (set by QR code)
     const storedTableId = localStorage.getItem('tableId');
-    setTableNumber(storedTableNumber);
-    // Always prefer to fetch display number if tableId is present
-    if (storedTableId) {
-      fetchTableDisplayNumber(storedTableId);
-    } else {
-      const storedTableDisplayNumber = localStorage.getItem('tableDisplayNumber');
-      if (storedTableNumber && (!storedTableDisplayNumber || storedTableDisplayNumber === storedTableNumber)) {
-        fetchTableDisplayNumber(storedTableNumber);
-      } else if (storedTableDisplayNumber) {
-        setTableDisplayNumber(storedTableDisplayNumber);
-      } else {
-        setTableDisplayNumber(null);
-      }
-    }
-    // Fetch cart from backend API (table number checked on checkout, not on view)
+    setTableId(storedTableId);
     fetchCart();
   }, []);
 
   // Fetch table display number from backend using table id
-  async function fetchTableDisplayNumber(tableId) {
-    // Only fetch from admin API if user is admin/cashier
-    let user = null;
-    try {
-      user = JSON.parse(localStorage.getItem('user'));
-    } catch (e) {}
-    if (user && (user.role === 'admin' || user.role === 'cashier')) {
-      try {
-        const table = await adminTableApi.getById(tableId);
-        setTableDisplayNumber(table?.data?.number || tableId);
-      } catch (error) {
-        setTableDisplayNumber(tableId);
-      }
-    } else {
-      // For normal users, use table number/id from localStorage, do NOT call admin API
-      setTableDisplayNumber(tableId);
-    }
-  }
+  // No need to fetch table display number for customer flow; use tableId only
 
   // Helper to get image URL
   const getImageUrl = (imagePath) => {
@@ -83,20 +48,16 @@ const Cart = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableNumber = localStorage.getItem('tableNumber');
-      if (token && tableNumber) {
+      const tableId = localStorage.getItem('tableId');
+      if (token && tableId) {
         // Authenticated user: fetch cart from backend
         const response = await authCartApi.list();
-        // Assume response.data is an array of cart items or a single cart object with items
         let items = [];
         if (Array.isArray(response.data)) {
-          // If backend returns an array of cart items
           items = response.data;
         } else if (response.data && response.data.items) {
-          // If backend returns a cart object with items array
           items = response.data.items;
         } else if (response.data) {
-          // If backend returns a single cart item
           items = [response.data];
         }
         setCartItems(items || []);
@@ -122,17 +83,12 @@ const Cart = () => {
 
   const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
-    
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableNumber = localStorage.getItem('tableNumber');
-    
+    const tableId = localStorage.getItem('tableId');
     try {
-      // Only use backend API if user has both token AND table number
-      if (token && tableNumber) {
-        // Authenticated user with table - update via API
+      if (token && tableId) {
         await authCartApi.updateItem(itemId, { quantity: newQuantity });
       } else {
-        // Guest user or no table - update localStorage
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
           const cart = JSON.parse(savedCart);
@@ -142,13 +98,10 @@ const Cart = () => {
           localStorage.setItem('cart', JSON.stringify(updatedCart));
         }
       }
-      
-      // Update local state
       const updatedCart = cartItems.map(item => 
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       );
       setCartItems(updatedCart);
-      
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Quantity updated');
     } catch (error) {
@@ -159,15 +112,11 @@ const Cart = () => {
 
   const removeItem = async (itemId) => {
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableNumber = localStorage.getItem('tableNumber');
-    
+    const tableId = localStorage.getItem('tableId');
     try {
-      // Only use backend API if user has both token AND table number
-      if (token && tableNumber) {
-        // Authenticated user with table - remove via API
+      if (token && tableId) {
         await authCartApi.removeItem(itemId);
       } else {
-        // Guest user or no table - remove from localStorage
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
           const cart = JSON.parse(savedCart);
@@ -175,11 +124,8 @@ const Cart = () => {
           localStorage.setItem('cart', JSON.stringify(updatedCart));
         }
       }
-      
-      // Update local state
       const updatedCart = cartItems.filter(item => item.id !== itemId);
       setCartItems(updatedCart);
-      
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Item removed from cart');
     } catch (error) {
@@ -208,73 +154,19 @@ const Cart = () => {
       alert('Your cart is empty!');
       return;
     }
-    
-    // Check for table number before checkout
-    const tableNumber = localStorage.getItem('tableNumber');
-    if (!tableNumber) {
-      toast.error('Please enter your table number to proceed', {
+    // Check for tableId before checkout
+    const tableId = localStorage.getItem('tableId');
+    if (!tableId) {
+      toast.error('No table ID found. Please scan the QR code again.', {
         duration: 4000,
         icon: '🔢',
       });
-      
-      // Show modal to enter table number
-      setShowTableModal(true);
       return;
     }
-    
-    // Navigate to payment page directly
     navigate('/payment');
   };
 
-  const handleTableNumberSubmit = async (userTableNumber) => {
-    setShowTableModal(false);
-    
-    if (!userTableNumber || !userTableNumber.trim()) {
-      toast.error('Table number is required to proceed. Redirecting to home...', {
-        duration: 3000,
-      });
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-      return;
-    }
-    
-    // Save table number and proceed (skip verification if API not available)
-    try {
-      toast.loading('Verifying table number...', { id: 'verify-table' });
-      
-      // Try to verify, but don't fail if API not available
-      try {
-        const response = await tableApi.verify(userTableNumber);
-        
-        if (response.exists || response.data?.exists || response.valid) {
-          localStorage.setItem('tableNumber', userTableNumber);
-          setTableNumber(userTableNumber);
-          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
-          window.dispatchEvent(new Event('cartUpdated'));
-          navigate('/payment');
-        } else {
-          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
-        }
-      } catch (apiError) {
-        // If API fails, allow anyway (backend might not be ready)
-        console.log('Table verification API not available, allowing table number:', apiError);
-        localStorage.setItem('tableNumber', userTableNumber);
-        setTableNumber(userTableNumber);
-        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
-        window.dispatchEvent(new Event('cartUpdated'));
-        navigate('/payment');
-      }
-    } catch (error) {
-      console.error('Error in table number submission:', error);
-      // Allow proceeding anyway
-      localStorage.setItem('tableNumber', userTableNumber);
-      setTableNumber(userTableNumber);
-      toast.success(`Table ${userTableNumber} set!`);
-      window.dispatchEvent(new Event('cartUpdated'));
-      navigate('/payment');
-    }
-  };
+  // No need for handleTableNumberSubmit; QR code provides tableId
 
   return (
     <div className="cart-page">
@@ -288,9 +180,9 @@ const Cart = () => {
             </button>
             <h1 className="cart-title">Shopping Cart </h1>
             {/* Show table number if present */}
-            {(tableDisplayNumber || tableNumber || (cartItems.length > 0 && (cartItems[0].table_number || cartItems[0].table_id))) && (
+            {tableId && (
               <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.95rem', color: '#555', marginRight: '0.5rem' }}>Table</span>
+                <span style={{ fontSize: '0.95rem', color: '#555', marginRight: '0.5rem' }}>Table ID</span>
                 <div style={{ 
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   color: 'white',
@@ -299,7 +191,7 @@ const Cart = () => {
                   fontWeight: 600,
                   boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
                 }}>
-                  {tableDisplayNumber || tableNumber || cartItems[0]?.table_number?.table_number || cartItems[0]?.table_number || cartItems[0]?.table_id}
+                  {tableId}
                 </div>
               </div>
             )}
@@ -453,11 +345,6 @@ const Cart = () => {
       </section>
       
       {/* Table Number Modal */}
-      <TableNumberModal 
-        isOpen={showTableModal}
-        onClose={() => setShowTableModal(false)}
-        onSubmit={handleTableNumberSubmit}
-      />
     </div>
   );
 };

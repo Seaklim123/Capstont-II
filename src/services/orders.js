@@ -6,7 +6,7 @@ export const ordersApi = {
   
     getAllOrders: async () => {
     try {
-      console.log("📥 Fetching orders...");
+      console.log("Fetching orders...");
 
       const res = await fetch(`${BASE_URL}/orders`, {
         method: "GET",
@@ -20,17 +20,17 @@ export const ordersApi = {
       }
 
       const data = await res.json();
-      console.log("✅ Orders fetched:", data);
+      console.log("Orders fetched:", data);
       return data;
 
     } catch (error) {
-      console.error("❌ Error fetching orders:", error);
+      console.error(" Error fetching orders:", error);
       return null;
     }
   },
   
     createOrder: async (orderData) => {
-    console.log("📤 Sending Order Payload:", orderData);
+    console.log(" Sending Order Payload:", orderData);
 
     try {
       const res = await fetch(`${BASE_URL}/orders`, {
@@ -47,11 +47,11 @@ export const ordersApi = {
       }
 
       const data = await res.json();
-      console.log("✅ Order created successfully:", data);
+      console.log("Order created successfully:", data);
       return data;
       
     } catch (error) {
-      console.error("❌ Error creating order:", error);
+      console.error(" Error creating order:", error);
       throw new Error("Failed to create order");
     }
   }

@@ -142,7 +142,7 @@ function Discount() {
                         
                         const tableNumber = localStorage.getItem('tableNumber');
                         if (!tableNumber) {
-                          toast.error('Please enter your table number first', { duration: 4000, icon: '🔢' });
+                          // toast.error('Please enter your table number first', { duration: 4000, icon: '🔢' });
                           navigate('/menu');
                           return;
                         }

@@ -30,17 +30,17 @@ function OrderConfirmation() {
       try {
         console.log('🔍 Fetching order from API:', orderNumber);
         const response = await authOrdersApi.findByNumber(orderNumber);
-        console.log('✅ Order fetched from API:', response.data);
+        console.log(' Order fetched from API:', response.data);
         setOrderDetails(response.data);
       } catch (error) {
-        console.error('❌ Error fetching order from API:', error);
+        console.error(' Error fetching order from API:', error);
         
         // Fallback: check localStorage for guest orders
         try {
           const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
           const order = guestOrders.find(o => o.orderNumber == orderNumber);
           if (order) {
-            console.log('✅ Found order in localStorage:', order);
+            console.log(' Found order in localStorage:', order);
             setOrderDetails({
               orderNumber: order.orderNumber,
               totalPrice: order.totalPrice,
@@ -50,10 +50,10 @@ function OrderConfirmation() {
               customer_name: order.customerName
             });
           } else {
-            console.log('❌ Order not found in localStorage');
+            console.log(' Order not found in localStorage');
           }
         } catch (localError) {
-          console.error('❌ Error reading from localStorage:', localError);
+          console.error(' Error reading from localStorage:', localError);
         }
       } finally {
         setLoading(false);

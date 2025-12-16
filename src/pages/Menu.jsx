@@ -3,14 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "../styles/Menu.css";
 import { categoryApi, productApi, authCartApi, tableApi, getImageUrl as getImageUrlHelper } from "../services/api.js";
 import toast from 'react-hot-toast';
-import TableNumberModal from '../components/TableNumberModal';
 
 function Menu() {
-  // Clear cart on page load to prevent pre-populated items
-  useEffect(() => {
-    localStorage.removeItem('cart');
-    window.dispatchEvent(new Event('cartUpdated'));
-  }, []);
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,8 +13,7 @@ function Menu() {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showTableModal, setShowTableModal] = useState(false);
-  const [pendingItemId, setPendingItemId] = useState(null);
+  // Removed TableNumberModal logic
   const itemsPerPage = 9; // Show 9 items per page (3 rows × 3 columns)
 
   // Fetch categories from API
@@ -182,75 +175,20 @@ function Menu() {
   const handleAddToCart = async (itemId) => {
     console.log('🛒 handleAddToCart called with itemId:', itemId);
     // Check for table number first
-    const tableNumber = localStorage.getItem('tableNumber');
-    if (!tableNumber) {
-      toast.error('Please enter your table number first', {
-        duration: 4000,
-        icon: '🔢',
-      });
-      // Show modal instead of prompt
-      setPendingItemId(itemId);
-      setShowTableModal(true);
-      return;
-    }
+    // const tableNumber = localStorage.getItem('tableNumber');
+    // if (!tableNumber) {
+    //   toast.error('Please enter your table number first', {
+    //     duration: 4000,
+    //     icon: '🔢',
+    //   });
+    //   // Do not block add to cart, just return
+    //   return;
+    // }
     // Continue with adding to cart
     await addItemToCart(itemId);
   };
 
-  const handleTableIdSubmit = async (userTableNumber) => {
-    setShowTableModal(false);
-    if (!userTableNumber || !userTableNumber.trim()) {
-      toast.error('Table number is required to order. Redirecting to home...', {
-        duration: 3000,
-      });
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-      return;
-    }
-    // Save table number and proceed (skip verification if API not available)
-    try {
-      toast.loading('Verifying table number...', { id: 'verify-table' });
-      // Try to verify, but don't fail if API not available
-      try {
-        const response = await tableApi.verify(userTableNumber);
-        if (response.exists || response.data?.exists || response.valid) {
-          localStorage.setItem('tableNumber', userTableNumber);
-          toast.success(`Table ${userTableNumber} confirmed!`, { id: 'verify-table' });
-          window.dispatchEvent(new Event('cartUpdated'));
-          // Add the pending item to cart
-          if (pendingItemId) {
-            await addItemToCart(pendingItemId);
-            setPendingItemId(null);
-          }
-        } else {
-          toast.error(`Table ${userTableNumber} not found. Please check your table number.`, { id: 'verify-table', duration: 3000 });
-        }
-      } catch (apiError) {
-        // If API fails, allow anyway (backend might not be ready)
-        console.log('Table verification API not available, allowing table number:', apiError);
-        localStorage.setItem('tableNumber', userTableNumber);
-        toast.success(`Table ${userTableNumber} set!`, { id: 'verify-table' });
-        window.dispatchEvent(new Event('cartUpdated'));
-        // Add the pending item to cart
-        if (pendingItemId) {
-          await addItemToCart(pendingItemId);
-          setPendingItemId(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error in table number submission:', error);
-      // Allow proceeding anyway
-      localStorage.setItem('tableNumber', userTableNumber);
-      toast.success(`Table ${userTableNumber} set!`);
-      window.dispatchEvent(new Event('cartUpdated'));
-      // Add the pending item to cart
-      if (pendingItemId) {
-        await addItemToCart(pendingItemId);
-        setPendingItemId(null);
-      }
-    }
-  };
+  // Removed handleTableIdSubmit logic (TableNumberModal deleted)
 
   const addItemToCart = async (itemId) => {
     const product = products.find(p => p.id === itemId);
@@ -295,7 +233,7 @@ function Menu() {
         localStorage.setItem('cart', JSON.stringify(cart));
         toast.success(`${product.name} added to cart!`);
         window.dispatchEvent(new Event('cartUpdated'));
-        setTimeout(() => navigate('/cart'), 500);
+        // Do not navigate to cart automatically; let user add more items
       } catch (error) {
         toast.error('Failed to add to cart');
       }
@@ -305,10 +243,12 @@ function Menu() {
   // Filter products by category
   // Show all products regardless of category selection (for debug)
   const getFilteredProducts = () => {
-    // If you want to filter by category, uncomment below:
-    // if (activeCategory !== 'All') {
-    //   return products.filter(p => p.category && p.category.name === activeCategory);
-    // }
+    if (activeCategory !== 'All') {
+      // Find the selected category object by name
+      const selectedCategory = categories.find(cat => cat.name === activeCategory);
+      if (!selectedCategory) return [];
+      return products.filter(p => p.category_id === selectedCategory.id);
+    }
     return products;
   };
 
@@ -654,14 +594,6 @@ function Menu() {
       </section>
 
       {/* Table Number Modal */}
-      <TableNumberModal 
-        isOpen={showTableModal}
-        onClose={() => {
-          setShowTableModal(false);
-          setPendingItemId(null);
-        }}
-        onSubmit={handleTableIdSubmit}
-      />
     </div>
   );
 }

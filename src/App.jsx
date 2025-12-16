@@ -20,7 +20,7 @@ import "./styles/App.css";
 function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="app">
         <Header />
         <main className="main-content">
