@@ -29,9 +29,9 @@ function Orders() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      // const token = localStorage.getItem('token') || localStorage.getItem('authToken');
 
-      if (token) {
+      // if (token) {
         // Authenticated user - fetch from API
         try {
           const response = await authOrdersApi.getAll();
@@ -45,13 +45,13 @@ function Orders() {
           const filteredOrders = tableId ? guestOrders.filter(order => String(order.table_id || order.table_number) === String(tableId)) : guestOrders;
           setOrders(filteredOrders);
         }
-      } else {
-        // Guest user - load from localStorage and filter by tableId
-        const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
-        const tableId = localStorage.getItem('tableId');
-        const filteredOrders = tableId ? guestOrders.filter(order => String(order.table_id || order.table_number) === String(tableId)) : guestOrders;
-        setOrders(filteredOrders);
-      }
+      // } else {
+      //   // Guest user - load from localStorage and filter by tableId
+      //   const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
+      //   const tableId = localStorage.getItem('tableId');
+      //   const filteredOrders = tableId ? guestOrders.filter(order => String(order.table_id || order.table_number) === String(tableId)) : guestOrders;
+      //   setOrders(filteredOrders);
+      // }
     } catch (error) {
       // Fallback to localStorage
       const guestOrders = JSON.parse(localStorage.getItem('guestOrders') || '[]');
@@ -186,7 +186,7 @@ function Orders() {
               <tbody>
                 {filteredOrders.map((order, index) => (
                   <tr key={index}>
-                    <td data-label="ID">{index + 1}</td>
+                    <td data-label="ID">{order.id}</td>
                     <td data-label="Order Number" className="order-number-cell">
                       #{order.numberOrder || order.orderNumber || 'N/A'}
                     </td>

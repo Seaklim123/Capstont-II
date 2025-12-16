@@ -13,8 +13,15 @@ function Menu() {
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [tableId, setTableId] = useState(null);
   // Removed TableNumberModal logic
   const itemsPerPage = 9; // Show 9 items per page (3 rows × 3 columns)
+  useEffect(()=>{
+    const storedTableId = localStorage.getItem('tableId');
+    if(storedTableId){
+      setTableId(storedTableId);
+    }
+  })
 
   // Fetch categories from API
   useEffect(() => {
@@ -172,73 +179,41 @@ function Menu() {
   };
 
   // Handle add to cart - try backend API first, fallback to localStorage
-  const handleAddToCart = async (itemId) => {
-    console.log('🛒 handleAddToCart called with itemId:', itemId);
-    // Check for table number first
-    // const tableNumber = localStorage.getItem('tableNumber');
-    // if (!tableNumber) {
-    //   toast.error('Please enter your table number first', {
-    //     duration: 4000,
-    //     icon: '🔢',
-    //   });
-    //   // Do not block add to cart, just return
-    //   return;
-    // }
-    // Continue with adding to cart
-    await addItemToCart(itemId);
+  
+  const handleAddToCart = async (product_id) => {
+    try {
+      // Ensure tableId exists in localStorage
+      // const tableId = localStorage.getItem('tableId');
+      // if (!tableId) {
+      //   console.error('No tableId found in localStorage');
+      //   return;
+      // }
+
+      // Build payload according to backend validation rules
+      const payload = {
+        quantity: 1, // required, integer >= 1
+        product_id: product_id,           // required, must exist in products table
+        table_id: tableId,  // required, must exist in table_numbers
+        status: "starting"      // optional, only "starting" or "ordering"
+      };
+
+      console.debug('handleAddToCart payload ->', payload);
+
+      // Call your API
+      const response = await authCartApi.addItem(payload);
+
+      console.log('Item added successfully:', response);
+      alert('Item added to cart!');
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      alert('Failed to add item to cart');
+    }
   };
+
 
   // Removed handleTableIdSubmit logic (TableNumberModal deleted)
 
-  const addItemToCart = async (itemId) => {
-    const product = products.find(p => p.id === itemId);
-    if (!product) {
-      toast.error('Product not found');
-      return;
-    }
-
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableNumber = localStorage.getItem('tableNumber');
-    if (token && tableNumber) {
-      // Only send required structure to backend
-      try {
-        const response = await authCartApi.addItem({
-          product_id: product.id,
-          quantity: 1,
-          table_id: Number(tableNumber),
-          status: 'starting'
-        });
-        toast.success(`${product.name} added to cart!`);
-        window.dispatchEvent(new Event('cartUpdated'));
-      } catch (error) {
-        toast.error('Failed to add to cart. Please try again.');
-      }
-    } else {
-      // Guest user - use localStorage
-      try {
-        const existingCart = localStorage.getItem('cart');
-        const cart = existingCart ? JSON.parse(existingCart) : [];
-        const existingItemIndex = cart.findIndex(item => item.id === product.id);
-        if (existingItemIndex > -1) {
-          cart[existingItemIndex].quantity += 1;
-        } else {
-          cart.push({
-            id: product.id,
-            name: product.name,
-            price: parseFloat(product.price),
-            image_path: product.image_path || product.image,
-            quantity: 1
-          });
-        }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        toast.success(`${product.name} added to cart!`);
-        window.dispatchEvent(new Event('cartUpdated'));
-        // Do not navigate to cart automatically; let user add more items
-      } catch (error) {
-        toast.error('Failed to add to cart');
-      }
-    }
-  };
+ 
 
   // Filter products by category
   // Show all products regardless of category selection (for debug)
@@ -287,7 +262,7 @@ function Menu() {
       <section className="menu-header-section">
         <div className="container">
           <div className="menu-header">
-            <span className="menu-badge">Menu</span>
+            <span className="menu-badge">Menu </span>
             <h1 className="menu-title">Our Menu</h1>
             <p className="menu-subtitle">
               Discover our signature dishes and innovative new creations.

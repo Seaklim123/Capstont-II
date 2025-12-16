@@ -14,9 +14,26 @@ const Cart = () => {
   useEffect(() => {
     // Get tableId from localStorage (set by QR code)
     const storedTableId = localStorage.getItem('tableId');
-    setTableId(storedTableId);
-    fetchCart();
-  }, []);
+    if(storedTableId){
+      setTableId(storedTableId);
+    }
+  },[]);
+  
+  useEffect(() => {
+    const fetchCarts = async () => {
+      try {
+        const data = await authCartApi.getCart(tableId);
+        setCartItems(data);
+      } catch (error) {
+        console.error('Failed to load carts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCarts();
+  }, [tableId]);
+
 
   // Fetch table display number from backend using table id
   // No need to fetch table display number for customer flow; use tableId only
@@ -44,42 +61,39 @@ const Cart = () => {
     return `${import.meta.env.VITE_STORAGE_URL || ''}/storage/${imagePath}`;
   };
 
-  const fetchCart = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableId = localStorage.getItem('tableId');
-      if (token && tableId) {
-        // Authenticated user: fetch cart from backend
-        const response = await authCartApi.list();
-        let items = [];
-        if (Array.isArray(response.data)) {
-          items = response.data;
-        } else if (response.data && response.data.items) {
-          items = response.data.items;
-        } else if (response.data) {
-          items = [response.data];
-        }
-        setCartItems(items || []);
-        console.log(' Backend cart items:', items);
-      } else {
-        // Guest user: load from localStorage
-        const savedCart = localStorage.getItem('cart');
-        console.log('Raw localStorage cart:', savedCart);
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          setCartItems(Array.isArray(cart) ? cart : []);
-        } else {
-          setCartItems([]);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading cart:', error);
-      setCartItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchCart = async () => {
+  //   try {
+  //     setLoading(true);
+      
+  //       const response = await authCartApi.getCart(2);
+  //       // let items = [];
+  //       // if (Array.isArray(response.data)) {
+  //         items = response.data;
+  //       // } else if (response.data && response.data.items) {
+  //       //   items = response.data.items;
+  //       // } else if (response.data) {
+  //       //   items = [response.data];
+  //       // }
+  //       setCartItems(items);
+  //       console.log(' Backend cart items:', items);
+  //     // } else {
+  //     //   // Guest user: load from localStorage
+  //     //   const savedCart = localStorage.getItem('cart');
+  //     //   console.log('Raw localStorage cart:', savedCart);
+  //     //   if (savedCart) {
+  //     //     const cart = JSON.parse(savedCart);
+  //     //     setCartItems(Array.isArray(cart) ? cart : []);
+  //     //   } else {
+  //     //     setCartItems([]);
+  //     //   }
+  //     // }
+  //   } catch (error) {
+  //     console.error('Error loading cart:', error);
+  //     setCartItems([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -196,7 +210,7 @@ const Cart = () => {
               </div>
             )}
             {/* Show cart status */}
-            {cartItems.length > 0 && cartItems[0].status && (
+            {cartItems.length > 0  && (
               <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
                 <span style={{ 
                   fontSize: '0.85rem', 

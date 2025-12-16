@@ -12,60 +12,43 @@ function Payment() {
   const [phoneError, setPhoneError] = useState(false);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tableId, setTableId] = useState(null);
+  
+    useEffect(() => {
+      // Get tableId from localStorage (set by QR code)
+      const storedTableId = localStorage.getItem('tableId');
+      if(storedTableId){
+        setTableId(storedTableId);
+      }
+    },[]);
 
   // Load cart items on component mount
   useEffect(() => {
     const loadCart = async () => {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableId = localStorage.getItem('tableId');
-      console.log(' Payment page - Loading cart...');
-      console.log(' Token exists:', !!token);
-      console.log(' Table ID:', tableId);
-      if (token && tableId) {
-        // Authenticated user: fetch cart from backend
-        try {
-          const response = await authCartApi.list();
-          let items = [];
-          if (Array.isArray(response.data)) {
-            items = response.data;
-          } else if (response.data && response.data.items) {
-            items = response.data.items;
-          } else if (response.data) {
-            items = [response.data];
-          }
-          setCartItems(items || []);
-          console.log(' Loaded cart from backend:', items);
-        } catch (error) {
-          console.error(' Error loading cart from backend:', error);
-          setCartItems([]);
-        }
-      } else {
-        // Guest user: load from localStorage
-        const savedCart = localStorage.getItem('cart');
-        console.log(' Loading cart from localStorage:', savedCart);
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          setCartItems(Array.isArray(cart) ? cart : []);
-        } else {
-          setCartItems([]);
-        }
+      try {
+        const data = await authCartApi.getCart(tableId);
+        setCartItems(data);
+      } catch (error) {
+        console.error('Failed to load carts:', error);
+      } finally {
+        setLoading(false);
       }
     };
     loadCart();
-  }, []);
+  }, [tableId]);
 
   // Debug effect to track cartItems changes and total calculation
-  useEffect(() => {
-    console.log(' Cart Items Updated:', cartItems);
-    console.log(' Cart Items Count:', cartItems.length);
-    if (cartItems.length > 0) {
-      console.log(' First item:', cartItems[0]);
-      console.log(' Current Subtotal:', calculateSubtotal());
-      console.log(' Current Total:', calculateTotal());
-    } else {
-      console.log(' Cart is empty!');
-    }
-  }, [cartItems]);
+  // useEffect(() => {
+  //   console.log(' Cart Items Updated:', cartItems);
+  //   console.log(' Cart Items Count:', cartItems.length);
+  //   if (cartItems.length > 0) {
+  //     console.log(' First item:', cartItems[0]);
+  //     console.log(' Current Subtotal:', calculateSubtotal());
+  //     console.log(' Current Total:', calculateTotal());
+  //   } else {
+  //     console.log(' Cart is empty!');
+  //   }
+  // }, [cartItems]);
 
   const calculateSubtotal = () => {
     if (cartItems.length === 0) {
@@ -124,18 +107,18 @@ function Payment() {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-      const tableId = localStorage.getItem('tableId');
+      // const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      // const tableId = localStorage.getItem('tableId');
 
       // Only use backend API if user has both token AND tableId
-      if (token && tableId) {
-        // AUTHENTICATED USER WITH TABLE - Full backend flow
-        console.log('=== AUTHENTICATED ORDER FLOW (WITH TABLE) ===');
+      // if (token && tableId) {
+      //   // AUTHENTICATED USER WITH TABLE - Full backend flow
+      //   console.log('=== AUTHENTICATED ORDER FLOW (WITH TABLE) ===');
 
         // Step 1: Create order payload (match backend requirements)
         // Use cart item IDs for backend
         const orderPayload = {
-          table_id: parseInt(tableId, 10),
+          table_id: tableId,
           payment: 'cash',
           phone_number: phoneNumber ? String(phoneNumber) : '',
         };
@@ -146,155 +129,144 @@ function Payment() {
           const response = await authOrdersApi.create(orderPayload);
           console.log('Order created successfully:', response);
           const createdOrderNumber = response.data?.numberOrder || response.data?.order_number || response.data?.id;
-          toast.success(`Order #${createdOrderNumber} placed successfully!`);
-          // Step 2: Clear cart after successful order
-          console.log('Step 2: Clearing cart...');
-          try {
-            for (const item of cartItems) {
-              await authCartApi.removeItem(item.id);
-              console.log(`Removed cart item ${item.id}`);
-            }
-          } catch (err) {
-            console.error('Error clearing cart item:', err);
-          }
+          toast.success(`Order #${createdOrderNumber} placed successfully!`);          
           // Clear local state
           setCartItems([]);
-          window.dispatchEvent(new Event('cartUpdated'));
-          // Navigate to orders page immediately after toast
           navigate('/orders');
         } catch (apiError) {
           // Try to extract backend error message
-          let backendMsg = apiError?.message;
-          if (apiError?.response) {
-            try {
-              const text = await apiError.response.text();
-              let data;
-              try {
-                data = JSON.parse(text);
-              } catch (jsonErr) {
-                data = text;
-              }
-              backendMsg = (data && data.message) ? data.message : backendMsg;
-              console.error('Backend error response:', data);
-            } catch (parseErr) {
-              console.error('Error parsing backend error response:', parseErr);
-            }
-          }
+          // let backendMsg = apiError?.message;
+          // if (apiError?.response) {
+          //   try {
+          //     const text = await apiError.response.text();
+          //     let data;
+          //     try {
+          //       data = JSON.parse(text);
+          //     } catch (jsonErr) {
+          //       data = text;
+          //     }
+          //     backendMsg = (data && data.message) ? data.message : backendMsg;
+          //     console.error('Backend error response:', data);
+          //   } catch (parseErr) {
+          //     console.error('Error parsing backend error response:', parseErr);
+          //   }
+          // }
           console.error('API Error:', apiError);
           toast.error(`Failed to create order: ${backendMsg}`);
         }
 
-      } else {
-        // GUEST USER OR NO TABLE - Send to backend AND save to localStorage
-        console.log('=== GUEST ORDER FLOW ===');
-        console.log(' Generating order number...');
+      // } 
+      // else {
+      //   // GUEST USER OR NO TABLE - Send to backend AND save to localStorage
+      //   console.log('=== GUEST ORDER FLOW ===');
+      //   console.log(' Generating order number...');
         
-        const orderNumber = Date.now();
-        const totalPrice = parseFloat(calculateTotal());
+      //   const orderNumber = Date.now();
+      //   const totalPrice = parseFloat(calculateTotal());
         
-        console.log('📝 Order Number:', orderNumber);
-        console.log('📝 Total Price:', totalPrice);
+      //   console.log('📝 Order Number:', orderNumber);
+      //   console.log('📝 Total Price:', totalPrice);
         
-        // Get table number from localStorage
-        const tableNumber = localStorage.getItem('tableNumber');
+      //   // Get table number from localStorage
+      //   const tableNumber = localStorage.getItem('tableNumber');
         
-        // Prepare order data for backend
-        const orderData = {
-          numberOrder: orderNumber,
-          totalPrice: totalPrice,
-          discount: 0,
-          note: notes || null,
-          phone_number: phoneNumber || '',
-          payment: 'cash',
-          status: 'starting',
-          table_id: tableNumber ? parseInt(tableNumber, 10) : 1,
-          items: cartItems.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            price: item.price
-          }))
-        };
+      //   // Prepare order data for backend
+      //   const orderData = {
+      //     numberOrder: orderNumber,
+      //     totalPrice: totalPrice,
+      //     discount: 0,
+      //     note: notes || null,
+      //     phone_number: phoneNumber || '',
+      //     payment: 'cash',
+      //     status: 'starting',
+      //     table_id: tableNumber ? parseInt(tableNumber, 10) : 1,
+      //     items: cartItems.map(item => ({
+      //       product_id: item.id,
+      //       quantity: item.quantity,
+      //       price: item.price
+      //     }))
+      //   };
         
-        console.log(' Sending order to backend:', orderData);
+      //   console.log(' Sending order to backend:', orderData);
         
-        // Try to send to backend API
-        try {
-          const response = await authOrdersApi.create(orderData);
-          console.log(' Order sent to backend successfully:', response);
-        } catch (apiError) {
-          console.error(' Backend API failed (order will be saved locally only):', apiError);
-          // Continue anyway - save to localStorage as fallback
-        }
+      //   // Try to send to backend API
+      //   try {
+      //     const response = await authOrdersApi.create(orderData);
+      //     console.log(' Order sent to backend successfully:', response);
+      //   } catch (apiError) {
+      //     console.error(' Backend API failed (order will be saved locally only):', apiError);
+      //     // Continue anyway - save to localStorage as fallback
+      //   }
         
-        // Also store in localStorage for guest (backup/fallback)
-        const guestOrder = {
-          id: orderNumber,
-          orderNumber: orderNumber,
-          numberOrder: orderNumber,
-          phoneNumber: phoneNumber || 'N/A',
-          phone_number: phoneNumber || 'N/A',
-          paymentMethod: 'cash',
-          payment: 'cash',
-          notes: notes || '',
-          note: notes || '',
-          items: cartItems,
-          totalPrice: parseFloat(totalPrice) || 0,
-          priceperorder: parseFloat(totalPrice) || 0,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          table_number: tableNumber || 'N/A'
-        };
+      //   // Also store in localStorage for guest (backup/fallback)
+      //   const guestOrder = {
+      //     id: orderNumber,
+      //     orderNumber: orderNumber,
+      //     numberOrder: orderNumber,
+      //     phoneNumber: phoneNumber || 'N/A',
+      //     phone_number: phoneNumber || 'N/A',
+      //     paymentMethod: 'cash',
+      //     payment: 'cash',
+      //     notes: notes || '',
+      //     note: notes || '',
+      //     items: cartItems,
+      //     totalPrice: parseFloat(totalPrice) || 0,
+      //     priceperorder: parseFloat(totalPrice) || 0,
+      //     status: 'pending',
+      //     createdAt: new Date().toISOString(),
+      //     table_number: tableNumber || 'N/A'
+      //   };
         
-        console.log(' Saving to localStorage as backup:', guestOrder);
-        console.log(' Order details check:');
-        console.log('   - Order Number:', guestOrder.orderNumber);
-        console.log('   - Phone:', guestOrder.phoneNumber);
-        console.log('   - Total:', guestOrder.totalPrice);
-        console.log('   - Items:', guestOrder.items.length);
+      //   console.log(' Saving to localStorage as backup:', guestOrder);
+      //   console.log(' Order details check:');
+      //   console.log('   - Order Number:', guestOrder.orderNumber);
+      //   console.log('   - Phone:', guestOrder.phoneNumber);
+      //   console.log('   - Total:', guestOrder.totalPrice);
+      //   console.log('   - Items:', guestOrder.items.length);
         
-        // Save to localStorage
-        try {
-          const existingOrders = localStorage.getItem('guestOrders');
-          console.log(' Existing orders in localStorage:', existingOrders);
+      //   // Save to localStorage
+      //   try {
+      //     const existingOrders = localStorage.getItem('guestOrders');
+      //     console.log(' Existing orders in localStorage:', existingOrders);
           
-          const guestOrders = existingOrders ? JSON.parse(existingOrders) : [];
-          console.log(' Parsed existing orders:', guestOrders);
-          console.log(' Number of existing orders:', guestOrders.length);
+      //     const guestOrders = existingOrders ? JSON.parse(existingOrders) : [];
+      //     console.log(' Parsed existing orders:', guestOrders);
+      //     console.log(' Number of existing orders:', guestOrders.length);
           
-          guestOrders.push(guestOrder);
-          console.log(' Orders after adding new order:', guestOrders);
-          console.log(' Total orders now:', guestOrders.length);
+      //     guestOrders.push(guestOrder);
+      //     console.log(' Orders after adding new order:', guestOrders);
+      //     console.log(' Total orders now:', guestOrders.length);
           
-          const ordersString = JSON.stringify(guestOrders);
-          localStorage.setItem('guestOrders', ordersString);
-          console.log(' Saved to localStorage');
+      //     const ordersString = JSON.stringify(guestOrders);
+      //     localStorage.setItem('guestOrders', ordersString);
+      //     console.log(' Saved to localStorage');
           
-          // Verify it was saved
-          const verifyOrders = localStorage.getItem('guestOrders');
-          const parsedVerify = JSON.parse(verifyOrders);
-          console.log(' Order saved to localStorage - Verification:', parsedVerify);
-          console.log(' Total orders now:', parsedVerify.length);
-          console.log(' Last order:', parsedVerify[parsedVerify.length - 1]);
-        } catch (storageError) {
-          console.error(' Error saving to localStorage:', storageError);
-        }
+      //     // Verify it was saved
+      //     const verifyOrders = localStorage.getItem('guestOrders');
+      //     const parsedVerify = JSON.parse(verifyOrders);
+      //     console.log(' Order saved to localStorage - Verification:', parsedVerify);
+      //     console.log(' Total orders now:', parsedVerify.length);
+      //     console.log(' Last order:', parsedVerify[parsedVerify.length - 1]);
+      //   } catch (storageError) {
+      //     console.error(' Error saving to localStorage:', storageError);
+      //   }
         
-        // Clear cart
-        localStorage.removeItem('cart');
-        setCartItems([]);
-        window.dispatchEvent(new Event('cartUpdated'));
+      //   // Clear cart
+      //   localStorage.removeItem('cart');
+      //   setCartItems([]);
+      //   window.dispatchEvent(new Event('cartUpdated'));
         
-        console.log(' Cart cleared');
+      //   console.log(' Cart cleared');
         
-        toast.success(`Order #${orderNumber} placed successfully!`);
+      //   toast.success(`Order #${orderNumber} placed successfully!`);
         
-        console.log(' Navigating to orders page...');
+      //   console.log(' Navigating to orders page...');
         
-        // Navigate to orders page
-        setTimeout(() => {
-          navigate('/orders');
-        }, 1500);
-      }
+      //   // Navigate to orders page
+      //   setTimeout(() => {
+      //     navigate('/orders');
+      //   }, 1500);
+      // }
       
     } catch (error) {
       console.error('Error placing order:', error);

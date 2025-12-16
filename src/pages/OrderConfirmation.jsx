@@ -261,7 +261,7 @@ function OrderConfirmation() {
         {/* Action Buttons */}
         <div className="order-action-buttons">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/orders')}
             className="btn-track-order"
           >
             Back to Home
