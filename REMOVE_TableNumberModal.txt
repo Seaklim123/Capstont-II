@@ -1,0 +1,1 @@
+Removed TableNumberModal component and all references from Menu.jsx and Cart.jsx. Deleted TableNumberModal.jsx and TableNumberModal.css.

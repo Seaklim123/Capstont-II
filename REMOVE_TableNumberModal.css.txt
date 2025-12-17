@@ -1,0 +1,1 @@
+Deleted TableNumberModal.css as part of TableNumberModal component removal.

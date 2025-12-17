@@ -1,0 +1,262 @@
+/* Site footer styles matching the dark 3-column layout from the screenshot */
+.site-footer{
+  background: linear-gradient(135deg, #042424 0%, #053535 100%);
+  color: #e5f5f5;
+  padding: 60px 0 24px;
+  font-family: inherit;
+}
+.site-footer .container{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.site-footer-top{
+  display:flex;
+  gap: 48px;
+  align-items:flex-start;
+  justify-content: space-between;
+  flex-wrap:wrap;
+}
+.footer-col{flex:1; min-width:220px}
+.footer-brand .welcome{
+  color:#6dd4d4; 
+  font-size:13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.footer-brand .brand-title{
+  font-size:42px; 
+  margin:10px 0 0; 
+  color:#ffffff;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.footer-links h4, .footer-contact h4{
+  color:#ffffff; 
+  margin-bottom:16px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.footer-links ul{
+  list-style:none; 
+  padding:0; 
+  margin:0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-links li{margin:0}
+.footer-links a{
+  color:#b8e5e5; 
+  text-decoration:none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.footer-links a:hover{
+  color:#fff; 
+  transform: translateX(4px);
+}
+.contact-email{
+  color:#b8e5e5; 
+  margin-bottom:16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.socials{
+  display:flex; 
+  gap:12px;
+  margin-top: 8px;
+}
+.social-btn{
+  display:inline-flex; 
+  align-items:center; 
+  justify-content:center; 
+  width:40px; 
+  height:40px; 
+  border-radius:50%; 
+  background:rgba(255,255,255,0.05); 
+  border:1px solid rgba(255,255,255,0.12); 
+  color:#b8e5e5; 
+  text-decoration:none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+.social-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.25);
+  color: #ffffff;
+  transform: translateY(-3px);
+}
+.social-btn svg{display:block}
+.footer-divider{
+  border:0; 
+  border-top:1px solid rgba(255,255,255,0.1); 
+  margin:36px 0;
+  opacity: 0.6;
+}
+.site-footer-bottom{
+  display:flex; 
+  justify-content:space-between; 
+  align-items:center; 
+  gap:16px; 
+  flex-wrap:wrap;
+  font-size: 13px;
+}
+.site-footer-bottom a{
+  color:#a8d8d8; 
+  text-decoration:none;
+  transition: color 0.2s ease;
+}
+.site-footer-bottom a:hover {
+  color: #ffffff;
+}
+.site-footer-bottom .bottom-right{
+  color:#8cc0c0;
+  font-weight: 500;
+}
+
+@media (max-width:780px){
+  .site-footer {
+    padding: 48px 0 24px;
+  }
+
+  .site-footer .container {
+    padding: 0 20px;
+  }
+
+  .site-footer-top {
+    flex-direction: column;
+    gap: 40px;
+    align-items: flex-start;
+  }
+
+  .footer-col {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .footer-brand {
+    text-align: center;
+    width: 100%;
+  }
+
+  .footer-brand .welcome {
+    font-size: 12px;
+    letter-spacing: 0.8px;
+  }
+
+  .footer-brand .brand-title {
+    font-size: 36px;
+    margin: 8px 0 0;
+  }
+
+  .footer-links,
+  .footer-contact {
+    text-align: left;
+  }
+
+  .footer-links h4,
+  .footer-contact h4 {
+    font-size: 17px;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  .footer-links ul {
+    gap: 12px;
+  }
+
+  .footer-links a {
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .contact-email {
+    font-size: 15px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .socials {
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .social-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .footer-divider {
+    margin: 32px 0;
+  }
+
+  .site-footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 40px 0 20px;
+  }
+
+  .site-footer .container {
+    padding: 0 16px;
+  }
+
+  .site-footer-top {
+    gap: 36px;
+  }
+
+  .footer-brand .welcome {
+    font-size: 11px;
+  }
+
+  .footer-brand .brand-title {
+    font-size: 32px;
+    margin: 6px 0 0;
+  }
+
+  .footer-links h4,
+  .footer-contact h4 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .footer-links a {
+    font-size: 14px;
+  }
+
+  .contact-email {
+    font-size: 14px;
+  }
+
+  .social-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .social-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .footer-divider {
+    margin: 28px 0;
+  }
+
+  .site-footer-bottom {
+    font-size: 12px;
+    gap: 8px;
+  }
+}

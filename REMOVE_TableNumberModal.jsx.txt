@@ -1,0 +1,1 @@
+Deleted TableNumberModal.jsx as part of TableNumberModal component removal.

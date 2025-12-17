@@ -1,41 +1,633 @@
-import { Link } from "react-router-dom";
+﻿import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { BestSellers } from "../components/best-sellers";
+import { productApi, authCartApi } from "../services/api";
+import toast from 'react-hot-toast';
+import "../styles/Home.css";
 
-function Home() {
+const Home = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentDiscountPage, setCurrentDiscountPage] = useState(0);
+  const [currentNewFoodPage, setCurrentNewFoodPage] = useState(0);
+
+  // Mock data for discount section
+  const discountItems = [
+    {
+      id: 1,
+      name: "Grilled Chicken",
+      price: 12.99,
+      discount: 20,
+      image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400"
+    },
+    {
+      id: 2,
+      name: "Beef Burger",
+      price: 10.99,
+      discount: 15,
+      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400"
+    },
+    {
+      id: 3,
+      name: "Caesar Salad",
+      price: 8.99,
+      discount: 25,
+      image: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400"
+    },
+    {
+      id: 4,
+      name: "Pasta Carbonara",
+      price: 14.99,
+      discount: 30,
+      image: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400"
+    },
+    {
+      id: 5,
+      name: "Salmon Steak",
+      price: 18.99,
+      discount: 20,
+      image: "https://images.unsplash.com/photo-1485921325833-c519f76c4927?w=400"
+    },
+    {
+      id: 6,
+      name: "Vegetable Pizza",
+      price: 11.99,
+      discount: 15,
+      image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400"
+    }
+  ];
+
+  // Mock data for popular dishes section
+  const popularDishes = [
+    {
+      id: 7,
+      name: "Spicy Ramen",
+      price: 13.99,
+      image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400"
+    },
+    {
+      id: 8,
+      name: "Margherita Pizza",
+      price: 15.99,
+      image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400"
+    },
+    {
+      id: 9,
+      name: "Sushi Platter",
+      price: 22.99,
+      image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400"
+    },
+    {
+      id: 10,
+      name: "Steak & Fries",
+      price: 24.99,
+      image: "https://images.unsplash.com/photo-1546833998-877b37c2e5c6?w=400"
+    },
+    {
+      id: 11,
+      name: "Thai Green Curry",
+      price: 16.99,
+      image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400"
+    },
+    {
+      id: 12,
+      name: "Fish Tacos",
+      price: 14.99,
+      image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400"
+    }
+  ];
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    console.log("Searching for:", searchQuery);
+  };
+
+  // Get image URL for products
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/150";
+    // Use the image path directly (should be a full URL from database)
+    return imagePath;
+  };
+
+  const itemsPerPage = 3;
+  const totalPages = Math.ceil(discountItems.length / itemsPerPage);
+  const totalNewFoodPages = Math.ceil(popularDishes.length / itemsPerPage);
+  
+  const getCurrentPageItems = () => {
+    const startIndex = currentDiscountPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return discountItems.slice(startIndex, endIndex);
+  };
+
+  const getCurrentNewFoodItems = () => {
+    const startIndex = currentNewFoodPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return popularDishes.slice(startIndex, endIndex);
+  };
+
+  const handleAddToCart = async (itemId) => {
+    // Get table number first
+    // const tableNumber = localStorage.getItem('tableNumber');
+    // if (!tableNumber) {
+    //   toast.error('Please enter your table number first', {
+    //     duration: 4000,
+    //     icon: '🔢',
+    //   });
+    //   navigate('/menu');
+    //   return;
+    // }
+
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    
+    try {
+      if (token && tableNumber) {
+        // Authenticated user with table - use backend API
+        const cartData = {
+          product_id: itemId,
+          quantity: 1,
+          status: 'starting',
+          table_id: parseInt(tableNumber, 10)
+        };
+        // Example fix in your addItem/addToCart function
+        await authCartApi.addItem(cartData);
+        toast.success('Added to cart!');
+        window.dispatchEvent(new Event('cartUpdated'));
+        setTimeout(() => navigate('/cart'), 500);
+      } else {
+        // Guest user - use localStorage
+        const existingCart = localStorage.getItem('cart');
+        const cart = existingCart ? JSON.parse(existingCart) : [];
+        
+        // Find the item in the mock data
+        const allItems = [...discountItems, ...popularDishes];
+        const item = allItems.find(i => i.id === itemId);
+        
+        if (item) {
+          const existingItemIndex = cart.findIndex(c => c.id === itemId);
+          
+          if (existingItemIndex > -1) {
+            cart[existingItemIndex].quantity += 1;
+          } else {
+            cart.push({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              image_path: item.image,
+              quantity: 1
+            });
+          }
+          
+          localStorage.setItem('cart', JSON.stringify(cart));
+          toast.success('Added to cart!');
+          window.dispatchEvent(new Event('cartUpdated'));
+          setTimeout(() => navigate('/cart'), 500);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
+    }
+  };
+
+  const handleDotClick = (pageIndex) => {
+    setCurrentDiscountPage(pageIndex);
+  };
+
+  const handleNewFoodDotClick = (pageIndex) => {
+    setCurrentNewFoodPage(pageIndex);
+  };
+
   return (
-    <div style={{ padding: "30px", textAlign: "center" }}>
-      <h1> Welcome to Smart QR Ordering</h1>
-      <p style={{ marginTop: "10px", fontSize: "18px" }}>
-        Scan the QR code on your table to view the menu, order food, and track your order easily.
-      </p>
+    <div className="home-page">
+      {/* Landing Hero Section */}
+      <section className="landing-hero">
+        <div className="landing-container">
+          <div className="landing-content">
+            <h1 className="landing-title">
+              Welcome to<br />
+              <span>Tos Kamong</span> Food
+            </h1>
+            <p className="landing-subtitle">
+              Experience authentic flavors and delightful meals crafted with passion. Order your favorites with just a tap.
+            </p>
+            <div className="landing-buttons">
+              <Link to="/menu" className="btn-outline">View Menu</Link>
+              <button className="btn-solid" onClick={() => navigate('/menu')}>Order Now</button>
+            </div>
+          </div>
+          <div className="landing-image">
+            <img 
+              src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800" 
+              alt="Delicious Food"
+              onError={(e) => {
+                console.error('Image failed to load:', e.target.src);
+                e.target.src = "https://via.placeholder.com/600x400?text=Delicious+Food";
+              }}
+            />
+          </div>
+        </div>
+      </section>
 
-      <div style={{ marginTop: "30px" }}>
-        <Link
-          to="/menu"
-          style={{
-            backgroundColor: "#4b8ee2",
-            color: "white",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontSize: "16px",
-          }}
-        >
-          View Menu
-        </Link>
-      </div>
+      {/* Best Menu Section - Now fetches from API */}
+      <BestSellers />
 
-      <div style={{ marginTop: "40px" }}>
-        <h3>How It Works</h3>
-        <ol style={{ textAlign: "left", display: "inline-block" }}>
-          <li>Scan the QR code placed on your table.</li>
-          <li>Browse the digital menu and choose your favorite dishes.</li>
-          <li>Place your order directly from your phone.</li>
-          <li>Track your order status in real time.</li>
-          <li>Pay online securely and enjoy your meal!</li>
-        </ol>
-      </div>
+      {/* Best Discount Section */}
+      <section className="best-discount-section" style={{ padding: '4rem 0', backgroundColor: '#ffffff' }}>
+        <div className="best-discount-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+          <div className="best-discount-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <span className="best-discount-badge" style={{
+              display: 'inline-block',
+              backgroundColor: '#333',
+              color: 'white',
+              padding: '0.5rem 1.5rem',
+              borderRadius: '20px',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              marginBottom: '1rem'
+            }}>Best Discount</span>
+            <h2 className="best-discount-title" style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Our Dish</h2>
+            <p className="best-discount-subtitle" style={{ color: '#666', fontSize: '1rem' }}>
+              Save big on your favorite meals with our special offers.
+            </p>
+          </div>
+          
+          <div className="best-discount-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '2.5rem',
+            maxWidth: '1500px',
+            margin: '0 auto',
+            padding: '0 2rem'
+          }}>
+            {getCurrentPageItems().map((item) => (
+                <div key={item.id} style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  border: '1px solid #f0f0f0',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                }}>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      zIndex: 10,
+                      color: '#333',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      letterSpacing: '0.3px'
+                    }}>{item.discount > 50 ? "Best Seller" : "50+ Sold"}</span>
+                    <div style={{
+                      height: '200px',
+                      backgroundColor: '#fafafa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#bbb',
+                      fontSize: '0.875rem',
+                      overflow: 'hidden'
+                    }}>
+                      <img 
+                        src={getImageUrl(item.image || item.image_path)} 
+                        alt={item.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}>
+                    <h3 style={{
+                      fontWeight: '600',
+                      fontSize: '1.05rem',
+                      color: '#1a1a1a',
+                      lineHeight: '1.4',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      margin: 0
+                    }}>{item.name}</h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            color: '#1a1a1a',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            lineHeight: 1
+                          }}>${parseFloat(item.price).toFixed(2)}</span>
+                          <span style={{
+                            fontSize: '0.9rem',
+                            color: '#999',
+                            textDecoration: 'line-through',
+                            fontWeight: '400'
+                          }}>${(parseFloat(item.price) / (1 - item.discount / 100)).toFixed(2)}</span>
+                        </div>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '4px',
+                          border: '1.5px solid #333',
+                          whiteSpace: 'nowrap',
+                          width: 'fit-content'
+                        }}>${((parseFloat(item.price) / (1 - item.discount / 100)) - parseFloat(item.price)).toFixed(2)} OFF</span>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(item.id);
+                        }}
+                        style={{
+                          padding: '0.65rem 1.5rem',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          border: '1.5px solid #d0d0d0',
+                          borderRadius: '25px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          alignSelf: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f5f5f5';
+                          e.target.style.borderColor = '#1a1a1a';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.borderColor = '#d0d0d0';
+                        }}
+                      >Add to Cart</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+
+          <div className="discount-pagination" style={{ marginTop: '3rem' }}>
+            <div className="pagination-dots" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              {Array.from({ length: totalPages }, (_, index) => (
+                <span 
+                  key={index}
+                  className={`dot ${currentDiscountPage === index ? 'active' : ''}`}
+                  onClick={() => handleDotClick(index)}
+                  style={{
+                    width: currentDiscountPage === index ? '24px' : '10px',
+                    height: '10px',
+                    borderRadius: currentDiscountPage === index ? '5px' : '50%',
+                    backgroundColor: currentDiscountPage === index ? '#000' : '#d9d9d9',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                ></span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Popular Dish Section */}
+      <section className="new-food-section" style={{ padding: '4rem 0', backgroundColor: '#ffffff' }}>
+        <div className="new-food-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+          <div className="new-food-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <span className="new-food-badge" style={{
+              display: 'inline-block',
+              backgroundColor: '#333',
+              color: 'white',
+              padding: '0.5rem 1.5rem',
+              borderRadius: '20px',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              marginBottom: '1rem'
+            }}>Popular</span>
+            <h2 className="new-food-title" style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Popular Dish</h2>
+            <p className="new-food-subtitle" style={{ color: '#666', fontSize: '1rem' }}>
+              Discover our most loved dishes by customers.
+            </p>
+          </div>
+          
+          <div className="new-food-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '2.5rem',
+            maxWidth: '1500px',
+            margin: '0 auto',
+            padding: '0 2rem'
+          }}>
+            {getCurrentNewFoodItems().length === 0 ? (
+              <p style={{ textAlign: 'center', padding: '20px', gridColumn: '1/-1' }}>No popular dishes available</p>
+            ) : (
+              getCurrentNewFoodItems().map((item) => (
+                <div key={item.id} style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  border: '1px solid #f0f0f0',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+                }}>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      padding: '0.35rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      zIndex: 10,
+                      color: '#333',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      letterSpacing: '0.3px'
+                    }}>{item.discount > 0 ? "50+ Sold" : "New"}</span>
+                    <div style={{
+                      height: '200px',
+                      backgroundColor: '#fafafa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#bbb',
+                      fontSize: '0.875rem',
+                      overflow: 'hidden'
+                    }}>
+                      <img 
+                        src={getImageUrl(item.image || item.image_path)} 
+                        alt={item.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
+                        onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                  }}>
+                    <h3 style={{
+                      fontWeight: '600',
+                      fontSize: '1.05rem',
+                      color: '#1a1a1a',
+                      lineHeight: '1.4',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      margin: 0
+                    }}>{item.name}</h3>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            color: '#1a1a1a',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            lineHeight: 1
+                          }}>${parseFloat(item.price).toFixed(2)}</span>
+                          {item.discount > 0 && (
+                            <>
+                              <span style={{
+                                fontSize: '0.9rem',
+                                color: '#999',
+                                textDecoration: 'line-through',
+                                fontWeight: '400'
+                              }}>${(parseFloat(item.price) / (1 - item.discount / 100)).toFixed(2)}</span>
+                            </>
+                          )}
+                        </div>
+                        {item.discount > 0 && (
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            backgroundColor: 'white',
+                            color: '#1a1a1a',
+                            padding: '0.3rem 0.6rem',
+                            borderRadius: '4px',
+                            border: '1.5px solid #333',
+                            whiteSpace: 'nowrap',
+                            width: 'fit-content'
+                          }}>${((parseFloat(item.price) / (1 - item.discount / 100)) - parseFloat(item.price)).toFixed(2)} OFF</span>
+                        )}
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(item.id);
+                        }}
+                        style={{
+                          padding: '0.65rem 1.5rem',
+                          backgroundColor: 'white',
+                          color: '#1a1a1a',
+                          border: '1.5px solid #d0d0d0',
+                          borderRadius: '25px',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          alignSelf: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f5f5f5';
+                          e.target.style.borderColor = '#1a1a1a';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.borderColor = '#d0d0d0';
+                        }}
+                      >Add to Cart</button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="new-food-pagination" style={{ marginTop: '3rem' }}>
+            <div className="pagination-dots" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              {Array.from({ length: totalNewFoodPages }, (_, index) => (
+                <span 
+                  key={index}
+                  className={`dot ${currentNewFoodPage === index ? 'active' : ''}`}
+                  onClick={() => handleNewFoodDotClick(index)}
+                  style={{
+                    width: currentNewFoodPage === index ? '24px' : '10px',
+                    height: '10px',
+                    borderRadius: currentNewFoodPage === index ? '5px' : '50%',
+                    backgroundColor: currentNewFoodPage === index ? '#000' : '#d9d9d9',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                ></span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer removed on Home page */}
     </div>
   );
-}
+};
 
 export default Home;

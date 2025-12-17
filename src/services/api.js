@@ -1,944 +1,1335 @@
-// API service for backend communication
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
- const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
-const API_ADMIN_PREFIX = '/v1/admin';
-const API_AUTH_PREFIX = '/v1/auth';
+// API Base Configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const STORAGE_BASE_URL = import.meta.env.VITE_STORAGE_URL ;
 
-class ApiService {
-  // Auth API method
-  async login(credentials) {
-      const response = await this.request(`${API_AUTH_PREFIX}/login`, {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-    return this.handleResponse(response);
+// Helper function to transform image paths to full URLs
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
+  if (imagePath.startsWith('/storage/')) return `${STORAGE_BASE_URL}${imagePath}`;
+  if (imagePath.startsWith('storage/')) return `${STORAGE_BASE_URL}/${imagePath}`;
+  return `${STORAGE_BASE_URL}/storage/${imagePath}`;
+};
+
+// Helper function to handle API responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
+  return response.json();
+};
 
-  async register(userData) {
-    const response = await this.request(`${API_AUTH_PREFIX}/register`, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    return this.handleResponse(response);
-  }
+// Helper function to create request options
+const createRequestOptions = (method, data = null, isFormData = false) => {
+  const options = {
+    method,
+    headers: {},
+  };
 
-  async getProfile() {
-    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
-      method: 'GET',
-    });
-    return this.handleResponse(response);
-  }
-
-  async updateProfile(profileData) {
-    const response = await this.request(`${API_AUTH_PREFIX}/profile`, {
-      method: 'PUT',
-      body: JSON.stringify(profileData),
-    });
-    return this.handleResponse(response);
-  }
-
-  async changePassword(passwordData) {
-    console.log('changePassword called with data:', passwordData);
-    
-    // Check if user is authenticated
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      throw new Error('Authentication required. Please log in again.');
-    }
-    
-    console.log('Auth token exists:', !!token);
-    
-    // Ensure field names match backend expectations
-    const requestData = {
-      current_password: passwordData.current_password,
-      new_password: passwordData.password, // Backend might expect 'new_password'
-      new_password_confirmation: passwordData.password_confirmation // Backend might expect 'new_password_confirmation'
-    };
-    
-    console.log('Sending request data:', requestData);
-    
-    try {
-      const response = await this.request(`${API_AUTH_PREFIX}/change-password`, {
-        method: 'POST',
-        body: JSON.stringify(requestData),
-      });
-      return this.handleResponse(response);
-    } catch (error) {
-      // Handle specific authentication errors
-      if (error.message.includes('Unauthenticated') || error.message.includes('401')) {
-        // Clear invalid token and redirect to login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        throw new Error('Session expired. Please log in again.');
-      }
-      
-      // If it's a validation error, try to extract field-specific errors
-      if (error.message.includes('Validation failed') && error.validationErrors) {
-        throw error; // Re-throw with validation details
-      }
-      throw error;
-    }
-  }
-
-  async refreshToken() {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      throw new Error('No token to refresh');
-    }
-
-    try {
-      const response = await this.request(`${API_AUTH_PREFIX}/refresh-token`, {
-        method: 'POST'
-      });
-      
-      const data = this.handleResponse(response);
-      
-      // Update stored token
-      if (data.data && data.data.token) {
-        localStorage.setItem('authToken', data.data.token);
-        console.log('Token refreshed successfully');
-        return data.data.token;
-      } else if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        console.log('Token refreshed successfully');
-        return data.token;
-      }
-      
-      throw new Error('Invalid refresh response format');
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      // If refresh fails, clear auth data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      throw new Error('Token refresh failed. Please log in again.');
-    }
-  }
-  constructor() {
-    this.baseURL = API_BASE_URL;
-    this.storageURL = API_BASE_URL.replace('/api', '') + '/storage';
-    this.publicURL = API_BASE_URL.replace('/api', '') + '/public';
-  }
-
-  // Utility method to construct proper image URLs
-  getImageUrl(imagePath) {
-    if (!imagePath) return '';
-    
-    // If it's already a full URL (like Unsplash), return as-is
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    const baseUrl = this.baseURL.replace('/api', '');
-    
-    // Handle Laravel Storage patterns based on your backend structure
-    if (imagePath.startsWith('category/')) {
-      // Backend returns: "category/filename.jpg" (categories)
-      // Construct: "http://localhost:8000/storage/category/filename.jpg"
-      return `${baseUrl}/storage/${imagePath}`;
-      
-    } else if (imagePath.startsWith('products/')) {
-      // Backend returns: "products/filename.jpg" (products)
-      // Construct: "http://localhost:8000/storage/products/filename.jpg"
-      return `${baseUrl}/storage/${imagePath}`;
-      
-    } else if (imagePath.startsWith('storage/')) {
-      // Backend returns: "storage/folder/filename.jpg" (full storage path)
-      // Construct: "http://localhost:8000/storage/folder/filename.jpg"
-      return `${baseUrl}/${imagePath}`;
-      
-    } else if (imagePath.startsWith('public/')) {
-      // Backend returns: "public/images/filename.jpg"
-      // Construct: "http://localhost:8000/public/images/filename.jpg"
-      return `${baseUrl}/${imagePath}`;
-      
-    } else if (imagePath.includes('/')) {
-      // Backend returns: "folder/filename.jpg" (assume storage)
-      // Construct: "http://localhost:8000/storage/folder/filename.jpg"
-      return `${baseUrl}/storage/${imagePath}`;
-      
+  if (data) {
+    if (isFormData) {
+      // For file uploads, let the browser set the Content-Type
+      options.body = data;
     } else {
-      // Backend returns: "filename.jpg" (just filename)
-      // Assume it's in storage/products: "http://localhost:8000/storage/products/filename.jpg"
-      return `${baseUrl}/storage/products/${imagePath}`;
+      options.headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(data);
     }
   }
 
-  // Method to handle different response formats from Laravel
-  handleResponse(response) {
-    // Handle Laravel Resource responses that might wrap data
-    if (response && response.data && Array.isArray(response.data)) {
-      return response.data;
-    }
-    if (response && response.data) {
-      return response.data;
-    }
-    if (response && Array.isArray(response)) {
-      return response;
-    }
-    return response.data || response;
+  return options;
+};
+
+// Helper to get auth headers (reads token from localStorage)
+const getAuthHeaders = () => {
+  const headers = {};
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+  return headers;
+};
 
-  // Generic request method
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+// Wrapper around fetch that injects Authorization header when available
+const fetchWithAuth = async (url, options = {}) => {
+  const authHeaders = getAuthHeaders();
+  options.headers = {
+    ...(options.headers || {}),
+    Accept: 'application/json',
+    ...authHeaders,
+  };
+  // If sending JSON body and Content-Type not set, add it
+  if (options.body && !(options.body instanceof FormData) && !options.headers['Content-Type']) {
+    options.headers['Content-Type'] = 'application/json';
+  }
+  console.debug('fetchWithAuth', url, options);
+  return fetch(url, options);
+};
 
-    // Default headers for JSON requests
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
 
-    // Get token from localStorage
-    const token = localStorage.getItem('authToken');
-    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-    let config = {
-      headers: {
-        ...defaultHeaders,
-        ...authHeaders,
-        ...options.headers,
-      },
-      mode: 'cors',
-      ...options,
-    };
+// ===========================================
+// CATEGORY API FUNCTIONS
+// ===========================================
 
-    // Remove Content-Type for FormData requests (let browser set it)
-    if (options.body instanceof FormData) {
-      // Remove Content-Type, then explicitly set Authorization header
-      delete config.headers['Content-Type'];
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
+export const categoryApi = {
+  // GET: Fetch all categories
+  getAll: async () => {
     try {
-      // Debug: print request headers for every API call
-      console.log('API Request:', {
-        url,
-        method: config.method || 'GET',
-        headers: config.headers,
-      });
-
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        let errorDetails = null;
-        
-        // Handle 401 Unauthorized - try to refresh token
-        if (response.status === 401) {
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            try {
-              console.log('Attempting token refresh due to 401...');
-              await this.refreshToken();
-              
-              // Retry the original request with new token
-              console.log('Retrying original request with refreshed token...');
-              const newToken = localStorage.getItem('authToken');
-              if (newToken) {
-                config.headers['Authorization'] = `Bearer ${newToken}`;
-                const retryResponse = await fetch(url, config);
-                
-                if (retryResponse.ok) {
-                  const retryData = await retryResponse.json();
-                  return retryData;
-                }
-              }
-            } catch (refreshError) {
-              console.error('Token refresh failed:', refreshError);
-              // Fall through to normal error handling
-            }
-          }
-        }
-        
-        try {
-          const errorData = await response.json();
-          errorDetails = errorData;
-          
-          // Handle specific 500 errors
-          if (response.status === 500) {
-            console.error('500 Server Error Details:', {
-              url,
-              method: config.method || 'GET',
-              errorData,
-              status: response.status
-            });
-            
-            if (errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
-              const tableNumber = this.extractTableNumberFromError(errorData.message);
-              errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
-            } else if (errorData.message && errorData.message.includes('foreign key constraint')) {
-              errorMessage = 'Cannot delete this item because it is being used by other records.';
-            } else if (errorData.message) {
-              errorMessage = errorData.message;
-            } else {
-              errorMessage = 'Internal server error. Please check the server logs for details.';
-            }
-          }
-          // Handle duplicate table number error specifically
-          else if (response.status === 500 && errorData.message && errorData.message.includes('UNIQUE constraint failed: table_numbers.number')) {
-            const tableNumber = this.extractTableNumberFromError(errorData.message);
-            errorMessage = `Table number ${tableNumber ? tableNumber : ''} already exists. Please choose a different table number.`;
-          } 
-          // Handle other validation errors
-          else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-          // Handle Laravel validation errors
-          else if (errorData.errors) {
-            const firstErrorKey = Object.keys(errorData.errors)[0];
-            const firstError = errorData.errors[firstErrorKey];
-            errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
-            
-            // Attach validation errors for field-specific handling
-            const error = new Error(errorMessage);
-            error.validationErrors = errorData.errors;
-            error.status = response.status;
-            throw error;
-          }
-          // Handle specific auth errors
-          else if (errorData.message) {
-            if (errorData.message.includes('current password is incorrect') || 
-                errorData.message.includes('current_password')) {
-              errorMessage = 'Current password is incorrect';
-            } else if (errorData.message.includes('password confirmation') || 
-                       errorData.message.includes('password_confirmation')) {
-              errorMessage = 'Password confirmation does not match';
-            } else {
-              errorMessage = errorData.message;
-            }
-          }
-        } catch (parseError) {
-          // If we can't parse the error, fall back to the text response
-          try {
-            const errorText = await response.text();
-            if (errorText.includes('UNIQUE constraint failed: table_numbers.number')) {
-              errorMessage = 'Table number already exists. Please choose a different table number.';
-            } else {
-              errorMessage = `HTTP ${response.status}: ${errorText}`;
-            }
-          } catch {
-            errorMessage = `HTTP ${response.status}: Server error`;
-          }
-        }
-        
-        throw new Error(errorMessage);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/categories`);
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
       }
-
-      const data = await response.json();
-      return data;
+      return result;
     } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error(`Cannot connect to server at ${this.baseURL}. Please check if the backend is running.`);
-      }
-
+      console.error('Error fetching categories:', error);
       throw error;
     }
-  }
+  },
 
-  // Helper method to extract table number from database error
-  extractTableNumberFromError(errorMessage) {
+  // GET: Fetch category by ID
+  getById: async (id) => {
     try {
-      // Look for pattern like "values (4, available, ...)"
-      const match = errorMessage.match(/values \((\d+),/);
-      return match ? match[1] : null;
-    } catch {
-      return null;
-    }
-  }
-
-  // Categories API methods
-  async getCategories() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/categories`);
-    const categories = this.handleResponse(response);
-    
-    // Transform categories to include properly formatted image URLs
-    return categories.map(category => ({
-      ...category,
-      image_url: this.getImageUrl(category.image_path),
-      originalImagePath: category.image_path
-    }));
-  }
-
-  async createCategory(categoryData) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories`, {
-      method: 'POST',
-      body: JSON.stringify(categoryData),
-    });
-    return response.data || response;
-  }
-
-  async updateCategory(id, categoryData) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(categoryData),
-    });
-    return response.data || response;
-  }
-
-  async deleteCategory(id) {
-      return this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Create category with file upload
-  async createCategoryWithFile(categoryData, imageFile) {
-    const formData = new FormData();
-    
-    // Add all category fields to FormData
-    Object.keys(categoryData).forEach(key => {
-      if (categoryData[key] !== null && categoryData[key] !== undefined) {
-        formData.append(key, categoryData[key]);
+      const response = await fetch(`${API_BASE_URL}/v1/auth/categories/${id}`);
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
       }
-    });
-    
-    // Add image file if provided
-    if (imageFile) {
-      formData.append('image_path', imageFile);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching category ${id}:`, error);
+      throw error;
     }
-    
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-      },
-      body: formData,
-    });
-    
-    console.log('Backend response for CATEGORY upload:', response);
-    console.log('Category image_path in response:', response?.image_path || response?.data?.image_path);
-    console.log('Full category response:', JSON.stringify(response, null, 2));
-    
-    return response.data || response;
-  }
+  },
 
-  // Update category with file upload
-  async updateCategoryWithFile(id, categoryData, imageFile) {
-    const formData = new FormData();
-    
-    // Add all category fields to FormData
-    Object.keys(categoryData).forEach(key => {
-      if (categoryData[key] !== null && categoryData[key] !== undefined) {
-        formData.append(key, categoryData[key]);
-      }
-    });
-    
-    // Add image file if provided
-    if (imageFile) {
-      formData.append('image_path', imageFile);
-    }
-    
-    // Use POST with _method override for file uploads (Laravel way)
-    formData.append('_method', 'PUT');
-    
-      const response = await this.request(`${API_ADMIN_PREFIX}/categories/${id}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-      },
-      body: formData,
-    });
-    return response.data || response;
-  }
-
-  // Products API methods
-  async getProducts() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products`);
-    const products = this.handleResponse(response);
-    
-    // Transform products to include properly formatted image URLs
-    return products.map(product => {
-      const imageUrl = this.getImageUrl(product.image_path);
-      
-      // Debug logging for image path construction
-      if (product.image_path) {
-        console.log('Image path transformation:', {
-          original: product.image_path,
-          constructed: imageUrl,
-          productName: product.name,
-          isUrl: product.image_path.startsWith('http')
-        });
-      }
-      
-      return {
-        ...product,
-        image_url: imageUrl,
-        originalImagePath: product.image_path
-      };
-    });
-  }
-
-  async createProduct(productData) {
-    console.log('Creating product with JSON data:', productData);
-      const response = await this.request(`${API_ADMIN_PREFIX}/products`, {
-      method: 'POST',
-      body: JSON.stringify(productData),
-    });
-    return response.data || response;
-  }
-
-  // Create product with file upload
-  async createProductWithFile(productData, imageFile) {
-    const formData = new FormData();
-    
-    // Add all product fields to FormData
-    Object.keys(productData).forEach(key => {
-      if (productData[key] !== null && productData[key] !== undefined) {
-        formData.append(key, productData[key]);
-      }
-    });
-    
-    // Add image file if provided
-    if (imageFile) {
-      // Try the most common Laravel field name for file uploads
-      formData.append('image_path', imageFile);
-      console.log('Adding image file to FormData as "image_path":', imageFile.name, imageFile.type, imageFile.size);
-      console.log('FormData entries:', [...formData.entries()].map(([key, value]) => [key, typeof value === 'object' ? `File: ${value.name || 'file'}` : value]));
-    }
-    
-    console.log('Creating product with FormData:', {
-      productData,
-      hasImageFile: !!imageFile,
-      formDataEntries: [...formData.entries()].map(([key, value]) => [key, typeof value === 'object' ? `File: ${value.name}` : value])
-    });
-    
-      const response = await this.request(`${API_ADMIN_PREFIX}/products`, {
-      method: 'POST',
-      headers: {
-        // Remove Content-Type to let browser set it with boundary for FormData
-        'Accept': 'application/json',
-      },
-      body: formData,
-    });
-    
-    console.log('Backend response for PRODUCT upload:', response);
-    console.log('Product image_path in response:', response?.image_path || response?.data?.image_path);
-    console.log('Full product response:', JSON.stringify(response, null, 2));
-    
-    return response.data || response;
-  }
-
-  async updateProduct(id, productData) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(productData),
-    });
-    return response.data || response;
-  }
-
-  async getProductById(id) {
+  // POST: Create new category
+  create: async (categoryData) => {
     try {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`);
-      const product = this.handleResponse(response);
-      
-      if (product) {
-        const imageUrl = this.getImageUrl(product.image_path);
-        return {
+      let requestData;
+      let isFormData = false;
+
+      // Check if image is included
+      if (categoryData.image_path) {
+        // Create FormData for file upload
+        requestData = new FormData();
+        requestData.append('name', categoryData.name);
+        requestData.append('image_path', categoryData.image_path);
+        isFormData = true;
+      } else {
+        // Use JSON for text-only data
+        requestData = { name: categoryData.name };
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/categories`,
+        createRequestOptions('POST', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update category by ID
+  update: async (id, categoryData) => {
+    try {
+      let requestData;
+      let isFormData = false;
+
+      // Check if image is included
+      if (categoryData.image_path) {
+        // Create FormData for file upload
+        requestData = new FormData();
+        if (categoryData.name) requestData.append('name', categoryData.name);
+        requestData.append('image_path', categoryData.image_path);
+        requestData.append('_method', 'PUT'); // Laravel requires this for file uploads with PUT
+        isFormData = true;
+      } else {
+        // Use JSON for text-only data
+        requestData = {};
+        if (categoryData.name) requestData.name = categoryData.name;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/categories/${id}`,
+        createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: Delete category by ID
+  delete: async (id) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/categories/${id}`,
+        createRequestOptions('DELETE')
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error deleting category ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+// ===========================================
+// PRODUCT API
+// ===========================================
+export const productApi = {
+  // GET: Fetch all products
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/auth/products`);
+      const result = await handleResponse(response);
+      // Keep all original fields from backend including image_path
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
           ...product,
-          image_url: imageUrl,
-          originalImagePath: product.image_path
-        };
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0),
+          is_best_seller: product.is_bestseller || product.is_best_seller || false
+        }));
       }
-      
-      return product;
+      return result;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+
+  // GET: Fetch single product by ID
+  getById: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/auth/products/${id}`);
+      const result = await handleResponse(response);
+      // Keep all original fields from backend
+      if (result.data) {
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+        result.data.is_best_seller = result.data.is_bestseller || result.data.is_best_seller || false;
+      }
+      return result;
     } catch (error) {
       console.error(`Error fetching product ${id}:`, error);
       throw error;
     }
-  }
+  },
 
-  // Update product with file upload
-  async updateProductWithFile(id, productData, imageFile) {
-    const formData = new FormData();
-    
-    // Add all product fields to FormData
-    Object.keys(productData).forEach(key => {
-      if (productData[key] !== null && productData[key] !== undefined) {
-        formData.append(key, productData[key]);
-      }
-    });
-    
-    // Add image file if provided
-    if (imageFile) {
-      formData.append('image_path', imageFile);
-    }
-    
-    // Use POST with _method override for file uploads (Laravel way)
-    formData.append('_method', 'PUT');
-    
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-      },
-      body: formData,
-    });
-    return response.data || response;
-  }
-
-  async deleteProduct(id) {
+  // POST: Create new product
+  create: async (productData) => {
     try {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-        method: 'DELETE',
-      });
-      return response.data || response;
+      const isFormData = productData && productData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData) {
+        requestData = new FormData();
+        requestData.append('name', productData.name);
+        requestData.append('price', productData.price);
+        requestData.append('discount', productData.discount || 0);
+        requestData.append('description', productData.description || '');
+        requestData.append('status', productData.status || 'available');
+        requestData.append('category_id', productData.category_id);
+        if (productData.image_path) {
+          requestData.append('image_path', productData.image_path);
+        }
+      } else {
+        requestData = productData;
+      }
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/products`,
+        createRequestOptions('POST', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update existing product
+  update: async (id, productData) => {
+    try {
+      const isFormData = productData && productData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData) {
+        requestData = new FormData();
+        if (productData.name) requestData.append('name', productData.name);
+        if (productData.price) requestData.append('price', productData.price);
+        if (productData.discount !== undefined) requestData.append('discount', productData.discount);
+        if (productData.description) requestData.append('description', productData.description);
+        if (productData.status) requestData.append('status', productData.status);
+        if (productData.category_id) requestData.append('category_id', productData.category_id);
+        if (productData.image_path) requestData.append('image_path', productData.image_path);
+        requestData.append('_method', 'PUT');
+      } else {
+        requestData = {};
+        if (productData.name) requestData.name = productData.name;
+        if (productData.price) requestData.price = productData.price;
+        if (productData.discount !== undefined) requestData.discount = productData.discount;
+        if (productData.description) requestData.description = productData.description;
+        if (productData.status) requestData.status = productData.status;
+        if (productData.category_id) requestData.category_id = productData.category_id;
+      }
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/products/${id}`,
+        createRequestOptions(isFormData ? 'POST' : 'PUT', requestData, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating product ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: Delete product by ID
+  delete: async (id) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/v1/auth/products/${id}`,
+        createRequestOptions('DELETE')
+      );
+      return await handleResponse(response);
     } catch (error) {
       console.error(`Error deleting product ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+// ===========================================
+// AUTHENTICATED /v1/auth API HELPERS
+// ===========================================
+
+const AUTH_BASE = `${API_BASE_URL}/v1/auth`;
+const CASHIER_BASE = `${API_BASE_URL}/v1/cashier`;
+
+// ===========================================
+// CASHIER API (No Mock Data - Always use real backend)
+// ===========================================
+
+export const cashierProductApi = {
+  getAll: async () => {
+    try {
+      const url = `${CASHIER_BASE}/products`;
+      console.log('🔵 Fetching cashier products from:', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      console.log('🔵 Response status:', response.status, response.statusText);
       
-      // Provide more specific error messages
-      if (error.message.includes('Foreign key constraint')) {
-        throw new Error('Cannot delete this product because it is being used in orders or other records. Please remove those references first.');
-      } else if (error.message.includes('Not found') || error.message.includes('404')) {
-        throw new Error('Product not found. It may have already been deleted.');
-      } else if (error.message.includes('Unauthorized') || error.message.includes('401')) {
-        throw new Error('You do not have permission to delete this product.');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Cashier products raw result:', result);
+      
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      console.log('✅ Transformed products:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching cashier products:', error.message);
+      console.error('❌ Full error:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      const url = `${CASHIER_BASE}/products/${id}`;
+      console.debug(`cashierProductApi.getById -> ${url}`);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+      }
+      console.debug('cashierProductApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching cashier product ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+export const cashierCategoryApi = {
+  getAll: async () => {
+    try {
+      const url = `${CASHIER_BASE}/categories`;
+      console.log('🔵 Fetching cashier categories from:', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      console.log('🔵 Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Cashier categories raw result:', result);
+      
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      console.log('✅ Transformed categories:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching cashier categories:', error.message);
+      console.error('❌ Full error:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      const url = `${CASHIER_BASE}/categories/${id}`;
+      console.debug(`cashierCategoryApi.getById -> ${url}`);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      console.debug('cashierCategoryApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching cashier category ${id}:`, error);
+      throw error;
+    }
+  }
+};
+
+export const authProductApi = {
+  getAll: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.products);
+      const url = `${AUTH_BASE}/products`;
+      console.debug('authProductApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      console.debug('authProductApi.getAll response ->', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching auth products:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.products.find(p => p.id === Number(id)) || null);
+      const url = `${AUTH_BASE}/products/${id}`;
+      console.debug(`authProductApi.getById -> ${url}`);
+      const response = await fetchWithAuth(url);
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+        result.data.price = parseFloat(result.data.price || 0);
+        result.data.discount = parseFloat(result.data.discount || 0);
+      }
+      console.debug('authProductApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching auth product ${id}:`, error);
+      throw error;
+    }
+  },
+
+  create: async (data) => {
+    try {
+      if (USE_MOCKS) {
+        const newId = _mock.products.length ? Math.max(..._mock.products.map(p => p.id)) + 1 : 1;
+        const newProduct = { id: newId, ...(data instanceof FormData ? Object.fromEntries(data.entries()) : data) };
+        _mock.products.push(newProduct);
+        return await mockDelay(newProduct);
+      }
+      const isFormData = data instanceof FormData;
+      const url = `${AUTH_BASE}/products`;
+      console.debug('authProductApi.create ->', url, isFormData ? 'FormData' : data);
+      const response = await fetchWithAuth(
+        url,
+        createRequestOptions('POST', data, isFormData)
+      );
+      const resData = await handleResponse(response);
+      console.debug('authProductApi.create response ->', resData);
+      return resData;
+    } catch (error) {
+      console.error('Error creating auth product:', error);
+      throw error;
+    }
+  },
+
+  update: async (id, data) => {
+    try {
+      if (USE_MOCKS) {
+        const idx = _mock.products.findIndex(p => p.id === Number(id));
+        if (idx === -1) throw new Error('Product not found');
+        const update = data instanceof FormData ? Object.fromEntries(data.entries()) : data;
+        _mock.products[idx] = { ..._mock.products[idx], ...update };
+        return await mockDelay(_mock.products[idx]);
+      }
+      const isFormData = data instanceof FormData;
+      const url = `${AUTH_BASE}/products/${id}`;
+      console.debug(`authProductApi.update -> ${url}`, isFormData ? 'FormData' : data);
+      const response = await fetchWithAuth(
+        url,
+        createRequestOptions(isFormData ? 'POST' : 'PUT', data, isFormData)
+      );
+      const resData = await handleResponse(response);
+      console.debug('authProductApi.update response ->', resData);
+      return resData;
+    } catch (error) {
+      console.error(`Error updating auth product ${id}:`, error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      if (USE_MOCKS) {
+        _mock.products = _mock.products.filter(p => p.id !== Number(id));
+        return await mockDelay({ success: true });
+      }
+      const url = `${AUTH_BASE}/products/${id}`;
+      console.debug(`authProductApi.delete -> ${url}`);
+      const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
+      const data = await handleResponse(response);
+      console.debug('authProductApi.delete response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error deleting auth product ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+export const authCategoryApi = {
+  getAll: async () => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.categories);
+      const url = `${AUTH_BASE}/categories`;
+      console.debug('authCategoryApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const result = await handleResponse(response);
+      // Transform image paths to full URLs
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      console.debug('authCategoryApi.getAll response ->', result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching auth categories:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      if (USE_MOCKS) return await mockDelay(_mock.categories.find(c => c.id === Number(id)) || null);
+      const url = `${AUTH_BASE}/categories/${id}`;
+      console.debug(`authCategoryApi.getById -> ${url}`);
+      const response = await fetchWithAuth(url);
+      const result = await handleResponse(response);
+      // Transform image path to full URL
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      console.debug('authCategoryApi.getById response ->', result);
+      return result;
+    } catch (error) {
+      console.error(`Error fetching auth category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  create: async (data) => {
+    try {
+      if (USE_MOCKS) {
+        const newId = _mock.categories.length ? Math.max(..._mock.categories.map(c => c.id)) + 1 : 1;
+        const newCat = data instanceof FormData ? Object.fromEntries(data.entries()) : data;
+        const created = { id: newId, ...newCat };
+        _mock.categories.push(created);
+        return await mockDelay(created);
+      }
+      const isFormData = data instanceof FormData;
+      const response = await fetchWithAuth(
+        `${AUTH_BASE}/categories`,
+        createRequestOptions('POST', data, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating auth category:', error);
+      throw error;
+    }
+  },
+
+  update: async (id, data) => {
+    try {
+      if (USE_MOCKS) {
+        const idx = _mock.categories.findIndex(c => c.id === Number(id));
+        if (idx === -1) throw new Error('Category not found');
+        const update = data instanceof FormData ? Object.fromEntries(data.entries()) : data;
+        _mock.categories[idx] = { ..._mock.categories[idx], ...update };
+        return await mockDelay(_mock.categories[idx]);
+      }
+      const isFormData = data instanceof FormData;
+      const response = await fetchWithAuth(
+        `${AUTH_BASE}/categories/${id}`,
+        createRequestOptions(isFormData ? 'POST' : 'PUT', data, isFormData)
+      );
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating auth category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      if (USE_MOCKS) {
+        _mock.categories = _mock.categories.filter(c => c.id !== Number(id));
+        return await mockDelay({ success: true });
+      }
+      const response = await fetchWithAuth(`${AUTH_BASE}/categories/${id}`, createRequestOptions('DELETE'));
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error deleting auth category ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+export const authCartApi = {
+  // GET: list all carts for the authenticated user
+  list: async () => {
+    try {
+      // Removed USE_MOCKS reference (was causing ReferenceError)
+      const url = `${AUTH_BASE}/carts`;
+      console.debug('authCartApi.list ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authCartApi.list response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error listing auth carts:', error);
+      throw error;
+    }
+  },
+  // GET: get current cart
+  getCart: async (id) => {
+    try {
+      const url = `${AUTH_BASE}/carts/${id}`;
+      console.debug('authCartApi.getCart ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authCartApi.getCart response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching auth cart:', error);
+      throw error;
+    }
+  },
+
+  // POST: add item to cart
+  addItem: async (itemData) => {
+    try {
+      const url = `${AUTH_BASE}/carts`;
+      // Always use tableId from localStorage for backend
+      const tableId = localStorage.getItem('tableId');
+      const payload = {
+        ...itemData,
+        table_id: tableId ? parseInt(tableId, 10) : undefined
+      };
+      console.debug('authCartApi.addItem ->', url, payload);
+      const response = await fetchWithAuth(
+        url,
+        createRequestOptions('POST', payload)
+      );
+      const data = await handleResponse(response);
+      console.debug('authCartApi.addItem response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error adding auth cart item:', error);
+      throw error;
+    }
+  },
+
+  // PUT: update cart item by id
+  updateItem: async (id, data) => {
+    try {
+      const url = `${AUTH_BASE}/carts/${id}`;
+      console.debug(`authCartApi.updateItem -> ${url}`, data);
+      const response = await fetchWithAuth(
+        url,
+        createRequestOptions('PUT', data)
+      );
+      const resData = await handleResponse(response);
+      console.debug('authCartApi.updateItem response ->', resData);
+      return resData;
+    } catch (error) {
+      console.error(`Error updating auth cart item ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: remove cart item
+  removeItem: async (id) => {
+    try {
+      const url = `${AUTH_BASE}/carts/${id}`;
+      console.debug(`authCartApi.removeItem -> ${url}`);
+      const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
+      const data = await handleResponse(response);
+      console.debug('authCartApi.removeItem response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error removing auth cart item ${id}:`, error);
+      throw error;
+    }
+  },
+};
+
+export const authOrdersApi = {
+  // POST: create new order
+  create: async (orderData) => {
+    try {
+      const url = `${AUTH_BASE}/orders`;
+      console.debug('authOrdersApi.create ->', url, orderData);
+      const response = await fetchWithAuth(url, createRequestOptions('POST', orderData));
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.create response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating auth order:', error);
+      throw error;
+    }
+  },
+
+  // GET: check order (generic endpoint)
+  checkOrder: async () => {
+    try {
+      const url = `${AUTH_BASE}/orders/checkOrder`;
+      console.debug('authOrdersApi.checkOrder ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.checkOrder response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error checking auth order:', error);
+      throw error;
+    }
+  },
+
+  // GET: find order by number
+  findByNumber: async (number) => {
+    try {
+      const url = `${AUTH_BASE}/orders/findByNumber/${number}`;
+      console.debug(`authOrdersApi.findByNumber -> ${url}`);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.findByNumber response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error finding auth order ${number}:`, error);
+      throw error;
+    }
+  },
+
+  // GET: order status list
+  getStatus: async () => {
+    try {
+      const url = `${AUTH_BASE}/orders/status`;
+      console.debug('authOrdersApi.getStatus ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.getStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching auth order statuses:', error);
+      throw error;
+    }
+  },
+
+  // GET: get all orders for authenticated user
+  getAll: async () => {
+    try {
+      const url = `${AUTH_BASE}/orders`;
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authOrdersApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching auth orders:', error);
+      throw error;
+    }
+  }
+};
+
+export const authPaymentApi = {
+  // GET: payment cancel
+  cancel: async () => {
+    try {
+      const url = `${AUTH_BASE}/payment/cancel`;
+      console.debug('authPaymentApi.cancel ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authPaymentApi.cancel response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error calling payment cancel:', error);
+      throw error;
+    }
+  },
+
+  // POST: payment create
+  create: async (paymentData) => {
+    try {
+      const url = `${AUTH_BASE}/payment/create`;
+      console.debug('authPaymentApi.create ->', url, paymentData);
+      const response = await fetchWithAuth(url, createRequestOptions('POST', paymentData));
+      const data = await handleResponse(response);
+      console.debug('authPaymentApi.create response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw error;
+    }
+  },
+
+  // GET: payment success
+  success: async () => {
+    try {
+      const url = `${AUTH_BASE}/payment/success`;
+      console.debug('authPaymentApi.success ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('authPaymentApi.success response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error calling payment success:', error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
+// TABLE API (For Table Number Verification)
+// ===========================================
+
+export const tableApi = {
+  // GET: Verify table number exists
+  verify: async (tableNumber) => {
+    try {
+      const url = `${AUTH_BASE}/tables/verify/${tableNumber}`;
+      console.debug('tableApi.verify ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('tableApi.verify response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error verifying table ${tableNumber}:`, error);
+      throw error;
+    }
+  },
+
+  // GET: Get all tables
+  getAll: async () => {
+    try {
+      const url = `${AUTH_BASE}/tables`;
+      console.debug('tableApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('tableApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching tables:', error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
+// ADMIN TABLE API (For Table Management)
+// ===========================================
+
+export const adminTableApi = {
+  // GET: Get all tables
+  getAll: async () => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables`;
+      console.debug('adminTableApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching admin tables:', error);
+      throw error;
+    }
+  },
+
+  // GET: Get table by ID
+  getById: async (id) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.getById ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.getById response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // POST: Create new table
+  create: async (tableData) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables`;
+      console.debug('adminTableApi.create ->', url, tableData);
+      const response = await fetchWithAuth(url, createRequestOptions('POST', tableData));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.create response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error creating admin table:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update table
+  update: async (id, tableData) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.update ->', url, tableData);
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', tableData));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.update response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE: Delete table
+  delete: async (id) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}`;
+      console.debug('adminTableApi.delete ->', url);
+      const response = await fetchWithAuth(url, createRequestOptions('DELETE'));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.delete response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error deleting admin table ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // PUT: Update table status
+  updateStatus: async (id, status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/tables/${id}/status`;
+      console.debug('adminTableApi.updateStatus ->', url, { status });
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', { status }));
+      const data = await handleResponse(response);
+      console.debug('adminTableApi.updateStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating table ${id} status:`, error);
+      throw error;
+    }
+  }
+};
+
+// ===========================================
+// ADMIN API (For Admin Dashboard)
+// ===========================================
+
+export const adminOrderApi = {
+  // GET: Get orders by status
+  getByStatus: async (status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders/status?status=${status}`;
+      console.debug('adminOrderApi.getByStatus ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.getByStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error fetching orders with status ${status}:`, error);
+      throw error;
+    }
+  },
+
+  // GET: Get all orders
+  getAll: async () => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders`;
+      console.debug('adminOrderApi.getAll ->', url);
+      const response = await fetchWithAuth(url);
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.getAll response ->', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      throw error;
+    }
+  },
+
+  // PUT: Update order status
+  updateStatus: async (orderId, status) => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/orders/${orderId}/status`;
+      console.debug('adminOrderApi.updateStatus ->', url, { status });
+      const response = await fetchWithAuth(url, createRequestOptions('PUT', { status }));
+      const data = await handleResponse(response);
+      console.debug('adminOrderApi.updateStatus response ->', data);
+      return data;
+    } catch (error) {
+      console.error(`Error updating order ${orderId} status:`, error);
+      throw error;
+    }
+  }
+};
+
+export const adminCategoryApi = {
+  getAll: async () => {
+    try {
+      const url = `${API_BASE_URL}/v1/admin/categories`;
+      console.debug('adminCategoryApi.getAll ->', url);
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(cat => ({
+          ...cat,
+          image: getImageUrl(cat.image || cat.image_path),
+          image_url: getImageUrl(cat.image || cat.image_path)
+        }));
+      }
+      return result;
+    } catch (error) {
+      console.error('Error fetching admin categories:', error);
+      throw error;
+    }
+  },
+
+  getById: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data) {
+        result.data.image = getImageUrl(result.data.image || result.data.image_path);
+        result.data.image_url = getImageUrl(result.data.image || result.data.image_path);
+      }
+      return result;
+    } catch (error) {
+      console.error(`Error fetching admin category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  create: async (categoryData) => {
+    try {
+      const isFormData = categoryData instanceof FormData || categoryData.image_path instanceof File;
+      let requestData;
+
+      if (isFormData && !(categoryData instanceof FormData)) {
+        requestData = new FormData();
+        requestData.append('name', categoryData.name);
+        if (categoryData.image_path) {
+          requestData.append('image_path', categoryData.image_path);
+        }
       } else {
-        throw new Error(`Failed to delete product: ${error.message}`);
+        requestData = categoryData;
       }
-    }
-  }
 
-  // Check if product can be deleted (optional method to check dependencies)
-  async checkProductDependencies(id) {
-    try {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}/dependencies`);
-      return this.handleResponse(response);
+      const options = {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      };
+
+      if (!(requestData instanceof FormData)) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(requestData);
+      } else {
+        options.body = requestData;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories`, options);
+      return await handleResponse(response);
     } catch (error) {
-      // If endpoint doesn't exist, assume no dependencies
-      console.log('Dependencies check not available, proceeding with delete');
-      return { canDelete: true, dependencies: [] };
+      console.error('Error creating admin category:', error);
+      throw error;
     }
-  }
+  },
 
-  async toggleProductStatus(id, status) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
-    return response.data || response;
-  }
-
-  // Tables API methods
-  async getTables() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/tables`);
-    return this.handleResponse(response);
-  }
-
-  async createTable(tableData) {
-    console.log('Creating table with data:', tableData);
-      const response = await this.request(`${API_ADMIN_PREFIX}/tables`, {
-      method: 'POST',
-      body: JSON.stringify(tableData),
-    });
-    // Handle Laravel Resource response format
-    return this.handleResponse(response);
-  }
-
-  async updateTable(id, tableData) {
-    console.log('Updating table with data:', tableData);
-      const response = await this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(tableData),
-    });
-    // Handle Laravel Resource response format
-    return this.handleResponse(response);
-  }
-
-  async deleteTable(id) {
-      return this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async updateTableStatus(id, status, currentNumber) {
-    // Send both number and status to satisfy DTO requirements
-      const response = await this.request(`${API_ADMIN_PREFIX}/tables/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ 
-        number: currentNumber,
-        status: status 
-      }),
-    });
-    // Handle Laravel Resource response format
-    return this.handleResponse(response);
-  }
-
-  // Users API methods
-  async getUsers() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users`);
-    return this.handleResponse(response);
-  }
-
-  async getUserById(id) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}`);
-    return this.handleResponse(response);
-  }
-
-  async createUser(userData) {
-    console.log('Creating user with data:', userData);
-    const response = await this.request(`${API_ADMIN_PREFIX}/users`, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    return this.handleResponse(response);
-  }
-
-  async createCashier(userData) {
-    console.log('Creating cashier with data:', userData);
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/cashier`, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    return this.handleResponse(response);
-  }
-
-  async updateUser(id, userData) {
-    console.log('Updating user with data:', userData);
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
-    return this.handleResponse(response);
-  }
-
-  async deleteUser(id) {
-    return this.request(`${API_ADMIN_PREFIX}/users/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async toggleUserStatus(id) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/${id}/toggle-status`, {
-      method: 'PATCH',
-    });
-    return this.handleResponse(response);
-  }
-
-  async getCashiers() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/cashiers`);
-    return this.handleResponse(response);
-  }
-
-  async getActiveUsers() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/active`);
-    return this.handleResponse(response);
-  }
-
-  async searchUsers(query) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/search?q=${encodeURIComponent(query)}`);
-    return this.handleResponse(response);
-  }
-
-  async getUserStatistics() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/users/statistics`);
-    return this.handleResponse(response);
-  }
-
-  // Dashboard API methods
-  async getDashboardData() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardEarnings() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/earnings`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardOrders() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/orders`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardTopProducts() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/top-products`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardFinancialSummary() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/financial-summary`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardEarningsChart() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/earnings/chart`);
-    return this.handleResponse(response);
-  }
-
-  async getDashboardCategoryPerformance() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/category-performance`);
-    return this.handleResponse(response);
-  }
-
-  async searchDashboardCategories(query) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/search/categories?q=${encodeURIComponent(query)}`);
-    return this.handleResponse(response);
-  }
-
-  async searchDashboardProducts(query) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/dashboard/search/products?q=${encodeURIComponent(query)}`);
-    return this.handleResponse(response);
-  }
-
-  // Reports API methods
-  async getReportsSummary() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/summary`);
-    return this.handleResponse(response);
-  }
-
-  async getReportsDetailed() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/detailed`);
-    return this.handleResponse(response);
-  }
-
-  async getSalesSummary() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/sales-summary`);
-    return this.handleResponse(response);
-  }
-
-  async getTotalEarnings() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/total-earnings`);
-    return this.handleResponse(response);
-  }
-
-  async getCurrentMonthEarnings() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/current-month-earnings`);
-    return this.handleResponse(response);
-  }
-
-  async getDailyEarnings() {
+  update: async (id, categoryData) => {
     try {
-      const response = await this.request(`${API_ADMIN_PREFIX}/reports/daily-earnings`);
-      return this.handleResponse(response);
-    } catch (error) {
-      // Expected error when no order data exists - use mock data instead
-      console.info(' Daily earnings endpoint unavailable (using demo data):', error.message);
-      throw new Error('Daily earnings data unavailable');
-    }
-  }
+      const isFormData = categoryData instanceof FormData || categoryData.image_path instanceof File;
+      let requestData;
+      let method = 'PUT';
 
-  async getMonthlyEarningsChart(year = null) {
+      if (isFormData && !(categoryData instanceof FormData)) {
+        requestData = new FormData();
+        if (categoryData.name) requestData.append('name', categoryData.name);
+        if (categoryData.image_path) requestData.append('image_path', categoryData.image_path);
+        requestData.append('_method', 'PUT');
+        method = 'POST';
+      } else if (categoryData instanceof FormData) {
+        requestData = categoryData;
+        requestData.append('_method', 'PUT');
+        method = 'POST';
+      } else {
+        requestData = categoryData;
+      }
+
+      const options = {
+        method: method,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      };
+
+      if (!(requestData instanceof FormData)) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(requestData);
+      } else {
+        options.body = requestData;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, options);
+      return await handleResponse(response);
+    } catch (error) {
+      console.error(`Error updating admin category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
     try {
-      const url = year 
-        ? `${API_ADMIN_PREFIX}/reports/monthly-earnings-chart?year=${year}`
-        : `${API_ADMIN_PREFIX}/reports/monthly-earnings-chart`;
-      const response = await this.request(url);
-      return this.handleResponse(response);
+      const response = await fetch(`${API_BASE_URL}/v1/admin/categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
     } catch (error) {
-      // Expected error when no order data exists - use mock data instead
-      console.info('Monthly earnings chart endpoint unavailable (using demo data):', error.message);
-      throw new Error('Monthly earnings chart data unavailable');
+      console.error(`Error deleting admin category ${id}:`, error);
+      throw error;
     }
   }
+};
 
-  async getCashierPerformance() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/cashier-performance`);
-    return this.handleResponse(response);
-  }
-
-  async getTotalCashiers() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/total-cashiers`);
-    return this.handleResponse(response);
-  }
-
-  async getProductPerformance() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/product-performance`);
-    return this.handleResponse(response);
-  }
-
-  async getProductsMostEarnings(limit = 10, startDate = null, endDate = null) {
-    let url = `${API_ADMIN_PREFIX}/reports/products-most-earnings?limit=${limit}`;
-    if (startDate && endDate) {
-      url += `&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+export const adminProductApi = {
+  getAll: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      const result = await handleResponse(response);
+      if (result.data && Array.isArray(result.data)) {
+        result.data = result.data.map(product => ({
+          ...product,
+          image: getImageUrl(product.image || product.image_path),
+          image_url: getImageUrl(product.image || product.image_path),
+          price: parseFloat(product.price || 0),
+          discount: parseFloat(product.discount || 0)
+        }));
+      }
+      return result;
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      throw error;
     }
-    const response = await this.request(url);
-    return this.handleResponse(response);
-  }
+  },
 
-  async getCategoryRevenue() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/category-revenue`);
-    return this.handleResponse(response);
-  }
+  getById: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error fetching admin product:', error);
+      throw error;
+    }
+  },
 
-  async getOrderStatus() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/order-status`);
-    return this.handleResponse(response);
-  }
+  create: async (productData) => {
+    try {
+      const formData = new FormData();
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
 
-  async getPaymentMethods() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/payment-methods`);
-    return this.handleResponse(response);
-  }
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error creating admin product:', error);
+      throw error;
+    }
+  },
 
-  async getTopCustomers(limit = 10) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/top-customers?limit=${limit}`);
-    return this.handleResponse(response);
-  }
+  update: async (id, productData) => {
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'PUT');
+      Object.keys(productData).forEach(key => {
+        if (productData[key] !== null && productData[key] !== undefined) {
+          formData.append(key, productData[key]);
+        }
+      });
 
-  async getRevenueComparison() {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/revenue-comparison`);
-    return this.handleResponse(response);
-  }
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error updating admin product:', error);
+      throw error;
+    }
+  },
 
-  async exportReportsPDF(data) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/export/pdf`, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    return this.handleResponse(response);
+  delete: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/admin/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
+        }
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('Error deleting admin product:', error);
+      throw error;
+    }
   }
+};
 
-  async exportReportsExcel(data) {
-    const response = await this.request(`${API_ADMIN_PREFIX}/reports/export/excel`, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    return this.handleResponse(response);
-  }
-  async getOrder() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
-    return this.handleResponse(response);
-  }
-  async cheackOrder(id) {
-      const response = await this.request(`${API_ADMIN_PREFIX}/orders/findByNumber/${id}`);
-    return this.handleResponse(response);
-  }
-
-  async acceptOrder(id) {
-    const response = await this.request(
-      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'accepted' }),
-      }
-    );
-    return this.handleResponse(response);
-  }
-  async cencalOrder(id) {
-    const response = await this.request(
-      `${API_ADMIN_PREFIX}/orders/markAsDone/${id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'cancel' }),
-      }
-    );
-    return this.handleResponse(response);
-  }
-  async cencalOrderList(id) {
-    const response = await this.request(
-      `${API_ADMIN_PREFIX}/orders/cancelOrder/${id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'cancel' }),
-      }
-    );
-    return this.handleResponse(response);
-  }
-
-}
-
-// Export singleton instance
-export default new ApiService();
+// ===========================================
+// EXPORT DEFAULT API OBJECT
+// ===========================================
+export default {
+  category: categoryApi,
+  product: productApi,
+  auth: {
+    product: authProductApi,
+    category: authCategoryApi,
+    cart: authCartApi,
+  },
+  cashier: {
+    product: cashierProductApi,
+    category: cashierCategoryApi,
+  },
+  admin: {
+    category: adminCategoryApi,
+    product: adminProductApi,
+    table: adminTableApi,
+    order: adminOrderApi,
+  },
+  table: tableApi,
+};

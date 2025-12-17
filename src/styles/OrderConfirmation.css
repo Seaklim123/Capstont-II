@@ -1,0 +1,186 @@
+.order-confirmation-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 1rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-confirmation-card {
+  max-width: 500px;
+  width: 100%;
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.success-icon {
+  width: 60px;
+  height: 60px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 2rem;
+}
+
+.order-confirmation-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.order-number {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.order-details-section {
+  background: #f9fafb;
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.order-details-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.order-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.order-detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.order-detail-value {
+  color: #333;
+  font-weight: 600;
+}
+
+.order-status-badge {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-starting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-accepted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancel {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.order-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-track-order {
+  width: 100%;
+  padding: 0.9rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-track-order:hover {
+  background: #5568d3;
+}
+
+.btn-back-home {
+  width: 100%;
+  padding: 0.9rem;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-home:hover {
+  background: #f0f4ff;
+}
+
+.loading-spinner {
+  font-size: 1.2rem;
+  color: #667eea;
+}
+
+/* Tablet and above */
+@media (min-width: 768px) {
+  .order-confirmation-container {
+    padding: 2rem 1rem;
+  }
+
+  .order-confirmation-card {
+    padding: 2.5rem;
+  }
+
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .order-confirmation-title {
+    font-size: 1.75rem;
+  }
+
+  .order-number {
+    font-size: 1.1rem;
+  }
+
+  .order-details-section {
+    padding: 1.5rem;
+  }
+
+  .order-action-buttons {
+    flex-direction: row;
+  }
+
+  .btn-track-order,
+  .btn-back-home {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
