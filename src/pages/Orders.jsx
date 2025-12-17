@@ -179,7 +179,7 @@ function Orders() {
                   <th>Status</th>
                   <th>Payment</th>
                   <th>Phone Number</th>
-                  <th>Items</th>
+                  {/* <th>Items</th> */}
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -221,7 +221,7 @@ function Orders() {
                     <td data-label="Phone Number" className="phone-cell">
                       {order.phonenumber || order.phoneNumber || 'N/A'}
                     </td>
-                    <td data-label="Items" className="items-cell">
+                    {/* <td data-label="Items" className="items-cell">
                       {order.order_lists && order.order_lists.length > 0 ? (
                         <div className="items-summary">
                           {order.order_lists.map((item, idx) => (
@@ -235,7 +235,7 @@ function Orders() {
                       ) : (
                         'No items'
                       )}
-                    </td>
+                    </td> */}
                     <td data-label="Actions" className="actions-cell">
                       <button 
                         className="view-btn"

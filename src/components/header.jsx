@@ -110,12 +110,12 @@ export function Header() {
 
           {/* Navigation Menu */}
           <nav className="nav-menu">
-            <Link 
+            {/* <Link 
               to="/" 
               className={`nav-link ${isActive('/') ? 'active' : ''}`}
             >
               Home
-            </Link>
+            </Link> */}
             <Link 
               to="/menu" 
               className={`nav-link ${isActive('/menu') ? 'active' : ''}`}

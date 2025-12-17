@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import InputPage from "./pages/InputPage";
 import MenuManagement from "./pages/MenuManagement";
@@ -25,7 +25,7 @@ function App() {
         <Header />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Home />} />
+            {/* <Route path="/" element={<Home />} /> */}
             <Route path="/menu" element={<Menu />} />
             <Route path="/input" element={<InputPage />} />
             <Route path="/admin/menu-management" element={<MenuManagement />} />

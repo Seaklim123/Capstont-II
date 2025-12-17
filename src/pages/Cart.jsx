@@ -153,7 +153,7 @@ const Cart = () => {
     return cartItems.reduce((total, item) => {
       // Access price from product if available
       const price = item.product?.price || item.price || 0;
-      console.log(' Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
+      // console.log(' Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
       return total + (parseFloat(price) * item.quantity);
     }, 0).toFixed(2);
   };
@@ -173,7 +173,7 @@ const Cart = () => {
     if (!tableId) {
       toast.error('No table ID found. Please scan the QR code again.', {
         duration: 4000,
-        icon: '🔢',
+        // icon: '🔢',
       });
       return;
     }

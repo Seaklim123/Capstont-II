@@ -61,7 +61,7 @@ function Payment() {
       const quantity = item.quantity || 0;
       const itemTotal = parseFloat(price) * quantity;
       
-      console.log(' Item:', item.name || item.product?.name, '| Price:', price, '| Qty:', quantity, '| Total:', itemTotal);
+      // console.log(' Item:', item.name || item.product?.name, '| Price:', price, '| Qty:', quantity, '| Total:', itemTotal);
       
       return total + itemTotal;
     }, 0);
