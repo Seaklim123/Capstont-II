@@ -454,7 +454,7 @@ const MenuItemForm = ({
               >
                 <option value="available">Available</option>
                 <option value="unavailable">Unavailable</option>
-                <option value="out_of_stock">Out of Stock</option>
+                {/* <option value="out_of_stock">Out of Stock</option> */}
               </select>
               <small className="text-gray text-sm">Set item availability status</small>
             </div>

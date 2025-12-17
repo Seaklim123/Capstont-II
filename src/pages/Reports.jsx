@@ -16,10 +16,14 @@ import {
   TrendingDown,
   FileText
 } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import ApiService from '../services/api';
 import ReportCard from '../components/Reports/ReportCard';
 import ReportChart from '../components/Reports/ReportChart';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import '../styles/reports.css';
 
 const Reports = () => {
@@ -163,43 +167,7 @@ const Reports = () => {
     }
   };
 
-  const handleExport = async (format) => {
-    const exportToast = toast.loading(`Exporting ${format.toUpperCase()}...`);
-    try {
-      const start_date = startDate ? startDate.toISOString().split('T')[0] : null;
-      const end_date = endDate ? endDate.toISOString().split('T')[0] : null;
-      const body = JSON.stringify({
-        start_date,
-        end_date,
-        report_type: 'sales', // or any other type if needed
-      });
-      const url = `/v1/admin/reports/export/${format}`;
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL + url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body,
-      });
-      if (!response.ok) throw new Error('Export failed');
-      const blob = await response.blob();
-      const fileName = `reports_${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
-      const urlBlob = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = urlBlob;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(urlBlob);
-      toast.success(`${format.toUpperCase()} exported successfully!`, { id: exportToast });
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast.error(`Failed to export ${format.toUpperCase()}`, { id: exportToast });
-    }
-  };
+  // Backend export removed. Use only frontend export (jsPDF, XLSX)
 
   const exportToPDFClient = async () => {
     const doc = new jsPDF();
@@ -545,7 +513,7 @@ const Reports = () => {
             Comprehensive business insights and performance metrics
           </p>
         </div>
-        <div className="flex gap-md items-center">
+        {/* <div className="flex gap-md items-center">
           <button 
             className="btn btn-secondary"
             onClick={loadReportsData}
@@ -572,7 +540,7 @@ const Reports = () => {
             })()}
           </select>
           {/* Date Range Picker */}
-          <div style={{ minWidth: 260 }}>
+          {/* <div style={{ minWidth: 260 }}>
             <DatePicker
               selectsRange
               startDate={startDate}
@@ -584,22 +552,24 @@ const Reports = () => {
               maxDate={new Date()}
               dateFormat="yyyy-MM-dd"
             />
+          </div> */}
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'flex-start' }}>
+            <button 
+              className="btn btn-primary"
+              onClick={exportToPDFClient}
+            >
+              <Download size={16} />
+              Export PDF
+            </button>
+            <button 
+              className="btn btn-success"
+              onClick={exportToExcelClient}
+            >
+              <FileText size={16} />
+              Export Excel
+            </button>
           </div>
-          <button 
-            className="btn btn-primary"
-            onClick={() => handleExport('pdf')}
-          >
-            <Download size={16} />
-            Export PDF
-          </button>
-          <button 
-            className="btn btn-success"
-            onClick={() => handleExport('excel')}
-          >
-            <FileText size={16} />
-            Export Excel
-          </button>
-        </div>
+        {/* </div> */} 
       </div>
 
       {/* Tab Navigation */}

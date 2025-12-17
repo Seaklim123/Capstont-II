@@ -615,7 +615,8 @@ class ApiService {
 
   async toggleProductStatus(id, status) {
       const response = await this.request(`${API_ADMIN_PREFIX}/products/${id}`, {
-      method: 'PATCH',
+      // method: 'PATCH',
+      method: 'PUT',
       body: JSON.stringify({ status }),
     });
     return response.data || response;

@@ -400,43 +400,33 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="card-content">
-            <div className="products-list">
+            <div className="products-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               {dashboardData.top_products && dashboardData.top_products.length > 0 ? (
                 dashboardData.top_products.slice(0, 5).map((item, index) => (
-                  <div key={item.id || index} className="product-item">
-                    <div className="product-rank">#{index + 1}</div>
-                    {item.image_path ? (
-                      <img 
-                        src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/storage/${item.image_path}`}
-                        alt={item.name}
-                        className="product-image"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <div className="product-placeholder">
-                        <PieChart size={16} />
-                      </div>
-                    )}
-                    <div className="product-info">
-                      <h4 className="product-name">{item.name || 'Unknown Product'}</h4>
-                      <p className="product-category">{item.category_name || 'Beverages'}</p>
-                      <p className="product-price">${parseFloat(item.price || 0).toFixed(2)}</p>
+                  <div
+                    key={item.id || index}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: '#f8fafc',
+                      borderRadius: '16px',
+                      boxShadow: '0 2px 8px 0 rgba(59,130,246,0.06)',
+                      padding: '1rem 1.2rem',
+                      minHeight: '90px',
+                      gap: '1.2rem',
+                    }}
+                  >
+                    <div style={{ minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3b82f6', color: '#fff', borderRadius: '50%', fontWeight: 600, fontSize: 18, boxShadow: '0 2px 8px 0 rgba(59,130,246,0.10)' }}>
+                      #{index + 1}
                     </div>
-                    <div className="product-stats">
-                      <div className="product-stats-row">
-                        <span className="stat-label">Orders:</span>
-                        <span className="stat-value orders">{item.total_orders || 0}</span>
-                      </div>
-                      <div className="product-stats-row">
-                        <span className="stat-label">Qty:</span>
-                        <span className="stat-value quantity">{item.total_quantity || 0}</span>
-                      </div>
-                      <div className="product-stats-row">
-                        <span className="stat-label">Revenue:</span>
-                        <span className="stat-value revenue">${parseFloat(item.total_revenue || 0).toFixed(2)}</span>
-                      </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 16, color: '#222', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 2 }} title={item.name}>{item.name || 'Unknown Product'}</div>
+                      <div style={{ fontSize: 13, color: '#3b82f6', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }}>{item.category_name || 'Beverages'}</div>
+                      {/* Optionally show price: <div style={{ fontSize: 13, color: '#64748b' }}>${parseFloat(item.price || 0).toFixed(2)}</div> */}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                      <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500, marginBottom: 2 }}>ORDERS: <span style={{ color: '#7c3aed', fontWeight: 700, fontSize: 18 }}>{item.total_orders || 0}</span></div>
+                      <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>QTY: <span style={{ color: '#059669', fontWeight: 700, fontSize: 18 }}>{item.total_quantity || 0}</span></div>
                     </div>
                   </div>
                 ))
