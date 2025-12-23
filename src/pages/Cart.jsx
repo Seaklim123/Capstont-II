@@ -95,58 +95,49 @@ const Cart = () => {
   //   }
   // };
 
+
   const updateQuantity = async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableId = localStorage.getItem('tableId');
-    try {
-      if (token && tableId) {
-        await authCartApi.updateItem(itemId, { quantity: newQuantity });
-      } else {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          const updatedCart = cart.map(item => 
-            item.id === itemId ? { ...item, quantity: newQuantity } : item
-          );
-          localStorage.setItem('cart', JSON.stringify(updatedCart));
-        }
-      }
-      const updatedCart = cartItems.map(item => 
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      );
-      setCartItems(updatedCart);
-      window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Quantity updated');
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast.error('Failed to update quantity');
-    }
-  };
+  if (newQuantity < 1) return;
+
+  try {
+    await authCartApi.updateItem(itemId, {
+      quantity: newQuantity
+    });
+
+    // Update UI state
+    const updatedCart = cartItems.map(item =>
+      item.id === itemId
+        ? { ...item, quantity: newQuantity }
+        : item
+    );
+
+    setCartItems(updatedCart);
+
+    window.dispatchEvent(new Event('cartUpdated'));
+    toast.success('Quantity updated');
+  } catch (error) {
+    console.error('Error updating quantity:', error);
+    toast.error('Failed to update quantity');
+  }
+};
+
 
   const removeItem = async (itemId) => {
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    const tableId = localStorage.getItem('tableId');
-    try {
-      if (token && tableId) {
-        await authCartApi.removeItem(itemId);
-      } else {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          const cart = JSON.parse(savedCart);
-          const updatedCart = cart.filter(item => item.id !== itemId);
-          localStorage.setItem('cart', JSON.stringify(updatedCart));
-        }
-      }
-      const updatedCart = cartItems.filter(item => item.id !== itemId);
-      setCartItems(updatedCart);
-      window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Item removed from cart');
-    } catch (error) {
-      console.error('Error removing item:', error);
-      toast.error('Failed to remove item');
-    }
-  };
+  try {
+    // Call backend API
+    await authCartApi.removeItem(itemId);
+
+    // Update UI immediately
+    const updatedCart = cartItems.filter(item => item.id !== itemId);
+    setCartItems(updatedCart);
+
+    window.dispatchEvent(new Event('cartUpdated'));
+    toast.success('Item removed from cart');
+  } catch (error) {
+    console.error('Error removing item:', error);
+    toast.error('Failed to remove item');
+  }
+};
 
   const calculateSubtotal = () => {
     console.log(' Calculating subtotal for items:', cartItems);
@@ -154,7 +145,8 @@ const Cart = () => {
       // Access price from product if available
       const price = item.product?.price || item.price || 0;
       // console.log(' Item:', item.name || item.product?.name, 'Price:', price, 'Quantity:', item.quantity);
-      return total + (parseFloat(price) * item.quantity);
+      // return total + (parseFloat(price) * item.quantity);
+        return total + ((parseFloat(price) * item.quantity) - (item.discount || 0));
     }, 0).toFixed(2);
   };
 
@@ -173,7 +165,7 @@ const Cart = () => {
     if (!tableId) {
       toast.error('No table ID found. Please scan the QR code again.', {
         duration: 4000,
-        // icon: '🔢',
+        
       });
       return;
     }
@@ -251,7 +243,7 @@ const Cart = () => {
                   // Use image_path from backend or localStorage
                   const imagePath = product.image_path || item.image_path || product.image || item.image;
                   const productImageUrl = getImageUrl(imagePath);
-                  
+                                    const productDiscount = product.discount || item.discount || 0;
                   console.log('Cart item:', item.id, 'Product:', productName, 'Image path:', imagePath, 'URL:', productImageUrl);
                   
                   return (
@@ -286,7 +278,28 @@ const Cart = () => {
                       
                       <div className="cart-item-details">
                         <h3 className="cart-item-name">{productName}</h3>
-                        <p className="cart-item-price">${parseFloat(productPrice).toFixed(2)}</p>
+                        <p className="cart-item-price">
+                          {parseFloat(productDiscount) > 0 ? (
+                            <>
+                              <span style={{ textDecoration: 'line-through', color: '#999', marginRight: 8 }}>
+                                ${parseFloat(productPrice).toFixed(2)}
+                              </span>
+                              <span style={{ color: '#e53935', fontWeight: 700, marginRight: 8 }}>
+                                ${(parseFloat(productPrice) - parseFloat(productDiscount)).toFixed(2)}
+                              </span>
+                              {/* <span style={{ color: '#ff9800', fontSize: '0.95em' }}>
+                                (Discounted from ${parseFloat(productPrice).toFixed(2)})
+                              </span> */}
+                            </>
+                          ) : (
+                            <>${parseFloat(productPrice).toFixed(2)}</>
+                          )}
+                        </p>
+                        {parseFloat(productDiscount) > 0 && (
+                          <div className="cart-item-discount" style={{ color: '#388e3c', fontSize: '0.98em', marginTop: '0.2em' }}>
+                            Discount: -${parseFloat(productDiscount).toFixed(2)}
+                          </div>
+                        )}
                         {item.note && (
                           <p className="cart-item-note" style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>
                             Note: {item.note}
@@ -316,7 +329,13 @@ const Cart = () => {
                       </div>
 
                       <div className="cart-item-total">
-                        ${(parseFloat(productPrice) * item.quantity).toFixed(2)}
+                        {/* ${(parseFloat(productPrice) * item.quantity).toFixed(2)} */}
+                        ${
+                          (
+                            (Number(productPrice || 0) - Number(productDiscount || 0)) 
+                            * item.quantity
+                          ).toFixed(2)
+                        }
                       </div>
 
                       <button 

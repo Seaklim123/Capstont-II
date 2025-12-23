@@ -182,13 +182,6 @@ function Menu() {
   
   const handleAddToCart = async (product_id) => {
     try {
-      // Ensure tableId exists in localStorage
-      // const tableId = localStorage.getItem('tableId');
-      // if (!tableId) {
-      //   console.error('No tableId found in localStorage');
-      //   return;
-      // }
-
       // Build payload according to backend validation rules
       const payload = {
         quantity: 1, // required, integer >= 1
@@ -201,6 +194,9 @@ function Menu() {
 
       // Call your API
       const response = await authCartApi.addItem(payload);
+
+      // Only fire event after backend confirms
+      window.dispatchEvent(new Event('cartUpdated'));
 
       console.log('Item added successfully:', response);
       alert('Item added to cart!');
@@ -422,7 +418,7 @@ function Menu() {
                           zIndex: 2
                         }}>Best Seller</span>
                       )}
-                      <span style={{
+                      {/* <span style={{
                         position: 'absolute',
                         top: '12px',
                         right: '12px',
@@ -433,7 +429,7 @@ function Menu() {
                         fontSize: '0.65rem',
                         fontWeight: '600',
                         zIndex: 2
-                      }}>50+ Sold</span>
+                      }}>50+ Sold</span> */}
                       {index === 0 && (
                         <div style={{
                           position: 'absolute',

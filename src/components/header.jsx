@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { authCartApi } from "../services/api";
 import "../styles/Header.css";
 
 export function Header() {
@@ -34,14 +35,30 @@ export function Header() {
 
   useEffect(() => {
     // Update cart count and table info
-    const updateCartCount = () => {
-      const cart = localStorage.getItem('cart');
-      if (cart) {
-        const items = JSON.parse(cart);
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-        setCartCount(totalItems);
+    const updateCartCount = async () => {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const tableId = localStorage.getItem('tableId');
+      if (token && tableId) {
+        // Authenticated: fetch from backend
+        try {
+          const cart = await authCartApi.getCart(tableId);
+          const totalItems = Array.isArray(cart)
+            ? cart.reduce((sum, item) => sum + (item.quantity || 0), 0)
+            : 0;
+          setCartCount(totalItems);
+        } catch (e) {
+          setCartCount(0);
+        }
       } else {
-        setCartCount(0);
+        // Guest: use localStorage
+        const cart = localStorage.getItem('cart');
+        if (cart) {
+          const items = JSON.parse(cart);
+          const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+          setCartCount(totalItems);
+        } else {
+          setCartCount(0);
+        }
       }
       // Update table number (id)
       const storedTableNumber = localStorage.getItem('tableNumber');

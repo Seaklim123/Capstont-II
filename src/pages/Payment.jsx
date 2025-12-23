@@ -289,10 +289,66 @@ function Payment() {
           </button>
         </div>
         <div className="order-summary-divider">
-          <div className="summary-row">
+          {/* List all products and their prices - Enhanced UI */}
+          {cartItems.length > 0 && (
+            <div style={{
+              marginBottom: '1.5rem',
+              background: '#f8f9fa',
+              borderRadius: '14px',
+              boxShadow: '0 2px 8px rgba(102,126,234,0.07)',
+              padding: '1.2rem 1.2rem 0.7rem 1.2rem',
+              border: '1.5px solid #e3e7f0'
+            }}>
+              <h4 style={{
+                margin: '0 0 1rem 0',
+                fontSize: '1.13rem',
+                fontWeight: 700,
+                color: '#222',
+                letterSpacing: '-0.5px'
+              }}>Order Items</h4>
+              {cartItems.map((item, idx) => {
+                const product = item.product || {};
+                const name = product.name || item.name || 'Product';
+                const price = parseFloat(product.price || item.price || 0);
+                const discount = parseFloat(product.discount || item.discount || 0);
+                const quantity = item.quantity || 1;
+                const finalPrice = discount > 0 ? price - discount : price;
+                return (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.55em 0',
+                    borderBottom: idx < cartItems.length - 1 ? '1px solid #e3e7f0' : 'none',
+                    fontSize: '1.04rem',
+                    fontWeight: 500
+                  }}>
+                    <span style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 600, color: '#222', fontSize: '1.05em' }}>{name}</span>
+                      <span style={{ color: '#888', fontSize: '0.97em', fontWeight: 400 }}>× {quantity}</span>
+                    </span>
+                    <span style={{ textAlign: 'right', minWidth: 80 }}>
+                      {discount > 0 ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', color: '#bbb', marginRight: 7, fontSize: '0.98em' }}>${price.toFixed(2)}</span>
+                          <span style={{ color: '#e53935', fontWeight: 700, fontSize: '1.08em' }}>${finalPrice.toFixed(2)}</span>
+                          <span style={{ color: '#388e3c', fontSize: '0.97em', marginLeft: 7 }}>
+                            -${discount.toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span style={{ color: '#222', fontWeight: 600 }}>${price.toFixed(2)}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {/* <div className="summary-row">
             <span>Subtotal</span>
             <span>${calculateSubtotal()}</span>
-          </div>
+          </div> */}
           <div className="summary-total">
             <span>Total</span>
             <span>${calculateTotal()}</span>
@@ -301,13 +357,13 @@ function Payment() {
 
         {/* Customer Information */}
         <div className="payment-section">
-          <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <User size={20} style={{ verticalAlign: 'middle' }} /> Customer Information
-          </h2>
+          </h2> */}
           
           <div className="form-group">
             <label className="form-label">
-              Phone Number (requirements)
+              Phone Number <span style={{ color: 'red' }}>*</span>
             </label>
             <input
               type="tel"
