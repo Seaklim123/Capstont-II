@@ -6,7 +6,7 @@ const QRCodeModal = ({ isOpen, onClose, table }) => {
 
   // Generate the menu URL for the QR code
   const generateQRContent = () => {
-    const customerMenuBaseUrl = 'http://localhost:5173';
+    const customerMenuBaseUrl = 'http://localhost:5174';
     if (!table || !table.id) {
       return '';
     }

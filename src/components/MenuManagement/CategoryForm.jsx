@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Link, FileImage } from 'lucide-react';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import '../../styles/image-preview.css';
 
 const CategoryForm = ({
@@ -193,136 +196,141 @@ const CategoryForm = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
-          <button 
-            className="btn btn-secondary btn-sm"
-            onClick={handleClose}
-            type="button"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="label">Category Name *</label>
-              <input
-                type="text"
-                id="label"
-                name="label"
-                value={formData.label}
-                onChange={handleInputChange}
-                placeholder="Enter category name (e.g., Appetizers, Main Courses, Desserts)"
-                className={`form-input ${errors.label ? 'border-error' : ''}`}
-              />
-              {errors.label && <span className="text-error text-sm">{errors.label}</span>}
-            </div>
-
-
-
-            <div className="form-group">
-              <label className="form-label">Upload Category Image (Optional)</label>
-              
-              {/* File Upload Area */}
-              {!imagePreview ? (
-                <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
-                  <ImageIcon size={32} className="mx-auto mb-3 text-gray" />
-                  <label htmlFor="category-image-upload" className="btn btn-primary btn-sm cursor-pointer">
-                    <Upload size={16} />
-                    Choose Category Image
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      aria-labelledby="category-modal-title"
+      aria-describedby="category-modal-description"
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 24,
+          p: 3,
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <h2 id="category-modal-title" style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+            {editingCategory ? 'Edit Category' : 'Add New Category'}
+          </h2>
+          <IconButton onClick={handleClose} size="small">
+            <X size={20} />
+          </IconButton>
+        </Box>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="label">Category Name *</label>
+            <input
+              type="text"
+              id="label"
+              name="label"
+              value={formData.label}
+              onChange={handleInputChange}
+              placeholder="Enter category name (e.g., Appetizers, Main Courses, Desserts)"
+              className={`form-input ${errors.label ? 'border-error' : ''}`}
+            />
+            {errors.label && <span className="text-error text-sm">{errors.label}</span>}
+          </div>
+          <div className="form-group" style={{ marginTop: 20 }}>
+            <label className="form-label">Upload Category Image (Optional)</label>
+            {!imagePreview ? (
+              <div className="border-dashed border-2 border-gray-light rounded p-4 text-center hover:border-primary transition-colors">
+                <ImageIcon size={32} className="mx-auto mb-3 text-gray" />
+                <label htmlFor="category-image-upload" className="btn btn-primary btn-sm cursor-pointer">
+                  <Upload size={16} />
+                  Choose Category Image
+                </label>
+                <input
+                  type="file"
+                  id="category-image-upload"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+                <p className="text-gray text-sm mt-3">
+                  Upload JPG, PNG, or WebP (Max 5MB)<br/>
+                  Recommended size: 300x200px for categories
+                </p>
+              </div>
+            ) : (
+              <div className="mb-3">
+                {isExistingImage && (
+                  <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
+                    <p className="text-blue-800 text-sm flex items-center gap-2">
+                      <FileImage size={16} />
+                      Current category image - Upload a new image to replace it
+                    </p>
+                  </div>
+                )}
+                <div className="image-preview-container border rounded overflow-hidden bg-gray-light">
+                  <div className="image-preview-wrapper">
+                    <img 
+                      src={imagePreview} 
+                      alt="Category Preview" 
+                      className="image-preview-img"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.nextElementSibling.style.display = 'flex';
+                      }}
+                      onLoad={(e) => {
+                        e.target.style.display = 'block';
+                        e.target.parentElement.nextElementSibling.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <div style={{display: 'none'}} className="image-error-state p-4 text-center text-gray flex flex-col items-center justify-center">
+                    <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Unable to load image</p>
+                  </div>
+                </div>
+                <div className="image-actions">
+                  <label htmlFor="category-image-change" className="btn btn-secondary btn-sm cursor-pointer">
+                    <Upload size={14} />
+                    {isExistingImage ? 'Replace Image' : 'Change Image'}
                   </label>
-                  <input
-                    type="file"
-                    id="category-image-upload"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <p className="text-gray text-sm mt-3">
-                    Upload JPG, PNG, or WebP (Max 5MB)<br/>
-                    Recommended size: 300x200px for categories
-                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={removeImage}
+                  >
+                    <X size={14} />
+                    Remove
+                  </button>
                 </div>
-              ) : (
-                // Image Preview
-                <div className="mb-3">
-                  {isExistingImage && (
-                    <div className="bg-blue-50 border border-blue-200 rounded p-2 mb-3">
-                      <p className="text-blue-800 text-sm flex items-center gap-2">
-                        <FileImage size={16} />
-                        Current category image - Upload a new image to replace it
-                      </p>
-                    </div>
-                  )}
-                  <div className="image-preview-container border rounded overflow-hidden bg-gray-light">
-                    <div className="image-preview-wrapper">
-                      <img 
-                        src={imagePreview} 
-                        alt="Category Preview" 
-                        className="image-preview-img"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.nextElementSibling.style.display = 'flex';
-                        }}
-                        onLoad={(e) => {
-                          e.target.style.display = 'block';
-                          e.target.parentElement.nextElementSibling.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                    <div style={{display: 'none'}} className="image-error-state p-4 text-center text-gray flex flex-col items-center justify-center">
-                      <ImageIcon size={24} className="mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Unable to load image</p>
-                    </div>
-                  </div>
-                  <div className="image-actions">
-                    <label htmlFor="category-image-change" className="btn btn-secondary btn-sm cursor-pointer">
-                      <Upload size={14} />
-                      {isExistingImage ? 'Replace Image' : 'Change Image'}
-                    </label>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      onClick={removeImage}
-                    >
-                      <X size={14} />
-                      Remove
-                    </button>
-                  </div>
-                  <input
-                    type="file"
-                    id="category-image-change"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="modal-footer">
-              <button 
-                type="button" 
-                className="btn btn-secondary"
-                onClick={handleClose}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-primary">
-                {editingCategory ? 'Update Category' : 'Add Category'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+                <input
+                  type="file"
+                  id="category-image-change"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            )}
+          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+            <button 
+              type="button" 
+              className="btn btn-secondary"
+              onClick={handleClose}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary">
+              {editingCategory ? 'Update Category' : 'Add Category'}
+            </button>
+          </Box>
+        </form>
+      </Box>
+    </Modal>
   );
 };
 

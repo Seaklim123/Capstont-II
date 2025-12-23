@@ -75,13 +75,25 @@ const Header = ({
 
   return (
     <header className={`admin-header ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      <div className="header-left">
-        {/* <button className="sidebar-toggle" onClick={toggleSidebar}>
-          <Menu size={20} />
+
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
+        {/* Menu icon for toggling sidebar (desktop & mobile) */}
+        <button
+          className="sidebar-toggle"
+          aria-label="Toggle sidebar"
+          onClick={toggleSidebar}
+          style={{
+            background: 'none',
+            border: 'none',
+            marginRight: '1rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '1.5rem',
+          }}
+        >
+          <Menu size={28} />
         </button>
-        <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-          <Menu size={20} />
-        </button> */}
         <div className="breadcrumb">
           <span>Admin</span>
           <span className="breadcrumb-separator">/</span>
@@ -91,17 +103,29 @@ const Header = ({
 
       <div className="header-right">
         <div className="header-actions">
-          {/* <button className="notification-btn">
-            <Bell size={18} />
-            <span className="notification-badge">3</span>
-          </button> */}
+         
           
-          <div className="user-menu" ref={dropdownRef}>
+          <div className="user-menu" ref={dropdownRef} style={{ position: 'relative' }}>
             <button 
               className="user-menu-trigger"
               onClick={toggleUserDropdown}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'none',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '24px',
+                minHeight: 0,
+                minWidth: 0,
+                boxShadow: 'none',
+                margin: 0,
+                transition: 'background 0.15s',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'}
+              onMouseOut={e => e.currentTarget.style.background = 'none'}
             >
-              <div className="user-avatar">{getUserInitial()}</div>
+              <div className="user-avatar" style={{ width: 36, height: 36, fontSize: 18, marginRight: 8 }}>{getUserInitial()}</div>
               <div className="user-info desktop-only">
                 <span className="user-name">{getUserDisplayName()}</span>
                 <span className="user-role">{getRoleBadge()}</span>
@@ -113,34 +137,30 @@ const Header = ({
 
             {/* User Dropdown Menu */}
             {userDropdownOpen && (
-              <div className="user-dropdown enhanced-dropdown">
-                <div className="user-dropdown-header enhanced-dropdown-header">
-                  <div className="user-avatar large enhanced-avatar">{getUserInitial()}</div>
-                  <div className="user-details">
+              <div className="user-dropdown enhanced-dropdown" style={{ display: 'flex', flexDirection: 'row', minWidth: 240, position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 100, boxShadow: '0 8px 32px 0 rgba(0,0,0,0.10)' }}>
+                {/* Left side: actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '18px 10px 18px 14px', borderRight: '1px solid #f1f5f9', minWidth: 100, background: '#f8fafc', height: '100%' }}>
+                  <button className="dropdown-item enhanced-dropdown-item" style={{ marginBottom: 12, width: '100%', justifyContent: 'flex-start' }} onClick={handleProfileClick}>
+                    <User size={18} style={{ marginRight: 10 }} />
+                    <span>Profile</span>
+                  </button>
+                  <button className="dropdown-item enhanced-dropdown-item" style={{ marginBottom: 12, width: '100%', justifyContent: 'flex-start' }}>
+                    <Settings size={18} style={{ marginRight: 10 }} />
+                    <span>Settings</span>
+                  </button>
+                  <button className="dropdown-item logout enhanced-logout" style={{ color: '#ef4444', width: '100%', justifyContent: 'flex-start', marginTop: 'auto' }} onClick={handleLogout}>
+                    <LogOut size={18} style={{ marginRight: 10 }} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+                {/* Right side: user info */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '18px 12px' }}>
+                  <div className="user-avatar large enhanced-avatar" style={{ marginBottom: 10 }}>{getUserInitial()}</div>
+                  <div className="user-details" style={{ textAlign: 'center' }}>
                     <div className="user-name enhanced-user-name">{getUserDisplayName()}</div>
                     <div className="user-role enhanced-user-role">{getRoleBadge()}</div>
                   </div>
                 </div>
-
-                <div className="dropdown-divider enhanced-divider"></div>
-
-                <div className="dropdown-menu enhanced-dropdown-menu">
-                  <button className="dropdown-item enhanced-dropdown-item" onClick={handleProfileClick}>
-                    <User size={16} />
-                    <span>Profile</span>
-                  </button>
-                  <button className="dropdown-item enhanced-dropdown-item">
-                    <Settings size={16} />
-                    <span>Settings</span>
-                  </button>
-                </div>
-
-                <div className="dropdown-divider enhanced-divider"></div>
-
-                <button className="dropdown-item logout enhanced-logout" onClick={handleLogout}>
-                  <LogOut size={16} />
-                  <span>Sign Out</span>
-                </button>
               </div>
             )}
           </div>

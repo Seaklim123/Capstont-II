@@ -1,4 +1,3 @@
-// src/pages/OrdersManagement.jsx
 import React, { useEffect, useState } from "react";
 import ApiService from "../services/api";
 import { Modal, Box, Button } from "@mui/material";
@@ -7,6 +6,21 @@ import { Package, Tag, Table, Clock, Check, X, Trash2 } from "lucide-react";
 import "../styles/OrdersManagement-simple.css";
 
 const OrdersManagement = () => {
+  // Mark payment as done
+  const handleMarkPaymentDone = async (orderId) => {
+    try {
+      // Call the new API endpoint
+      await ApiService.request(`/v1/admin/orders/update_payment_status/${orderId}`, {
+        method: 'PUT',
+      });
+      alert('Payment marked as done!');
+      await loadOrders();
+    } catch (error) {
+      alert('Failed to mark payment as done');
+      console.error(error);
+    }
+  };
+// ...existing code...
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewOrder, setViewOrder] = useState(null);
@@ -86,6 +100,8 @@ const OrdersManagement = () => {
     }
   };
   const handleCancelOrderList = async (id) => {
+    // Optimistically remove the cancelled item from selectedOrderItems
+    setSelectedOrderItems((prev) => prev.filter(item => item.id !== id));
     try {
       const res = await ApiService.cencalOrderList(id);
       console.log("OrderList Cancel:", res);
@@ -107,13 +123,13 @@ const OrdersManagement = () => {
         <h1 className="page-title">Orders Management</h1>
         <p className="page-subtitle">Manage all current orders and update their status</p>
       </div>
-      <Button 
+      {/* <Button 
         onClick={() => navigate("/create-order")}
         className="create-order-btn"
         variant="contained"
       >
         Create New Order
-      </Button>
+      </Button> */}
       <div className="orders-table-container">
         {loading ? (
           <div className="loading-container">
@@ -131,8 +147,7 @@ const OrdersManagement = () => {
                   <th>Discount</th>
                   <th>Status</th>
                   <th>Payment</th>
-                  {/* <th>Refund</th> */}
-                  
+                  <th>Payment Status</th>
                   <th>Price/Order</th>
                   <th>Phone Number</th>
                   <th>Items</th>
@@ -177,8 +192,22 @@ const OrdersManagement = () => {
                     )}
                   </td>
                     <td data-label="Payment">{item.payment}</td>
-                    {/* <td data-label="Refund">{item.refund}</td> */}
-                    <td data-label="Price/Order">{item.priceperorder}</td>
+                    <td data-label="Payment Status">
+                      {item.payment_status === 'done' ? (
+                        <span style={{ color: '#22c55e', fontWeight: 600 }}>Done</span>
+                      ) : (
+                        <Button
+                          variant="outlined"
+                          color="success"
+                          size="small"
+                          style={{ fontWeight: 600, borderRadius: 8, borderColor: '#22c55e', color: '#22c55e', padding: '2px 12px', minWidth: 0 }}
+                          onClick={() => handleMarkPaymentDone(item.id)}
+                        >
+                          Mark as Paid
+                        </Button>
+                      )}
+                    </td>
+                    <td data-label="Price/Order">{item.priceperorder.toFixed(2)}</td>
                     <td data-label="Phone">{item.phonenumber}</td>
                     <td data-label="Items">
                       <Button 
@@ -190,13 +219,13 @@ const OrdersManagement = () => {
                         View
                       </Button>
                     </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="10" className="no-orders">No orders found.</td>
                   </tr>
-                )}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="11" className="no-orders">No orders found.</td>
+                </tr>
+              )}
               </tbody>
             </table>
           </div>
@@ -212,30 +241,68 @@ const OrdersManagement = () => {
         <Box className="modal-container"
           sx={{
             position: 'absolute',
-            top: '50%',
+            top: '32px',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: { xs: '92vw', sm: '85vw', md: '75vw', lg: 800 },
-            maxWidth: '92vw',
-            height: '85vh',
-            maxHeight: '85vh',
+            transform: 'translateX(-50%)',
+            width: { xs: '98vw', sm: '90vw', md: 600, lg: 600 },
+            minWidth: { md: 350 },
+            maxWidth: '99vw',
+            height: 'auto',
+            maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            bgcolor: 'background.paper',
+            bgcolor: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '20px',
             p: 0,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            boxShadow: '0 8px 40px 0 rgba(0,0,0,0.18)',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            transition: 'box-shadow 0.2s',
           }}
         >
-          <div className="modal-header">
+          <div className="modal-header" style={{
+            background: 'linear-gradient(90deg, #e0e7ef 0%, #f8fafc 100%)',
+            borderBottom: '1px solid #e5e7eb',
+            padding: '32px 32px 16px 32px',
+            borderTopLeftRadius: '20px',
+            borderTopRightRadius: '20px',
+            boxShadow: '0 2px 8px 0 rgba(0,0,0,0.03)',
+            width: '100%',
+            textAlign: 'center',
+            position: 'relative',
+          }}>
+            {/* X Close Icon */}
+            <button
+              onClick={handleCloseItemsModal}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 24,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 6,
+                zIndex: 2,
+                borderRadius: '50%',
+                transition: 'background 0.15s',
+              }}
+              aria-label="Close"
+              title="Close"
+              onMouseOver={e => e.currentTarget.style.background = '#e5e7eb'}
+              onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <X size={26} color="#64748b" />
+            </button>
             <div className="header-content">
               <div className="header-info">
-                <h2 className="modal-title">Order Items</h2>
-                <p className="modal-subtitle">
+                <h2 className="modal-title" style={{ fontWeight: 700, fontSize: '1.5rem', color: '#22223b', marginBottom: 4 }}>Order Items</h2>
+                <p className="modal-subtitle" style={{ color: '#64748b', fontWeight: 500, fontSize: '1.1rem' }}>
                   {selectedOrderItems?.length || 0} item(s) • 
-                  ${selectedOrderItems?.reduce((sum, item) => sum + (parseFloat(item.cart?.product?.price || 0) * (item.cart?.quantity || 0)), 0).toFixed(2)} total
+                  <span style={{ color: '#22c55e', fontWeight: 700 }}>
+                    ${selectedOrderItems?.reduce((sum, item) => sum + (parseFloat(item.cart?.product?.price || 0) * (item.cart?.quantity || 0)), 0).toFixed(2)}
+                  </span> total
                 </p>
               </div>
             </div>
@@ -246,14 +313,15 @@ const OrdersManagement = () => {
                 {selectedOrderItems.map((orderItem, index) => (
                   <div key={orderItem.id} className="order-item-card">
                     <div className="item-layout">
-                      {/* Product Image */}
-                      <div className="product-image-container">
+                      {/* Product Image - Centered */}
+                      <div className="product-image-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto' }}>
                         {(orderItem.cart?.product?.image_url || orderItem.cart?.product?.image_path) ? (
                           <img 
                             src={orderItem.cart.product.image_url || 
                                  `http://localhost:8000/storage/${orderItem.cart.product.image_path}`}
                             alt={orderItem.cart.product.name || 'Product'}
                             className="product-image"
+                            style={{ display: 'block', margin: '0 auto' }}
                             onError={(e) => {
                               console.log('Image failed to load:', e.target.src);
                               console.log('Product data:', orderItem.cart.product);
@@ -262,17 +330,14 @@ const OrdersManagement = () => {
                             }}
                             onLoad={(e) => console.log('Image loaded successfully:', e.target.src)}
                           />
-                        ) : (
-                          console.log('No image found, product data:', orderItem.cart?.product)
+                        ) : null}
+                        {!(orderItem.cart?.product?.image_url || orderItem.cart?.product?.image_path) && (
+                          <div style={{ width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                            <svg className="placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
                         )}
-                        <div 
-                          className="no-image-placeholder" 
-                          style={{ display: (orderItem.cart?.product?.image_url || orderItem.cart?.product?.image_path) ? 'none' : 'flex' }}
-                        >
-                          <svg className="placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
                       </div>
 
                       {/* Product Details */}
@@ -335,7 +400,8 @@ const OrdersManagement = () => {
                            orderItem.status || 'Unknown'}
                         </span>
                         
-                        {orderItem.status !== 'cancel' && (
+                        {/* Disable Cancel if payment is done */}
+                        {orderItem.status !== 'cancel' && orders.find(o => o.id === orderItem.cart?.order_id)?.payment_status !== 'done' && (
                           <Button
                             onClick={() => handleCancelOrderList(orderItem.id)}
                             className="cancel-item-btn"
@@ -345,6 +411,10 @@ const OrdersManagement = () => {
                           >
                             Cancel
                           </Button>
+                        )}
+                        {/* If payment is done, show info instead of Cancel button */}
+                        {orderItem.status !== 'cancel' && orders.find(o => o.id === orderItem.cart?.order_id)?.payment_status === 'done' && (
+                          <span style={{color:'#64748b',fontWeight:500,fontSize:'0.95rem',marginLeft:8}}>Cannot cancel after payment</span>
                         )}
                       </div>
                     </div>

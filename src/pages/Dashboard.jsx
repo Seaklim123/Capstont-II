@@ -340,14 +340,14 @@ const Dashboard = () => {
                 <div className="stat-label">Total Earnings</div>
                 <div className="stat-value text-success">${(dashboardData.financial?.total_earnings || dashboardData.earnings?.total || 0).toLocaleString()}</div>
               </div>
-              <div className="stat-item">
+              {/* <div className="stat-item">
                 <div className="stat-label">Net Earnings</div>
                 <div className="stat-value text-primary">${(dashboardData.financial?.net_earnings || 0).toLocaleString()}</div>
               </div>
               <div className="stat-item">
                 <div className="stat-label">This Month</div>
                 <div className="stat-value text-info">${(dashboardData.earnings?.this_month || 0).toLocaleString()}</div>
-              </div>
+              </div> */}
               <div className="stat-item">
                 <div className="stat-label">Total Orders</div>
                 <div className="stat-value">{dashboardData.orders?.total || 0}</div>
@@ -364,14 +364,14 @@ const Dashboard = () => {
                 <div className="stat-label">Pending Orders</div>
                 <div className="stat-value text-warning">{dashboardData.orders?.pending || 0}</div>
               </div>
-              <div className="stat-item">
+              {/* <div className="stat-item">
                 <div className="stat-label">Cancelled Orders</div>
                 <div className="stat-value text-danger">{dashboardData.orders?.cancelled || 0}</div>
               </div>
               <div className="stat-item">
                 <div className="stat-label">Total Refunds</div>
                 <div className="stat-value text-warning">${(dashboardData.financial?.total_refunds || 0).toLocaleString()}</div>
-              </div>
+              </div> */}
               <div className="stat-item">
                 <div className="stat-label">Total Discounts</div>
                 <div className="stat-value text-info">${(dashboardData.financial?.total_discounts || 0).toLocaleString()}</div>
@@ -380,10 +380,10 @@ const Dashboard = () => {
                 <div className="stat-label">Today's Orders</div>
                 <div className="stat-value text-primary">{dashboardData.orders?.today || 0}</div>
               </div>
-              <div className="stat-item">
+              {/* <div className="stat-item">
                 <div className="stat-label">Today's Revenue</div>
                 <div className="stat-value text-success">${(dashboardData.earnings?.today || 0).toLocaleString()}</div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

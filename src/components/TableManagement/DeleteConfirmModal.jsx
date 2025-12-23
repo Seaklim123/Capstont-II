@@ -34,8 +34,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, table }) => {
               <div className="table-details">
                 <p><strong>Table:</strong> {table.table_name}</p>
                 <p><strong>Number:</strong> #{table.table_number}</p>
-                <p><strong>Location:</strong> {table.location}</p>
-                <p><strong>Capacity:</strong> {table.capacity} people</p>
+                {/* <p><strong>Location:</strong> {table.location}</p>
+                <p><strong>Capacity:</strong> {table.capacity} people</p> */}
               </div>
               
               <div className="warning-message">

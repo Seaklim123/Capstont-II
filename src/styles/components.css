@@ -319,19 +319,20 @@
 }
 
 /* === MODALS === */
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999999 !important;
+  background: rgba(0,0,0,0.6); /* darker overlay */
+  backdrop-filter: blur(8px);   /* stronger blur */
+  z-index: 2147483647 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
-  backdrop-filter: blur(2px);
   overflow-y: auto;
   overflow-x: hidden;
 }

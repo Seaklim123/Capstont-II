@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, ImageIcon, Link, FileImage } from 'lucide-react';
+import { X, Upload, ImageIcon } from 'lucide-react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import '../../styles/image-preview.css';
 
 const MenuItemForm = ({
@@ -75,28 +89,6 @@ const MenuItemForm = ({
     setErrors({});
   }, [editingItem, isOpen, categories]);
 
-  // Handle body scroll lock when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      // Prevent body scroll
-      document.body.classList.add('modal-open');
-      document.body.style.top = `-${window.scrollY}px`;
-    } else {
-      // Restore body scroll
-      document.body.classList.remove('modal-open');
-      const scrollY = document.body.style.top;
-      document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
-    }
-
-    // Cleanup function
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.body.style.top = '';
-    };
-  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -266,24 +258,26 @@ const MenuItemForm = ({
     }
   };
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">{editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
-          <button 
-            className="btn btn-secondary btn-sm"
-            onClick={handleClose}
-            type="button"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <form onSubmit={handleSubmit}>
+    return (
+      <Dialog open={isOpen} onClose={handleClose} aria-labelledby="menuitem-modal-title" maxWidth="xs" fullWidth={false}>
+        <Box
+          sx={{
+            width: 400,
+            p: 3,
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            mx: 'auto',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <h2 id="menuitem-modal-title" style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>
+              {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
+            </h2>
+            <IconButton onClick={handleClose} size="small">
+              <X size={20} />
+            </IconButton>
+          </Box>
+          <Box component="form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label" htmlFor="name">Item Name *</label>
               <input
@@ -294,10 +288,10 @@ const MenuItemForm = ({
                 onChange={handleInputChange}
                 placeholder="Enter item name"
                 className={`form-input ${errors.name ? 'border-error' : ''}`}
+                maxLength={50}
               />
               {errors.name && <span className="text-error text-sm">{errors.name}</span>}
             </div>
-
             <div className="form-group">
               <label className="form-label" htmlFor="category">Category *</label>
               <select
@@ -313,8 +307,10 @@ const MenuItemForm = ({
                   </option>
                 ))}
               </select>
-            </div>            <div className="form-row">
-              <div className="form-group flex-1">
+              {errors.category && <span className="text-error text-sm">{errors.category}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+              <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label" htmlFor="price">Price ($) *</label>
                 <input
                   type="number"
@@ -329,8 +325,7 @@ const MenuItemForm = ({
                 />
                 {errors.price && <span className="text-error text-sm">{errors.price}</span>}
               </div>
-
-              <div className="form-group flex-1">
+              <div className="form-group" style={{ flex: 1 }}>
                 <label className="form-label" htmlFor="discount">Discount (%)</label>
                 <input
                   type="number"
@@ -348,14 +343,17 @@ const MenuItemForm = ({
                   Enter percentage (0-100%)
                   {formData.price && formData.discount ? (
                     <span className="text-primary ml-2">
-                      • ${(parseFloat(formData.price) * parseFloat(formData.discount) / 100).toFixed(2)} off
-                      • Final price: ${(parseFloat(formData.price) - (parseFloat(formData.price) * parseFloat(formData.discount) / 100)).toFixed(2)}
+                      • ${(
+                        parseFloat(formData.price) * parseFloat(formData.discount) / 100
+                      ).toFixed(2)} off
+                      • Final price: ${(
+                        parseFloat(formData.price) - (parseFloat(formData.price) * parseFloat(formData.discount) / 100)
+                      ).toFixed(2)}
                     </span>
                   ) : null}
                 </small>
               </div>
             </div>
-
             <div className="form-group">
               <label className="form-label" htmlFor="description">Description *</label>
               <textarea
@@ -366,17 +364,15 @@ const MenuItemForm = ({
                 placeholder="Enter item description"
                 rows={3}
                 className={`form-input ${errors.description ? 'border-error' : ''}`}
+                maxLength={200}
               />
               {errors.description && <span className="text-error text-sm">{errors.description}</span>}
               <small className="text-gray text-sm">{formData.description.length}/200 characters</small>
             </div>
-
-            <div className="form-group">
+            <div className="form-group" style={{ marginTop: 20 }}>
               <label className="form-label">Upload Image (Optional)</label>
-              
-              {/* File Upload Area */}
               {!imagePreview ? (
-                <div className="border-dashed border-2 border-gray-light rounded p-6 text-center hover:border-primary transition-colors">
+                <div className="border-dashed border-2 border-gray-light rounded p-4 text-center hover:border-primary transition-colors">
                   <ImageIcon size={32} className="mx-auto mb-3 text-gray" />
                   <label htmlFor="image-upload" className="btn btn-primary btn-sm cursor-pointer">
                     <Upload size={16} />
@@ -395,7 +391,6 @@ const MenuItemForm = ({
                   </p>
                 </div>
               ) : (
-                // Image Preview
                 <div className="mb-3">
                   <div className="image-preview-container menu-item-image-preview">
                     <div className="image-preview-wrapper">
@@ -403,11 +398,11 @@ const MenuItemForm = ({
                         src={imagePreview} 
                         alt="Preview" 
                         className="image-preview-img"
-                        onError={(e) => {
+                        onError={e => {
                           e.target.style.display = 'none';
                           e.target.parentElement.nextElementSibling.style.display = 'flex';
                         }}
-                        onLoad={(e) => {
+                        onLoad={e => {
                           e.target.style.display = 'block';
                           e.target.parentElement.nextElementSibling.style.display = 'none';
                         }}
@@ -442,7 +437,6 @@ const MenuItemForm = ({
                 </div>
               )}
             </div>
-
             <div className="form-group">
               <label className="form-label" htmlFor="status">Status</label>
               <select
@@ -454,12 +448,10 @@ const MenuItemForm = ({
               >
                 <option value="available">Available</option>
                 <option value="unavailable">Unavailable</option>
-                {/* <option value="out_of_stock">Out of Stock</option> */}
               </select>
               <small className="text-gray text-sm">Set item availability status</small>
             </div>
-
-            <div className="modal-footer">
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
               <button 
                 type="button" 
                 className="btn btn-secondary"
@@ -470,11 +462,10 @@ const MenuItemForm = ({
               <button type="submit" className="btn btn-primary">
                 {editingItem ? 'Update Item' : 'Add Item'}
               </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            </Box>
+          </Box>
+        </Box>
+      </Dialog>
   );
 };
 

@@ -1,3 +1,7 @@
+:root {
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 80px;
+}
 /* ===== GLOBAL DESIGN SYSTEM ===== */
 
 :root {

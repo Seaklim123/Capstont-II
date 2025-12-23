@@ -55,109 +55,41 @@ const Reports = () => {
   const loadReportsData = async () => {
     // You can use startDate and endDate to filter API calls or local data here
     const loadingToast = toast.loading('Loading reports data...');
-    
     try {
       setLoading(true);
-      
-      // Load all report data in parallel
-      // You can pass startDate and endDate to your API if supported
-      const [
-        summaryResponse,
-        salesSummaryResponse,
-        monthlyChartResponse,
-        dailyEarningsResponse,
-        topProductsResponse,
-        categoryRevenueResponse,
-        cashierPerformanceResponse,
-        orderStatusResponse,
-        paymentMethodsResponse,
-        topCustomersResponse,
-        revenueComparisonResponse
-      ] = await Promise.allSettled([
-        ApiService.getReportsSummary(),
-        ApiService.getSalesSummary(),
-        ApiService.getMonthlyEarningsChart(selectedYear),
-        ApiService.getDailyEarnings(),
-        ApiService.getProductsMostEarnings(10, startDate ? startDate.toISOString().split('T')[0] : null, endDate ? endDate.toISOString().split('T')[0] : null),
-        ApiService.getCategoryRevenue(),
-        ApiService.getCashierPerformance(),
-        ApiService.getOrderStatus(),
-        ApiService.getPaymentMethods(),
-        ApiService.getTopCustomers(10),
-        ApiService.getRevenueComparison()
-      ]);
+      // Fetch detailed report data
+      const detailedResponse = await ApiService.getReportsDetailed();
+      // Accept both { data: ... } and direct object
+      const detailedData = detailedResponse?.data?.data || detailedResponse?.data || detailedResponse || {};
 
-      // Debug logs to understand API response structure
-      console.log('API Responses Debug:', {
-        monthlyChart: monthlyChartResponse.status === 'fulfilled' ? monthlyChartResponse.value : 'failed',
-        dailyEarnings: dailyEarningsResponse.status === 'fulfilled' ? dailyEarningsResponse.value : 'failed',
-        categoryRevenue: categoryRevenueResponse.status === 'fulfilled' ? categoryRevenueResponse.value : 'failed'
-      });
+      setData(prev => ({
+        ...prev,
+        salesSummary: {
+          all_time: {
+            earnings: detailedData.sales_summary?.all_time?.earnings || 0,
+            orders: detailedData.sales_summary?.all_time?.orders || 0,
+          },
+          this_month: {
+            earnings: detailedData.sales_summary?.this_month?.earnings || 0,
+            orders: detailedData.sales_summary?.this_month?.orders || 0,
+          }
+        },
+        orderStatus: {
+          completion_rate: detailedData.order_status?.completion_rate || 0,
+          pending: detailedData.order_status?.pending || 0,
+          completed: detailedData.order_status?.completed || 0,
+          cancelled: detailedData.order_status?.cancelled || 0
+        },
+        topProducts: detailedData.top_products_by_earnings || [],
+        categoryRevenue: detailedData.category_breakdown || [],
+        cashierPerformance: detailedData.cashier_performance || [],
+        monthlyChart: detailedData.monthly_earnings_chart || [],
+        dailyEarnings: detailedData.daily_earnings_current_month || [],
+        paymentMethods: detailedData.payment_methods || [],
+        topCustomers: detailedData.top_customers || [],
+        revenueComparison: detailedData.revenue_comparison || null
+      }));
 
-      setData({
-        summary: summaryResponse.status === 'fulfilled' ? summaryResponse.value?.data : null,
-        salesSummary: salesSummaryResponse.status === 'fulfilled' ? salesSummaryResponse.value?.data : null,
-        monthlyChart: monthlyChartResponse.status === 'fulfilled' && monthlyChartResponse.value?.data?.monthly_earnings_chart
-          ? monthlyChartResponse.value.data.monthly_earnings_chart
-          : monthlyChartResponse.status === 'fulfilled' && Array.isArray(monthlyChartResponse.value?.data)
-          ? monthlyChartResponse.value.data
-          : monthlyChartResponse.status === 'fulfilled' && Array.isArray(monthlyChartResponse.value)
-          ? monthlyChartResponse.value 
-          : [],
-        dailyEarnings: dailyEarningsResponse.status === 'fulfilled' && dailyEarningsResponse.value?.data?.daily_earnings_current_month
-          ? dailyEarningsResponse.value.data.daily_earnings_current_month
-          : dailyEarningsResponse.status === 'fulfilled' && Array.isArray(dailyEarningsResponse.value?.data)
-          ? dailyEarningsResponse.value.data
-          : dailyEarningsResponse.status === 'fulfilled' && Array.isArray(dailyEarningsResponse.value)
-          ? dailyEarningsResponse.value 
-          : [],
-        topProducts: topProductsResponse.status === 'fulfilled' && topProductsResponse.value?.data?.top_products_by_earnings
-          ? topProductsResponse.value.data.top_products_by_earnings
-          : topProductsResponse.status === 'fulfilled' && topProductsResponse.value?.data?.top_products
-          ? topProductsResponse.value.data.top_products
-          : topProductsResponse.status === 'fulfilled' && Array.isArray(topProductsResponse.value?.data)
-          ? topProductsResponse.value.data
-          : topProductsResponse.status === 'fulfilled' && Array.isArray(topProductsResponse.value)
-          ? topProductsResponse.value 
-          : [],
-        categoryRevenue: categoryRevenueResponse.status === 'fulfilled' && categoryRevenueResponse.value?.data?.category_breakdown
-          ? categoryRevenueResponse.value.data.category_breakdown
-          : categoryRevenueResponse.status === 'fulfilled' && Array.isArray(categoryRevenueResponse.value?.data)
-          ? categoryRevenueResponse.value.data
-          : categoryRevenueResponse.status === 'fulfilled' && Array.isArray(categoryRevenueResponse.value)
-          ? categoryRevenueResponse.value 
-          : [
-            { name: 'Main Dishes', revenue: 45600 },
-            { name: 'Beverages', revenue: 23400 },
-            { name: 'Desserts', revenue: 20500 },
-            { name: 'Appetizers', revenue: 15800 },
-            { name: 'Salads', revenue: 8700 }
-          ],
-        cashierPerformance: cashierPerformanceResponse.status === 'fulfilled' && cashierPerformanceResponse.value?.data?.cashier_performance
-          ? cashierPerformanceResponse.value.data.cashier_performance
-          : cashierPerformanceResponse.status === 'fulfilled' && Array.isArray(cashierPerformanceResponse.value?.data)
-          ? cashierPerformanceResponse.value.data
-          : cashierPerformanceResponse.status === 'fulfilled' && Array.isArray(cashierPerformanceResponse.value)
-          ? cashierPerformanceResponse.value 
-          : [],
-        orderStatus: orderStatusResponse.status === 'fulfilled' ? orderStatusResponse.value?.data : null,
-        paymentMethods: paymentMethodsResponse.status === 'fulfilled' && paymentMethodsResponse.value?.data?.payment_methods
-          ? paymentMethodsResponse.value.data.payment_methods
-          : paymentMethodsResponse.status === 'fulfilled' && Array.isArray(paymentMethodsResponse.value?.data)
-          ? paymentMethodsResponse.value.data
-          : paymentMethodsResponse.status === 'fulfilled' && Array.isArray(paymentMethodsResponse.value)
-          ? paymentMethodsResponse.value 
-          : [],
-        topCustomers: topCustomersResponse.status === 'fulfilled' && topCustomersResponse.value?.data?.top_customers
-          ? topCustomersResponse.value.data.top_customers
-          : topCustomersResponse.status === 'fulfilled' && Array.isArray(topCustomersResponse.value?.data)
-          ? topCustomersResponse.value.data
-          : topCustomersResponse.status === 'fulfilled' && Array.isArray(topCustomersResponse.value)
-          ? topCustomersResponse.value 
-          : [],
-        revenueComparison: revenueComparisonResponse.status === 'fulfilled' ? revenueComparisonResponse.value?.data : null
-      });
-      
       toast.success('Reports loaded successfully!', { id: loadingToast });
     } catch (error) {
       console.error('Error loading reports:', error);

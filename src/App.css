@@ -1,6 +1,76 @@
-/* ===== IMPORT GLOBAL STYLES ===== */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width, 240px);
+  height: 100vh;
+  background: #192132;
+  z-index: 1001;
+  transition: width var(--transition-normal), left var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width, 80px);
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 240px;
+    max-width: 80vw;
+    height: 100vh;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    background: rgba(25, 33, 50, 0.98);
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  }
+  .sidebar.collapsed {
+    width: 80px;
+  }
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    max-width: 80vw;
+    height: 100vh;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    background: rgba(25, 33, 50, 0.98); /* almost solid for overlay */
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  }
+  .sidebar.collapsed {
+    width: 80px;
+  }
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
 @import './styles/globals.css';
 @import './styles/components.css';
+/* ===== IMPORT GLOBAL STYLES ===== */
 
 /* ===== ROOT SETUP ===== */
 #root {
@@ -120,7 +190,7 @@
 }
 
 /* ===== HEADER ENHANCEMENTS ===== */
-.mobile-menu-toggle {
+/* .mobile-menu-toggle {
   display: none;
   background: none;
   border: none;
@@ -130,11 +200,11 @@
   padding: var(--space-sm);
   border-radius: var(--radius-md);
   min-height: auto;
-}
+} */
 
-.mobile-menu-toggle:hover {
+/* .mobile-menu-toggle:hover {
   background-color: var(--bg-tertiary);
-}
+} */
 
 .header-actions {
   display: flex;
@@ -142,38 +212,10 @@
   gap: var(--space-lg);
 }
 
-.notification-btn {
-  position: relative;
-  background: none;
-  border: none;
-  font-size: var(--font-lg);
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: var(--space-sm);
-  border-radius: var(--radius-md);
-  min-height: auto;
-}
 
-.notification-btn:hover {
-  background-color: var(--bg-tertiary);
-}
 
-.notification-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background-color: var(--error-color);
-  color: var(--text-white);
-  font-size: var(--font-xs);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  min-width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-}
+
+
 
 .dropdown-arrow {
   font-size: var(--font-xs);
@@ -223,6 +265,7 @@
 }
 
 /* ===== MAIN CONTENT STYLES ===== */
+
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-width);
@@ -923,21 +966,41 @@
 }
 
 @media (max-width: 768px) {
+  /* Desktop sidebar: pushes content */
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform var(--transition-normal);
+    position: relative;
+    width: var(--sidebar-width);
+    height: 100vh;
+    z-index: 1001;
+    transition: width var(--transition-normal);
+    left: 0;
+    top: 0;
   }
-  
-  .sidebar.mobile-open {
-    transform: translateX(0);
+  .sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
   }
-  
-  .main-content {
-    margin-left: 0;
-  }
-  
-  .main-content.sidebar-collapsed {
-    margin-left: 0;
+
+  @media (max-width: 1024px) {
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      z-index: 1001;
+      transform: translateX(-100%);
+      transition: transform var(--transition-normal);
+    }
+    .sidebar.mobile-open {
+      transform: translateX(0);
+    }
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+    .main-content,
+    .main-content.sidebar-collapsed {
+      margin-left: 0;
+    }
   }
   
   .admin-header {
@@ -1070,7 +1133,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  /* background-color: rgba(0, 0, 0, 0.5); */
   display: flex;
   align-items: center;
   justify-content: center;

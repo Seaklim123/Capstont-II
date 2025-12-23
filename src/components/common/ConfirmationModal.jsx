@@ -1,5 +1,13 @@
 import React from 'react';
 import { X, AlertTriangle, Trash2, Save, Info } from 'lucide-react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+
 
 const ConfirmationModal = ({
   isOpen,
@@ -13,95 +21,73 @@ const ConfirmationModal = ({
   itemName = null,
   icon = null
 }) => {
-  if (!isOpen) return null;
-
   // Icon mapping based on type
   const getIcon = () => {
     if (icon) return icon;
-    
     switch (type) {
       case 'danger':
-        return <Trash2 size={20} className="text-red-500" />;
+        return <Trash2 size={24} style={{ color: '#f44336' }} />;
       case 'warning':
-        return <AlertTriangle size={20} className="text-yellow-500" />;
+        return <AlertTriangle size={24} style={{ color: '#ff9800' }} />;
       case 'info':
-        return <Info size={20} className="text-blue-500" />;
+        return <Info size={24} style={{ color: '#2196f3' }} />;
       case 'save':
-        return <Save size={20} className="text-green-500" />;
+        return <Save size={24} style={{ color: '#4caf50' }} />;
       default:
-        return <AlertTriangle size={20} className="text-gray-500" />;
+        return <AlertTriangle size={24} style={{ color: '#757575' }} />;
     }
   };
 
-  // Button class based on type
-  const getConfirmButtonClass = () => {
+  // Button color based on type
+  const getConfirmButtonColor = () => {
     switch (type) {
       case 'danger':
-        return 'btn btn-danger';
+        return 'error';
       case 'warning':
-        return 'btn btn-warning';
+        return 'warning';
       case 'info':
-        return 'btn btn-primary';
+        return 'primary';
       case 'save':
-        return 'btn btn-success';
+        return 'success';
       default:
-        return 'btn btn-primary';
-    }
-  };
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+        return 'primary';
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="confirmation-modal">
-        <div className="modal-header">
-          <div className="modal-title-section">
+    <Dialog open={isOpen} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" gap={1}>
             {getIcon()}
-            <h3>{title}</h3>
-          </div>
-          <button 
-            className="close-btn"
-            onClick={onClose}
-            type="button"
-          >
+            <span style={{ fontWeight: 600 }}>{title}</span>
+          </Box>
+          <IconButton onClick={onClose} size="small" aria-label="close">
             <X size={20} />
-          </button>
-        </div>
-        
-        <div className="modal-body">
-          <p>
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box mt={1} mb={2}>
+          <span>
             {message}
             {itemName && (
               <>
-                {' '}
-                <strong>"{itemName}"</strong>
+                {' '}<strong>"{itemName}"</strong>
               </>
             )}
-          </p>
-        </div>
-        
-        <div className="modal-actions">
-          <button 
-            className="btn btn-outline"
-            onClick={onClose}
-            type="button"
-          >
-            {cancelText}
-          </button>
-          <button 
-            className={getConfirmButtonClass()}
-            onClick={onConfirm}
-            type="button"
-          >
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
+          </span>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="outlined">
+          {cancelText}
+        </Button>
+        <Button onClick={onConfirm} variant="contained" color={getConfirmButtonColor()} autoFocus>
+          {confirmText}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

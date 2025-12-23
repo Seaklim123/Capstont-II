@@ -287,6 +287,7 @@ export const AuthProvider = ({ children }) => {
       'cashier': [
         'view_dashboard',
         'manage_orders',
+        'manage_menu',
         'view_menu',
         'view_tables',
         'view_reports'

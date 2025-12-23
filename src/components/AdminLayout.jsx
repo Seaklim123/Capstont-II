@@ -36,42 +36,36 @@ const AdminLayout = () => {
       path: '/dashboard',
       name: 'Dashboard',
       icon: <LayoutDashboard size={20} />, 
-      description: 'Overview & Analytics',
       show: true
     },
     {
       path: '/orders',
       name: 'Orders Management',
       icon: <ClipboardList size={20} />, 
-      description: 'Manage current orders',
       show: true
     },
     {
       path: '/menu',
       name: 'Menu Management',
       icon: <UtensilsCrossed size={20} />, 
-      description: 'Add/Edit food items',
       show: true
     },
     {
       path: '/tables',
       name: 'Table Management',
       icon: <Table size={20} />, 
-      description: 'Manage tables & QR codes',
       show: true
     },
     {
       path: '/users',
       name: 'Users/Staff',
       icon: <Users size={20} />, 
-      description: 'Staff & permissions',
       show: user && (user.role === 'founder_restaurant' || (hasRole && hasRole('founder_restaurant')))
     },
     {
       path: '/reports',
       name: 'Reports',
       icon: <BarChart3 size={20} />, 
-      description: 'Sales & analytics',
       show: user && ((user.permissions && user.permissions.includes('view_reports')) || (hasPermission && hasPermission('view_reports')))
     }
   ];
@@ -79,11 +73,47 @@ const AdminLayout = () => {
   return (
     <>
       {/* Sidebar (now acts as overlay on mobile) */}
+
+      {/* Mobile overlay for sidebar */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-overlay active"
+          onClick={toggleSidebar}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.3)',
+            zIndex: 999,
+          }}
+        />
+      )}
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60px' }}>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', height: '60px', padding: '0 1rem' }}>
+          <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', height: '60px' }}>
             <img src="/public/TosOrder-logo.png" alt="TOS KAMONG Logo" style={{ width: '50px', height: '60px', objectFit: 'contain' }} />
           </div>
+          {/* Only show close icon on mobile overlay */}
+          {mobileMenuOpen ? (
+            <button
+              className="sidebar-close-btn"
+              aria-label="Close sidebar"
+              onClick={toggleSidebar}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                marginLeft: 'auto',
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          ) : null}
           {!sidebarCollapsed && (
             <h2 className="sidebar-title" style={{ textAlign: 'center', width: '100%', margin: 0 }}>
               TOS KAMONG
@@ -104,7 +134,6 @@ const AdminLayout = () => {
                   {!sidebarCollapsed && (
                     <div className="nav-text">
                       <span className="nav-name">{item.name}</span>
-                      <span className="nav-description">{item.description}</span>
                     </div>
                   )}
                 </Link>

@@ -7,8 +7,10 @@ import CategoriesTable from '../components/MenuManagement/CategoriesTable';
 import CategoryForm from '../components/MenuManagement/CategoryForm';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import ApiService from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const MenuManagement = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -22,6 +24,9 @@ const MenuManagement = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Categories state
   const [editingCategory, setEditingCategory] = useState(null);
@@ -41,10 +46,14 @@ const MenuManagement = () => {
     
     try {
       setLoading(true);
-      const [productsResponse, categoriesResponse] = await Promise.all([
-        ApiService.getProducts(),
-        ApiService.getCategories()
-      ]);
+      let productsResponse, categoriesResponse;
+      if (user && user.role === 'cashier') {
+        productsResponse = await ApiService.getCashierProducts();
+        categoriesResponse = await ApiService.getCashierCategories();
+      } else {
+        productsResponse = await ApiService.getProducts();
+        categoriesResponse = await ApiService.getCategories();
+      }
       
       // Transform items data to ensure consistent field names
       const transformedItems = productsResponse.map(item => ({
@@ -69,7 +78,15 @@ const MenuManagement = () => {
         updated_at: category.updated_at
       }));
       
-      setItems(transformedItems);
+      // Sort items by created_at (or id) descending so newest appear first
+      const sortedItems = [...transformedItems].sort((a, b) => {
+        if (a.created_at && b.created_at) {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
+        // fallback to id if created_at is missing
+        return (b.id || 0) - (a.id || 0);
+      });
+      setItems(sortedItems);
       setCategoriesList(transformedCategories);
       
       // Debug: Log image URLs for troubleshooting (first 3 items only)
@@ -113,6 +130,7 @@ const MenuManagement = () => {
     }
 
     setFilteredItems(filtered);
+    setCurrentPage(1); // Reset to first page on filter change
   }, [items, searchTerm, selectedCategory]);
 
   const handleAddItem = () => {
@@ -218,6 +236,16 @@ const MenuManagement = () => {
       
       // Reload data to get updated list (without showing loading toast)
       await loadData(false);
+      // Move the newly added or updated item to the top of the list
+      setItems(prevItems => {
+        // Find the new/updated item in the loaded data
+        const newItem = items.find(i => i.name === backendData.name && i.description === backendData.description);
+        if (newItem) {
+          // Remove if already exists (for update), then add to top
+          return [newItem, ...prevItems.filter(i => i.id !== newItem.id)];
+        }
+        return prevItems;
+      });
       setShowForm(false);
       setEditingItem(null);
     } catch (err) {
@@ -475,13 +503,45 @@ const MenuManagement = () => {
             </div>
 
             {/* Menu Items Table */}
+            {/* Pagination logic: slice filteredItems for current page */}
             <MenuItemsTable
-              items={filteredItems}
+              items={filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
               categories={categoriesList}
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
               onToggleAvailability={handleToggleAvailability}
             />
+            {/* Pagination Controls */}
+            {filteredItems.length > itemsPerPage && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={{ marginRight: 8 }}
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.ceil(filteredItems.length / itemsPerPage) }, (_, i) => (
+                  <button
+                    key={i + 1}
+                    className={`btn btn-sm ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ margin: '0 2px' }}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredItems.length / itemsPerPage), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredItems.length / itemsPerPage)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </>
         ) : (
           <>

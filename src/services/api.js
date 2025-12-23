@@ -3,8 +3,71 @@
  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 const API_ADMIN_PREFIX = '/v1/admin';
 const API_AUTH_PREFIX = '/v1/auth';
-
+const API_CASHIER_PREFIX = '/v1/cashier';
 class ApiService {
+    // Cashier Dashboard API methods
+    async getCashierDashboardData() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierDashboardEarnings() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard/earnings`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierDashboardOrders() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard/orders`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierDashboardTopProducts() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard/top-products`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierDashboardFinancialSummary() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard/financial-summary`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierDashboardCategoryPerformance() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/dashboard/category-performance`);
+      return this.handleResponse(response);
+    }
+
+    // Cashier Orders API methods
+    async getCashierOrders() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/orders`);
+      return this.handleResponse(response);
+    }
+
+    async getCashierOrderById(id) {
+      const response = await this.request(`${API_CASHIER_PREFIX}/orders/${id}`);
+      return this.handleResponse(response);
+    }
+
+    async createCashierOrder(orderData) {
+      const response = await this.request(`${API_CASHIER_PREFIX}/orders`, {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+      });
+      return this.handleResponse(response);
+    }
+
+    async updateCashierOrder(id, orderData) {
+      const response = await this.request(`${API_CASHIER_PREFIX}/orders/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(orderData),
+      });
+      return this.handleResponse(response);
+    }
+
+    async deleteCashierOrder(id) {
+      return this.request(`${API_CASHIER_PREFIX}/orders/${id}`, {
+        method: 'DELETE',
+      });
+    }
   // Auth API method
   async login(credentials) {
       const response = await this.request(`${API_AUTH_PREFIX}/login`, {
@@ -471,6 +534,35 @@ class ApiService {
     });
   }
 
+    // Cashier Products API method
+    async getCashierProducts() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/products`);
+      const products = this.handleResponse(response);
+      // Format image URLs like getProducts()
+      return products.map(product => {
+        const imageUrl = this.getImageUrl(product.image_path);
+        return {
+          ...product,
+          image_url: imageUrl,
+          originalImagePath: product.image_path
+        };
+      });
+    }
+
+    // Cashier Categories API method
+    async getCashierCategories() {
+      const response = await this.request(`${API_CASHIER_PREFIX}/categories`);
+      const categories = this.handleResponse(response);
+      // Format image URLs like getCategories
+      return categories.map(category => ({
+        ...category,
+        image_url: this.getImageUrl(category.image_path),
+        originalImagePath: category.image_path
+      }));
+    }
+
+
+
   async createProduct(productData) {
     console.log('Creating product with JSON data:', productData);
       const response = await this.request(`${API_ADMIN_PREFIX}/products`, {
@@ -791,8 +883,13 @@ class ApiService {
   }
 
   async getReportsDetailed() {
+    // Always return the full response object, not just .data, so the Reports page can map fields correctly
     const response = await this.request(`${API_ADMIN_PREFIX}/reports/detailed`);
-    return this.handleResponse(response);
+    // If response has .data, return as { data: response.data }, else return as { data: response }
+    if (response && response.data) {
+      return { data: response.data };
+    }
+    return { data: response };
   }
 
   async getSalesSummary() {
@@ -874,6 +971,8 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  
+
   async getTopCustomers(limit = 10) {
     const response = await this.request(`${API_ADMIN_PREFIX}/reports/top-customers?limit=${limit}`);
     return this.handleResponse(response);
@@ -900,7 +999,7 @@ class ApiService {
     return this.handleResponse(response);
   }
   async getOrder() {
-      const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
+    const response = await this.request(`${API_ADMIN_PREFIX}/orders`);
     return this.handleResponse(response);
   }
   async cheackOrder(id) {
@@ -938,7 +1037,16 @@ class ApiService {
     );
     return this.handleResponse(response);
   }
-
+ async acceptPayment(id) {
+    const response = await this.request(
+      `${API_ADMIN_PREFIX}/update_payment_status/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'accepted' }),
+      }
+    );
+    return this.handleResponse(response);
+  }
 }
 
 // Export singleton instance
